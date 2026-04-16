@@ -1,13 +1,119 @@
-\documentclass{article}
-\usepackage[utf8]{inputenc}
-\title{Project Report}
-\author{}
+\documentclass[a4paper]{article}
+
+% --- CẤU HÌNH CƠ BẢN ---
+\usepackage{fontspec}
+\defaultfontfeatures{Ligatures=TeX}
+\IfFontExistsTF{Times New Roman}{
+  \setmainfont{Times New Roman}
+}{
+  \setmainfont{TeX Gyre Termes}
+}
+\usepackage[vietnamese]{babel}
+\usepackage[fontsize=13pt]{scrextend}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{indentfirst}
+
+% --- CĂN LỀ ---
+\usepackage[left=2cm, right=2cm, top=2cm, bottom=2.5cm]{geometry}
+\setlength{\headsep}{10pt}     % giảm khoảng cách header → nội dung
+\setlength{\footskip}{36pt}   % tăng khoảng cách nội dung → footer
+
+% --- GÓI HỖ TRỢ ---
+\usepackage{graphicx}
+\usepackage{lmodern}
+\usepackage{url}
+\usepackage{amsmath, amssymb}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[justification=centering]{caption}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{tabularx}
+\usepackage{booktabs}
+
+% --- HEADER & FOOTER ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\raggedbottom
+
+% Fix khoảng header (QUAN TRỌNG)
+\setlength{\headheight}{33pt}
+\usepackage{titlesec}
+
+% --- ĐỊNH DẠNG TIÊU ĐỀ ---
+\titleformat{\section}
+  {\normalfont\fontsize{16pt}{16pt}\bfseries}  % font 16pt
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\fontsize{14pt}{15pt}\bfseries}  % font 14pt (bằng body text)
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\fontsize{13pt}{15pt}\bfseries\itshape}  % 13pt, in nghiêng để phân biệt
+  {\thesubsubsection}{1em}{}
+
+% --- KHOẢNG CÁCH ---
+\titlespacing*{\section}      {0pt}{1.5ex plus .5ex minus .2ex}{0.8ex plus .2ex}
+\titlespacing*{\subsection}   {0pt}{1.2ex plus .4ex minus .2ex}{0.6ex plus .2ex}
+\titlespacing*{\subsubsection}{0pt}{1.0ex plus .3ex minus .2ex}{0.4ex plus .2ex}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Header
+\fancyhead[L]{\IfFileExists{images/uet_logo.png}{\includegraphics[height=1.0cm]{images/uet_logo.png}}{\textbf{UET}}}
+\fancyhead[R]{\leftmark}
+
+% Footer
+\fancyfoot[L]{INT3121 - Các Chuyên đề trong Khoa học Máy tính}
+\fancyfoot[R]{\thepage}
+
+% Style cho trang bắt đầu section
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0.4pt}
+  \fancyhead[L]{\IfFileExists{images/uet_logo.png}{\includegraphics[height=1.0cm]{images/uet_logo.png}}{\textbf{UET}}}
+    \fancyhead[R]{\leftmark}
+    \fancyfoot[L]{INT3121 - Các Chuyên đề trong Khoa học Máy tính}
+    \fancyfoot[R]{\thepage}
+}
+
+% --- THÔNG TIN ---
+\title{Báo cáo Các Chuyên đề trong Khoa học Máy tính - Nhóm 3}
+\author{Nhóm 3}
 \date{\today}
 
 \begin{document}
-\maketitle
 
-\section{Introduction}
-Draft content.
+% --- TRANG BÌA ---
+\IfFileExists{cover.tex}{\input{cover.tex}}{\section*{Trang b\`ia}
+N\^oi dung trang b\`ia ch\ua du\oc t\ạo.}
+\thispagestyle{empty}
+
+% --- MỤC LỤC ---
+\newpage
+\tableofcontents
+\thispagestyle{empty}
+
+\newpage
+\listoffigures
+
+\newpage
+\listoftables
+
+\newpage
+
+% --- NỘI DUNG ---
+\include{chapters/0_tom_tat}
+\include{chapters/1_gioi_thieu}
+
+% --- TÀI LIỆU THAM KHẢO ---
+\newpage
+\bibliographystyle{IEEEtran}
+\bibliography{bib/references}
 
 \end{document}

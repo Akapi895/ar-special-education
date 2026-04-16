@@ -1,0 +1,23 @@
+# latexmkrc
+
+# dùng XeLaTeX
+$pdf_mode = 1;
+$xelatex = 'xelatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S';
+
+# đổi engine mặc định sang xelatex
+$pdflatex = $xelatex;
+$lualatex = 'lualatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S';
+
+# gom toàn bộ output vào thư mục build
+$out_dir = 'build';
+$aux_dir = 'build';
+
+# nếu dùng bibliography hiện đại
+$biber = 'biber %O %B';
+
+# dọn thêm các file phụ thường gặp
+$clean_ext = 'acn acr alg glg glo gls ist lof lot nav out snm toc xdv fdb_latexmk fls synctex.gz run.xml bbl bcf blg';
+$clean_full_ext = 'pdf';
+
+# cho phép latexmk tự cd vào thư mục tài liệu
+$do_cd = 1;
