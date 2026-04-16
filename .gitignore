@@ -1,0 +1,44 @@
+# macOS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# Python backend
+apps/backend/.venv/
+apps/backend/venv/
+apps/backend/__pycache__/
+apps/backend/.pytest_cache/
+apps/backend/.mypy_cache/
+apps/backend/dist/
+apps/backend/build/
+
+# Unity
+apps/unity-client/[Ll]ibrary/
+apps/unity-client/[Tt]emp/
+apps/unity-client/[Oo]bj/
+apps/unity-client/[Bb]uild/
+apps/unity-client/[Bb]uilds/
+apps/unity-client/[Ll]ogs/
+apps/unity-client/[Uu]ser[Ss]ettings/
+apps/unity-client/[Mm]emoryCaptures/
+
+# LaTeX build artifacts
+docs/report-latex/build/
+docs/report-latex/*.aux
+docs/report-latex/*.bbl
+docs/report-latex/*.bcf
+docs/report-latex/*.blg
+docs/report-latex/*.fdb_latexmk
+docs/report-latex/*.fls
+docs/report-latex/*.log
+docs/report-latex/*.out
+docs/report-latex/*.run.xml
+docs/report-latex/*.synctex.gz
+docs/report-latex/*.toc
+docs/report-latex/*.pdf
