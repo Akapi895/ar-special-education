@@ -1,0 +1,358 @@
+[ROLE DOC] Learning Activities / AR Mini-games
+================================================
+
+1. OBJECTIVE
+------------
+Build the learning and mini-game portion of the application — that is, turn the AR background
+into structured learning activities with clear goals, correct/incorrect feedback, step-by-step
+hints, and local progress saving.
+
+
+2. ROLE
+-------
+Responsible for the Learning Activities / AR Mini-games section. Simply put:
+- Build specific lessons that run on top of the shared AR environment.
+- Build the learning logic for each activity.
+- Build the hint system and feedback system.
+- Build local progress tracking according to the agreed contract.
+- Do NOT build the AR core layer (plane scanning, session management, placement, low-level interaction).
+
+→ Turn the AR environment into structured lessons with goals, checks, and results.
+
+
+3. TECHNICAL OBJECTIVES
+------------------------
+Must ensure the following:
+- Activities can run on the shared AR scene.
+- Each activity has a clear flow from question to feedback.
+- Learning logic is decoupled from the AR core.
+- New activities can be added in the future.
+- A hint system exists for when children answer incorrectly.
+- Positive feedback is given immediately after each interaction.
+- Progress is saved locally.
+- Basic learning results can be displayed.
+
+
+4. SCOPE OF WORK
+----------------
+
+4.1 What to Build
+
+A. Common Activity Framework
+Design a shared structure so all lessons follow the same pattern:
+- Initialize activity
+- Display task
+- Receive input
+- Check answer
+- Give feedback
+- Save result
+
+B. First Activity: Quantity Match (Top Priority)
+- Show a number.
+- Show AR object groups.
+- Child selects the group with the correct count.
+- App checks and gives feedback.
+
+C. Second Activity: Compare Quantity
+- Show two groups of objects.
+- Child selects which group is more, fewer, or equal.
+- App checks and gives feedback.
+
+D. Third Activity: Number Line Jump
+- Show an AR number line.
+- Place a character at a starting number.
+- Child performs left/right jumps.
+- Check the final position.
+
+E. Hint System
+When a child answers incorrectly, do not immediately reveal the answer —
+provide step-by-step hints instead.
+
+F. Feedback System
+After each interaction, the app must respond with effects, sounds, short praise,
+or suggestions to try again.
+
+G. Local Progress
+Save progress locally in the agreed format.
+
+---
+
+4.2 What NOT to Build
+- AR session management
+- Plane detection
+- Low-level placement logic
+- Basic core-level interaction
+- Shared AR scene design
+- Changes to folder architecture without prior agreement
+- Changes to data format conventions without an established contract
+- Full parent dashboard unless explicitly assigned
+
+NOTE: If any cross-cutting concern with AR core or data schema arises, stop and ask first.
+
+
+5. DELIVERABLES
+---------------
+
+5.1 Activity Framework
+A clean structure that supports multiple lessons, including:
+- Presenter
+- View
+- Config
+- Answer model
+- Result model
+
+5.2 Quantity Match (Complete)
+Must include:
+- Question
+- Answer choices
+- Correct/incorrect feedback
+- Hint on wrong answer
+- Result saved
+
+5.3 Compare Quantity (Complete)
+Must include:
+- Two object groups
+- Comparison question
+- Answer check
+- Feedback
+- Result saved
+
+5.4 Number Line Jump (Complete)
+Must include:
+- AR number line
+- Starting position
+- Jump steps
+- Final position check
+- Equation display
+- Result saved
+
+5.5 Hints and Feedback
+- Hints must not be too long.
+- Feedback must be short, positive, and easy for children to understand.
+
+5.6 Local Progress
+Record the following:
+- Activity result
+- Number of attempts
+- Number of hints used
+- Time spent
+- Error type (if applicable)
+
+
+6. UNDERSTANDING THIS TASK CORRECTLY
+--------------------------------------
+This is the learning layer, not the AR layer. That means:
+- No need to worry about how the AR camera works.
+- No need to worry about how surface scanning works.
+- Simply assume the AR core already provides the conditions needed to render activities and receive input.
+
+Focus on these questions:
+- What is the child learning?
+- What skill does this activity teach?
+- How are mistakes corrected?
+- How is success responded to?
+- What is saved afterward?
+
+
+7. ARCHITECTURE REQUIREMENTS
+-----------------------------
+
+7.1 Separate Learning Logic from UI
+- UI only displays.
+- Learning logic handles answer checking and progress.
+- UI does not decide what is correct or incorrect.
+
+7.2 Separate Learning from AR Core
+- Learning does not scan planes.
+- Learning does not place objects.
+- Learning only uses APIs provided by the AR core.
+
+7.3 Separate Data from Logic
+- Lesson config should be in its own file.
+- Result/progress models should be separate.
+- Do not hardcode all content inside scripts.
+
+7.4 Be Extensible
+- Each activity should have its own set of files.
+- Each feature should share an internal framework.
+- Adding a new activity in the future must not break existing activities.
+
+
+8. FOLDER STRUCTURE
+--------------------
+
+Assets/
+├── Features/
+│   └── Activities/
+│       ├── QuantityMatch/
+│       ├── CompareQuantity/
+│       └── NumberLineJump/
+├── Core/
+│   ├── Learning/
+│   ├── Support/
+│   └── Data/
+└── Shared/
+
+8.1 Quantity Match
+Assets/Features/Activities/QuantityMatch/
+├── Scripts/
+│   ├── QuantityMatchPresenter.cs
+│   ├── QuantityMatchView.cs
+│   ├── QuantityMatchConfig.cs
+│   └── QuantityMatchAnswer.cs
+├── Prefabs/
+│   ├── PFB_QuantityGroup.prefab
+│   └── PFB_NumberCard.prefab
+├── UI/
+│   └── PFB_QuantityMatchPanel.prefab
+└── Tests/
+
+8.2 Compare Quantity
+Assets/Features/Activities/CompareQuantity/
+├── Scripts/
+│   ├── CompareQuantityPresenter.cs
+│   ├── CompareQuantityView.cs
+│   └── CompareQuantityConfig.cs
+├── Prefabs/
+├── UI/
+└── Tests/
+
+8.3 Number Line Jump
+Assets/Features/Activities/NumberLineJump/
+├── Scripts/
+│   ├── NumberLineJumpPresenter.cs
+│   ├── NumberLineJumpView.cs
+│   └── NumberLineJumpConfig.cs
+├── Prefabs/
+│   ├── PFB_NumberLine.prefab
+│   ├── PFB_NumberTile.prefab
+│   └── PFB_JumpCharacter.prefab
+├── UI/
+└── Tests/
+
+
+9. PRIORITIZED TASK SEQUENCE
+------------------------------
+
+Phase 1: Activity Framework
+- Build the shared activity skeleton.
+- Finalize the display and input-receiving flow.
+- Finalize how it works with the AR core.
+
+Phase 2: Quantity Match
+- Display the number to match.
+- Spawn object groups.
+- Allow child to select an answer.
+- Check correct/incorrect.
+- Give feedback.
+- Save result.
+
+Phase 3: Compare Quantity
+- Display two object groups.
+- Display comparison question.
+- Check selection.
+- Give feedback.
+- Save result.
+
+Phase 4: Number Line Jump
+- Display number line.
+- Let character jump.
+- Check final position.
+- Give feedback.
+- Save result.
+
+Phase 5: Hint, Feedback, Progress
+- Improve hint system.
+- Improve feedback system.
+- Standardize local progress.
+
+
+10. DEFINITION OF DONE
+-----------------------
+
+Per Activity:
+- Runs on the shared scene.
+- Has a clear flow.
+- Can receive user input.
+- Has answer checking.
+- Has correct/incorrect feedback.
+- Saves result locally.
+
+For the Entire Module:
+- New activities can be added.
+- No hard dependency on AR core internals.
+- Does not break the shared scene.
+- Learning logic is not mixed with display logic.
+- Code is easy to read and review.
+
+
+11. CODE CONVENTIONS
+---------------------
+
+11.1 Clear Naming
+- File and class names use PascalCase.
+- Names must accurately describe their function.
+- Examples: QuantityMatchPresenter.cs, CompareQuantityView.cs, NumberLineJumpConfig.cs
+
+11.2 One Primary Responsibility per File
+- Presenter handles logic.
+- View handles UI.
+- Config holds configuration.
+- Answer model holds answer data.
+
+11.3 Avoid Excessive Hardcoding
+- Do not hardcode all lesson content directly in code.
+- Use config files or ScriptableObjects where appropriate.
+- Activity data should be easy to change.
+
+
+12. WORKING RULES
+------------------
+
+Must Wait for Khánh:
+- Shared AR scene
+- Placement API
+- Interaction API
+- Mock prefabs or placeholders
+- Event callbacks from AR core
+
+Can Proceed Without Waiting:
+- Activity logic
+- Activity config
+- Correct/incorrect flow
+- Hint system
+- Feedback system
+- Local progress logic per contract
+
+Must Align On:
+- Event names
+- How to spawn objects
+- How to receive tap/select/drag input
+- How to load an activity into the shared scene
+
+For now: code the activity mock portion.
+
+
+13. PRE-COMPLETION CHECKLIST
+-----------------------------
+Before marking a task as done, verify:
+[ ] Activity framework has a clear structure
+[ ] Quantity Match runs correctly
+[ ] Compare Quantity runs correctly
+[ ] Number Line Jump runs correctly
+[ ] Hint system works
+[ ] Feedback system works
+[ ] Local progress is saved correctly
+[ ] Code is not mixed with AR core
+[ ] Content is not hardcoded arbitrarily
+[ ] Folder structure follows conventions
+[ ] New activities can be added
+
+
+14. THINGS TO AVOID
+--------------------
+- Do not build an activity as a tangled, non-reusable script.
+- Do not rely on a separate scene per lesson unless necessary.
+- Do not let UI decide learning logic.
+- Do not scatter data-saving logic across multiple places.
+- Do not use vague file names like MainScript.cs, Test2.cs, or NewActivity.cs.
