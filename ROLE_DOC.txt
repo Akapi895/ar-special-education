@@ -336,17 +336,20 @@ For now: code the activity mock portion.
 13. PRE-COMPLETION CHECKLIST
 -----------------------------
 Before marking a task as done, verify:
-[ ] Activity framework has a clear structure
-[ ] Quantity Match runs correctly
-[ ] Compare Quantity runs correctly
-[ ] Number Line Jump runs correctly
-[ ] Hint system works
-[ ] Feedback system works
-[ ] Local progress is saved correctly
-[ ] Code is not mixed with AR core
-[ ] Content is not hardcoded arbitrarily
-[ ] Folder structure follows conventions
-[ ] New activities can be added
+[X] Activity framework has a clear structure
+[X] Quantity Match runs correctly
+[X] Compare Quantity runs correctly
+[X] Number Line Jump runs correctly
+[X] Hint system works
+[X] Feedback system works
+[X] Local progress is saved correctly
+[X] Code is not mixed with AR core
+[X] Content is not hardcoded arbitrarily
+[X] Folder structure follows conventions
+[X] New activities can be added
+
+All learning layer tasks completed as of 2026-05-08.
+See apps/unity-client/Assets/Docs/LearningActivities_ImplementationSummary.md for details.
 
 
 14. THINGS TO AVOID
