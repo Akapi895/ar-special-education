@@ -64,13 +64,17 @@ namespace Features.Activities.CompareQuantity
         [SerializeField]
         private Button nextRoundButton;
 
-        // Events from IActivityView
-        public event Action<ActivityAnswer> OnAnswerSelected;
         public event Action OnHintRequested;
         public event Action OnCancelRequested;
 
         // Events specific to ICompareQuantityView
         public event Action<ComparisonAnswer> OnAnswerSelected;
+
+        event Action<ActivityAnswer> IActivityView.OnAnswerSelected
+        {
+            add { }
+            remove { }
+        }
 
         // Presenter reference
         private IActivityPresenter presenter;

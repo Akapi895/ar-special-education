@@ -14,7 +14,7 @@ namespace Features.Activities.CompareQuantity
         /// <summary>
         /// Event fired when an answer is selected.
         /// </summary>
-        event Action<ComparisonAnswer> OnAnswerSelected;
+        new event Action<ComparisonAnswer> OnAnswerSelected;
 
         /// <summary>
         /// Show the question with group counts.

@@ -100,6 +100,7 @@ namespace Features.Activities.CompareQuantity
         public string MoreButtonLabel => moreButtonLabel;
         public string FewerButtonLabel => fewerButtonLabel;
         public string EqualButtonLabel => equalButtonLabel;
+        public string FailedFeedback => failedFeedback;
         public float GroupSpacing => groupSpacing;
 
         /// <summary>

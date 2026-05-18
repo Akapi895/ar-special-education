@@ -1,6 +1,7 @@
 using Core.Learning.Models;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using UnityEngine;
 
@@ -49,7 +50,7 @@ namespace Core.Data.LocalStorage
             currentSession = new SessionData
             {
                 SessionId = Guid.NewGuid().ToString(),
-                StartTime = DateTime.UtcNow,
+                StartTime = DateTime.UtcNow.ToString("o"),
                 ActivityId = activityId
             };
 
@@ -73,8 +74,8 @@ namespace Core.Data.LocalStorage
                 return;
             }
 
-            currentSession.EndTime = DateTime.UtcNow;
-            currentSession.Duration = (float)(currentSession.EndTime - currentSession.StartTime).TotalSeconds;
+            currentSession.EndTime = DateTime.UtcNow.ToString("o");
+            currentSession.Duration = CalculateSessionDurationSeconds(currentSession.StartTime, currentSession.EndTime);
 
             OnSessionEnded?.Invoke(currentSession);
 
@@ -283,6 +284,17 @@ namespace Core.Data.LocalStorage
             {
                 Debug.LogError($"[LocalProgressStorage] Failed to save session: {e.Message}");
             }
+        }
+
+        private static float CalculateSessionDurationSeconds(string startTime, string endTime)
+        {
+            if (DateTime.TryParse(startTime, null, DateTimeStyles.RoundtripKind, out DateTime start)
+                && DateTime.TryParse(endTime, null, DateTimeStyles.RoundtripKind, out DateTime end))
+            {
+                return (float)(end - start).TotalSeconds;
+            }
+
+            return 0f;
         }
     }
 
@@ -534,7 +546,7 @@ namespace Core.Data.LocalStorage
         public int TotalResults;
 
         [SerializeField]
-        private Dictionary<string, string> activityStatisticsJson = new Dictionary<string, string>>();
+        private Dictionary<string, string> activityStatisticsJson = new Dictionary<string, string>();
 
         // Runtime access to activity stats
         [NonSerialized]

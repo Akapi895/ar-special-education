@@ -132,12 +132,12 @@ namespace Core.Learning.Utils
                     else
                     {
                         // Fall back to horizontal for other counts
-                        float totalWidth = (numberOfGroups - 1) * spacing;
-                        float startX = centerPosition.x - totalWidth / 2f;
+                        float fallbackTotalWidth = (numberOfGroups - 1) * spacing;
+                        float fallbackStartX = centerPosition.x - fallbackTotalWidth / 2f;
 
                         for (int i = 0; i < numberOfGroups; i++)
                         {
-                            positions[i] = new Vector3(startX + i * spacing, centerPosition.y, centerPosition.z);
+                            positions[i] = new Vector3(fallbackStartX + i * spacing, centerPosition.y, centerPosition.z);
                         }
                     }
                     break;

@@ -1,4 +1,6 @@
+using Core.Data.LocalStorage;
 using Core.Learning.Models;
+using Core.Support.FeedbackSystem;
 using System;
 using UnityEngine;
 
@@ -195,6 +197,8 @@ namespace Core.Learning.ActivityRunner
         protected virtual void HandleCorrectAnswer(ActivityAnswer answer)
         {
             currentResult.Complete(true, null);
+            PlayAnswerFeedback(isCorrect: true);
+            PersistRoundResult();
             ChangeState(ActivityState.Completed);
 
             // Wait a moment then go to next round or complete
@@ -206,10 +210,13 @@ namespace Core.Learning.ActivityRunner
         /// </summary>
         protected virtual void HandleIncorrectAnswer(ActivityAnswer answer)
         {
+            PlayAnswerFeedback(isCorrect: false);
+
             if (currentResult.TotalAttempts >= config.MaxAttemptsPerQuestion)
             {
                 // Max attempts reached - fail the round
                 currentResult.Complete(false, GetErrorType(answer));
+                PersistRoundResult();
                 ChangeState(ActivityState.Failed);
                 OnActivityCompleted?.Invoke(currentResult);
             }
@@ -266,8 +273,61 @@ namespace Core.Learning.ActivityRunner
         /// </summary>
         protected virtual void CompleteActivity(bool success)
         {
+            PlayAnswerFeedback(isCorrect: success, isActivityComplete: true);
             ChangeState(success ? ActivityState.Completed : ActivityState.Failed);
             OnActivityCompleted?.Invoke(currentResult);
+        }
+
+        /// <summary>
+        /// Persist the current round result to local storage.
+        /// </summary>
+        protected virtual void PersistRoundResult()
+        {
+            if (currentResult == null)
+            {
+                return;
+            }
+
+            ProgressStorageProxy.Instance.SaveResult(currentResult);
+        }
+
+        /// <summary>
+        /// Trigger global feedback (sound/VFX hooks via FeedbackServiceProxy).
+        /// </summary>
+        protected virtual void PlayAnswerFeedback(bool isCorrect, bool isActivityComplete = false)
+        {
+            var proxy = FindAnyObjectByType<FeedbackServiceProxy>();
+            if (proxy != null)
+            {
+                if (isActivityComplete)
+                {
+                    proxy.ShowSuccess();
+                }
+                else if (isCorrect)
+                {
+                    proxy.ShowCorrect();
+                }
+                else
+                {
+                    proxy.ShowIncorrect();
+                }
+
+                return;
+            }
+
+            // Fallback without scene proxy
+            if (isActivityComplete)
+            {
+                FeedbackServiceProxy.Instance.ShowSuccess();
+            }
+            else if (isCorrect)
+            {
+                FeedbackServiceProxy.Instance.ShowCorrect();
+            }
+            else
+            {
+                FeedbackServiceProxy.Instance.ShowIncorrect();
+            }
         }
 
         /// <summary>

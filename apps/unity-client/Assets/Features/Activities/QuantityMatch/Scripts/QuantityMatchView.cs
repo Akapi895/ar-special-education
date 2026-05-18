@@ -46,9 +46,14 @@ namespace Features.Activities.QuantityMatch
         private GameObject[] groupSelectionButtons;  // Optional: buttons for each group
 
         // Events from IActivityView
-        public event Action<ActivityAnswer> OnAnswerSelected;
         public event Action OnHintRequested;
         public event Action OnCancelRequested;
+
+        event Action<ActivityAnswer> IActivityView.OnAnswerSelected
+        {
+            add { }
+            remove { }
+        }
 
         // Events specific to IQuantityMatchView
         public event Action<int, int> OnGroupSelected;
@@ -59,6 +64,10 @@ namespace Features.Activities.QuantityMatch
         // State
         private int currentTargetNumber;
         private int currentNumberOfGroups;
+
+        private Button[] runtimeGroupButtons;
+
+        public bool HasUiReferences => targetNumberText != null;
 
         private void Awake()
         {
@@ -96,6 +105,30 @@ namespace Features.Activities.QuantityMatch
         }
 
         /// <summary>
+        /// Builds minimal UI at runtime when prefabs are not assigned.
+        /// </summary>
+        public void BuildRuntimeUi(Canvas canvas)
+        {
+            var panel = CreateUiPanel(canvas.transform, "QuantityMatchPanel");
+
+            targetNumberText = CreateText(panel, "TargetNumber", "?", 72, new Vector2(0, 200));
+            progressText = CreateText(panel, "Progress", "", 28, new Vector2(0, 140));
+
+            feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0, -40));
+            feedbackText = CreateText(feedbackPanel.transform, "FeedbackText", "", 32, Vector2.zero);
+            feedbackPanel.SetActive(false);
+
+            hintPanel = CreateSubPanel(panel, "HintPanel", new Vector2(0, -120));
+            hintText = CreateText(hintPanel.transform, "HintText", "", 26, Vector2.zero);
+            hintPanel.SetActive(false);
+
+            hintButton = CreateButton(panel, "HintButton", "Hint", new Vector2(-120, -220), () => OnHintRequested?.Invoke());
+            cancelButton = CreateButton(panel, "CancelButton", "Cancel", new Vector2(120, -220), () => OnCancelRequested?.Invoke());
+            nextRoundButton = CreateButton(panel, "NextButton", "Next", new Vector2(0, -280), OnNextRoundClicked);
+            nextRoundButton.gameObject.SetActive(false);
+        }
+
+        /// <summary>
         /// Initialize the view with presenter callbacks.
         /// </summary>
         public void Initialize(IActivityPresenter activityPresenter)
@@ -130,6 +163,7 @@ namespace Features.Activities.QuantityMatch
             UpdateTargetNumber(targetNumber);
             HideFeedback();
             HideHint();
+            EnsureRuntimeGroupButtons(numberOfGroups);
 
             // Enable hint button
             if (hintButton != null)
@@ -371,6 +405,95 @@ namespace Features.Activities.QuantityMatch
             {
                 NotifyGroupSelected(groupIndex, 0);  // Count will be filled by presenter
             }
+        }
+
+        private void EnsureRuntimeGroupButtons(int numberOfGroups)
+        {
+            if (groupSelectionButtons != null && groupSelectionButtons.Length > 0)
+            {
+                return;
+            }
+
+            if (runtimeGroupButtons != null)
+            {
+                foreach (Button button in runtimeGroupButtons)
+                {
+                    if (button != null)
+                    {
+                        Destroy(button.gameObject);
+                    }
+                }
+            }
+
+            runtimeGroupButtons = new Button[numberOfGroups];
+            float startX = -(numberOfGroups - 1) * 80f * 0.5f;
+
+            for (int i = 0; i < numberOfGroups; i++)
+            {
+                int groupIndex = i;
+                runtimeGroupButtons[i] = CreateButton(
+                    transform,
+                    $"GroupButton_{i}",
+                    $"Group {i + 1}",
+                    new Vector2(startX + i * 80f, -180f),
+                    () => OnGroupButtonClicked(groupIndex));
+            }
+        }
+
+        private static RectTransform CreateUiPanel(Transform parent, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            return rect;
+        }
+
+        private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.sizeDelta = new Vector2(600, 80);
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.5f);
+            return go;
+        }
+
+        private static Text CreateText(Transform parent, string name, string content, int fontSize, Vector2 anchoredPosition)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.sizeDelta = new Vector2(600, 100);
+            rect.anchoredPosition = anchoredPosition;
+
+            var text = go.GetComponent<Text>();
+            text.text = content;
+            text.fontSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = Color.white;
+            return text;
+        }
+
+        private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.sizeDelta = new Vector2(140, 48);
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = new Color(0.2f, 0.5f, 0.9f, 1f);
+
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(onClick);
+
+            CreateText(go.transform, "Label", label, 22, Vector2.zero);
+            return button;
         }
     }
 }

@@ -1,15 +1,17 @@
 using UnityEngine;
-using Core.Learning.ActivityRunner;
 
-namespace Features.Activities.Shared
+namespace Features.Activities
 {
     /// <summary>
     /// Helper component to set up activity prefabs at runtime.
     /// Creates placeholder objects if actual prefabs are not assigned.
-    /// Use this in SC_ARGameplay to initialize activities for testing.
     /// </summary>
     public class ActivityPrefabSetup : MonoBehaviour
     {
+        private static ActivityPrefabSetup instance;
+
+        public static ActivityPrefabSetup Instance => instance;
+
         [Header("Quantity Match Prefabs")]
         [SerializeField] private GameObject applePrefab;
         [SerializeField] private GameObject carrotPrefab;
@@ -29,28 +31,31 @@ namespace Features.Activities.Shared
 
         private void Awake()
         {
+            instance = this;
+
             if (autoCreatePlaceholders)
             {
                 CreatePlaceholderPrefabs();
             }
         }
 
-        /// <summary>
-        /// Create placeholder prefabs if none are assigned.
-        /// These can be used for testing before art assets are ready.
-        /// </summary>
+        private void OnDestroy()
+        {
+            if (instance == this)
+            {
+                instance = null;
+            }
+        }
+
+        public GameObject GetApplePrefab() => applePrefab;
+
         private void CreatePlaceholderPrefabs()
         {
-            // Quantity Match placeholders
             if (applePrefab == null) applePrefab = CreateApplePrefab();
             if (carrotPrefab == null) carrotPrefab = CreateCarrotPrefab();
             if (starPrefab == null) starPrefab = CreateStarPrefab();
-
-            // Compare Quantity placeholders
             if (compareApplePrefab == null) compareApplePrefab = CreateApplePrefab();
             if (compareCarrotPrefab == null) compareCarrotPrefab = CreateCarrotPrefab();
-
-            // Number Line Jump placeholders
             if (numberTilePrefab == null) numberTilePrefab = CreateNumberTilePrefab();
             if (jumpCharacterPrefab == null) jumpCharacterPrefab = CreateCharacterPrefab();
 
@@ -83,7 +88,6 @@ namespace Features.Activities.Shared
             GameObject obj = CreatePrimitivePrefab("PFB_NumberTile", Color.white, PrimitiveType.Cube);
             obj.transform.localScale = new Vector3(0.2f, 0.05f, 0.2f);
 
-            // Add number text child
             GameObject textObj = new GameObject("NumberText");
             textObj.transform.SetParent(obj.transform);
             textObj.transform.localPosition = Vector3.up * 0.03f;
@@ -96,7 +100,6 @@ namespace Features.Activities.Shared
             GameObject obj = CreatePrimitivePrefab("PFB_JumpCharacter", new Color(0.3f, 0.6f, 1f), PrimitiveType.Capsule);
             obj.transform.localScale = new Vector3(0.1f, 0.15f, 0.1f);
 
-            // Add face indicator
             GameObject face = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             face.name = "Face";
             face.transform.SetParent(obj.transform);
@@ -116,9 +119,6 @@ namespace Features.Activities.Shared
             return obj;
         }
 
-        /// <summary>
-        /// Get a prefab by name. Useful for dynamic loading.
-        /// </summary>
         public GameObject GetPrefab(string prefabName)
         {
             return prefabName switch
@@ -132,16 +132,13 @@ namespace Features.Activities.Shared
             };
         }
 
-        /// <summary>
-        /// Destroy all placeholder objects (for cleanup).
-        /// </summary>
         public void DestroyPlaceholders()
         {
-            if (applePrefab != null) DestroyImmediate(applePrefab);
-            if (carrotPrefab != null) DestroyImmediate(carrotPrefab);
-            if (starPrefab != null) DestroyImmediate(starPrefab);
-            if (numberTilePrefab != null) DestroyImmediate(numberTilePrefab);
-            if (jumpCharacterPrefab != null) DestroyImmediate(jumpCharacterPrefab);
+            if (applePrefab != null) Destroy(applePrefab);
+            if (carrotPrefab != null) Destroy(carrotPrefab);
+            if (starPrefab != null) Destroy(starPrefab);
+            if (numberTilePrefab != null) Destroy(numberTilePrefab);
+            if (jumpCharacterPrefab != null) Destroy(jumpCharacterPrefab);
         }
     }
 }

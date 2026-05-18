@@ -8,6 +8,7 @@
 .env
 .env.*
 !.env.example
+venv/
 
 # Python backend
 apps/backend/.venv/

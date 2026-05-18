@@ -70,9 +70,14 @@ namespace Features.Activities.NumberLineJump
         private Button nextRoundButton;
 
         // Events from IActivityView
-        public event Action<ActivityAnswer> OnAnswerSelected;
         public event Action OnHintRequested;
         public event Action OnCancelRequested;
+
+        event Action<ActivityAnswer> IActivityView.OnAnswerSelected
+        {
+            add { }
+            remove { }
+        }
 
         // Events specific to INumberLineJumpView
         public event Action<JumpStepDirection> OnJumpRequested;
@@ -409,6 +414,24 @@ namespace Features.Activities.NumberLineJump
         {
             // TODO: Implement visual highlighting of AR tiles
             Debug.Log($"[NumberLineJumpView] Highlight tile {number}: {highlight}");
+        }
+
+        /// <summary>
+        /// Enable or disable user input (IActivityView).
+        /// </summary>
+        public void SetInputEnabled(bool enabled)
+        {
+            SetJumpInputEnabled(enabled);
+
+            if (hintButton != null)
+            {
+                hintButton.interactable = enabled;
+            }
+
+            if (cancelButton != null)
+            {
+                cancelButton.interactable = enabled;
+            }
         }
 
         /// <summary>

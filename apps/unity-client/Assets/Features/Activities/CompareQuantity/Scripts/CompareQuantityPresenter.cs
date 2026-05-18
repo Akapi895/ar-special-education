@@ -185,7 +185,7 @@ namespace Features.Activities.CompareQuantity
         {
             if (answer is not CompareQuantityAnswer compareAnswer)
             {
-                return Models.ErrorType.Other;
+                return ErrorType.Other;
             }
 
             // Determine the specific error type based on the wrong comparison
@@ -195,22 +195,22 @@ namespace Features.Activities.CompareQuantity
             if (expected == ComparisonAnswer.Equal)
             {
                 // User didn't recognize equality
-                return Models.ErrorType.WrongComparison;
+                return ErrorType.WrongComparison;
             }
             else if (selected == ComparisonAnswer.Equal)
             {
                 // User thought it was equal but it wasn't
-                return Models.ErrorType.WrongComparison;
+                return ErrorType.WrongComparison;
             }
             else if (selected == ComparisonAnswer.More && expected == ComparisonAnswer.Fewer)
             {
                 // User said more when it was fewer
-                return Models.ErrorType.WrongComparison;
+                return ErrorType.WrongComparison;
             }
             else
             {
                 // User said fewer when it was more
-                return Models.ErrorType.WrongComparison;
+                return ErrorType.WrongComparison;
             }
         }
 

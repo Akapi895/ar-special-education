@@ -97,7 +97,7 @@ namespace Core.Support.FeedbackSystem
         private IEnumerator ShowFeedbackCoroutine(FeedbackData data)
         {
             // Trigger the feedback
-            Instance.OnFeedbackTriggered?.Invoke(data);
+            Instance.NotifyFeedbackTriggered(data);
 
             // Play sound effect
             if (!string.IsNullOrEmpty(data.SoundEffect))
@@ -109,7 +109,7 @@ namespace Core.Support.FeedbackSystem
             yield return new WaitForSeconds(data.DisplayDuration > 0 ? data.DisplayDuration : 2f);
 
             // Complete
-            Instance.OnFeedbackComplete?.Invoke();
+            Instance.NotifyFeedbackComplete();
         }
 
         private void OnDestroy()

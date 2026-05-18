@@ -150,6 +150,16 @@ namespace Core.Support.FeedbackSystem
             PlayVisualEffect(effectName, Vector3.zero);
         }
 
+        public void NotifyFeedbackTriggered(FeedbackData data)
+        {
+            OnFeedbackTriggered?.Invoke(data);
+        }
+
+        public void NotifyFeedbackComplete()
+        {
+            OnFeedbackComplete?.Invoke();
+        }
+
         /// <summary>
         /// Clear all pending feedback.
         /// </summary>

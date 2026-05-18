@@ -1,6 +1,6 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
-using Features.Activities.QuantityMatch;
+using Features.Activities;
 using System;
 using UnityEngine;
 
@@ -25,6 +25,10 @@ namespace Features.Activities.QuantityMatch
 
         // Spawned objects tracking
         private GameObject[] spawnedGroups;
+
+        [Header("Prefabs")]
+        [SerializeField]
+        private GameObject defaultObjectPrefab;
 
         // Events specific to Quantity Match
         public event Action<int, string> OnGroupSpawned;  // groupIndex, groupId
@@ -227,9 +231,17 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         private GameObject GetObjectPrefab()
         {
-            // TODO: Implement prefab loading
-            // For now, return null - AR team will need to provide prefabs
-            Debug.LogWarning("[QuantityMatchPresenter] GetObjectPrefab() not implemented. AR team needs to provide prefabs.");
+            if (defaultObjectPrefab != null)
+            {
+                return defaultObjectPrefab;
+            }
+
+            if (ActivityPrefabSetup.Instance != null)
+            {
+                return ActivityPrefabSetup.Instance.GetApplePrefab();
+            }
+
+            Debug.LogWarning("[QuantityMatchPresenter] No object prefab assigned. Assign defaultObjectPrefab or add ActivityPrefabSetup.");
             return null;
         }
 
@@ -261,7 +273,7 @@ namespace Features.Activities.QuantityMatch
         {
             if (answer is not QuantityMatchAnswer quantityAnswer)
             {
-                return Models.ErrorType.Other;
+                return ErrorType.Other;
             }
 
             // Determine the specific error type based on the wrong selection
@@ -271,17 +283,17 @@ namespace Features.Activities.QuantityMatch
             if (selectedCount < targetCount)
             {
                 // Selected a group with fewer objects
-                return Models.ErrorType.WrongQuantity;  // Could add "TooFew" if needed
+                return ErrorType.WrongQuantity;  // Could add "TooFew" if needed
             }
             else if (selectedCount > targetCount)
             {
                 // Selected a group with more objects
-                return Models.ErrorType.WrongQuantity;  // Could add "TooMany" if needed
+                return ErrorType.WrongQuantity;  // Could add "TooMany" if needed
             }
             else
             {
                 // Count matches but wrong group (shouldn't happen with current design)
-                return Models.ErrorType.Other;
+                return ErrorType.Other;
             }
         }
 
@@ -293,6 +305,12 @@ namespace Features.Activities.QuantityMatch
             if (currentState != ActivityState.InProgress)
             {
                 return;
+            }
+
+            if (groupObjectCount <= 0 && currentQuestion != null
+                && groupIndex >= 0 && groupIndex < currentQuestion.ObjectCountsPerGroup.Length)
+            {
+                groupObjectCount = currentQuestion.ObjectCountsPerGroup[groupIndex];
             }
 
             Debug.Log($"[QuantityMatchPresenter] Group selected: {groupIndex}");

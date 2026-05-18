@@ -505,22 +505,22 @@ namespace Features.Activities.NumberLineJump
         {
             if (answer is not NumberLineJumpAnswer jumpAnswer)
             {
-                return Models.ErrorType.Other;
+                return ErrorType.Other;
             }
 
             if (jumpAnswer.HasOvershot)
             {
-                return Models.ErrorType.WrongDirection;
+                return ErrorType.WrongDirection;
             }
 
             if (jumpAnswer.HitBoundary)
             {
-                return Models.ErrorType.WrongDirection;
+                return ErrorType.WrongDirection;
             }
 
             if (jumpAnswer.ExceededMaxJumps)
             {
-                return Models.ErrorType.WrongJumpCount;
+                return ErrorType.WrongJumpCount;
             }
 
             int actualJumps = jumpAnswer.GetTotalJumps();
@@ -528,10 +528,10 @@ namespace Features.Activities.NumberLineJump
 
             if (actualJumps != Mathf.Abs(expectedJumps))
             {
-                return Models.ErrorType.WrongJumpCount;
+                return ErrorType.WrongJumpCount;
             }
 
-            return Models.ErrorType.Other;
+            return ErrorType.Other;
         }
 
         /// <summary>
