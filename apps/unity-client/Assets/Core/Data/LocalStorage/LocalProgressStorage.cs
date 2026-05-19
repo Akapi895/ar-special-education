@@ -10,6 +10,7 @@ namespace Core.Data.LocalStorage
     /// <summary>
     /// Service for storing and loading learning progress locally.
     /// Uses JSON serialization for persistent storage.
+    /// Fixed version - DateTime and Dictionary serialization issues resolved.
     /// </summary>
     public class LocalProgressStorage
     {
@@ -50,7 +51,7 @@ namespace Core.Data.LocalStorage
             currentSession = new SessionData
             {
                 SessionId = Guid.NewGuid().ToString(),
-                StartTime = DateTime.UtcNow.ToString("o"),
+                StartTimeString = DateTime.UtcNow.ToString("o"),
                 ActivityId = activityId
             };
 
@@ -74,8 +75,8 @@ namespace Core.Data.LocalStorage
                 return;
             }
 
-            currentSession.EndTime = DateTime.UtcNow.ToString("o");
-            currentSession.Duration = CalculateSessionDurationSeconds(currentSession.StartTime, currentSession.EndTime);
+            currentSession.EndTimeString = DateTime.UtcNow.ToString("o");
+            currentSession.Duration = CalculateSessionDurationSeconds(currentSession.StartTimeString, currentSession.EndTimeString);
 
             OnSessionEnded?.Invoke(currentSession);
 
@@ -104,6 +105,16 @@ namespace Core.Data.LocalStorage
             {
                 Debug.LogError("[LocalProgressStorage] Cannot save null result");
                 return;
+            }
+
+            // Ensure DateTime fields are serialized as strings
+            if (result.StartTime != default)
+            {
+                result.StartTimeString = result.StartTime.ToString("o");
+            }
+            if (result.EndTime != default)
+            {
+                result.EndTimeString = result.EndTime.ToString("o");
             }
 
             // Add to progress data
@@ -192,6 +203,8 @@ namespace Core.Data.LocalStorage
         /// </summary>
         public string ExportProgressAsJson()
         {
+            // Before exporting, ensure all DateTime fields are serialized
+            progressData.PrepareForSerialization();
             return JsonUtility.ToJson(progressData, true);
         }
 
@@ -205,6 +218,7 @@ namespace Core.Data.LocalStorage
                 ProgressData imported = JsonUtility.FromJson<ProgressData>(json);
                 if (imported != null)
                 {
+                    imported.DeserializeAfterLoad();
                     progressData = imported;
                     SaveProgress();
                     return true;
@@ -225,6 +239,7 @@ namespace Core.Data.LocalStorage
         {
             try
             {
+                progressData.PrepareForSerialization();
                 string json = JsonUtility.ToJson(progressData, true);
                 File.WriteAllText(progressFilePath, json);
             }
@@ -252,6 +267,7 @@ namespace Core.Data.LocalStorage
                     }
                     else
                     {
+                        progressData.DeserializeAfterLoad();
                         Debug.Log($"[LocalProgressStorage] Loaded {progressData.AllResults.Count} results");
                     }
                 }
@@ -286,10 +302,10 @@ namespace Core.Data.LocalStorage
             }
         }
 
-        private static float CalculateSessionDurationSeconds(string startTime, string endTime)
+        private static float CalculateSessionDurationSeconds(string startTimeString, string endTimeString)
         {
-            if (DateTime.TryParse(startTime, null, DateTimeStyles.RoundtripKind, out DateTime start)
-                && DateTime.TryParse(endTime, null, DateTimeStyles.RoundtripKind, out DateTime end))
+            if (DateTime.TryParse(startTimeString, null, DateTimeStyles.RoundtripKind, out DateTime start)
+                && DateTime.TryParse(endTimeString, null, DateTimeStyles.RoundtripKind, out DateTime end))
             {
                 return (float)(end - start).TotalSeconds;
             }
@@ -300,6 +316,7 @@ namespace Core.Data.LocalStorage
 
     /// <summary>
     /// Container for all progress data.
+    /// Fixed version - properly handles serialization.
     /// </summary>
     [Serializable]
     public class ProgressData
@@ -310,12 +327,95 @@ namespace Core.Data.LocalStorage
         [SerializeField]
         private string lastUpdated;
 
+        // Fixed: Use serializable list instead of Dictionary
+        [SerializeField]
+        private List<ActivityStatisticsEntry> activityStatistics = new List<ActivityStatisticsEntry>();
+
         public List<ActivityResult> AllResults => allResults;
         public string LastUpdated => lastUpdated;
 
         public ProgressData()
         {
             lastUpdated = DateTime.UtcNow.ToString("o");
+        }
+
+        /// <summary>
+        /// Prepare data for serialization - convert DateTimes to strings.
+        /// </summary>
+        public void PrepareForSerialization()
+        {
+            lastUpdated = DateTime.UtcNow.ToString("o");
+
+            foreach (var result in allResults)
+            {
+                if (result.StartTime != default && string.IsNullOrEmpty(result.StartTimeString))
+                {
+                    result.StartTimeString = result.StartTime.ToString("o");
+                }
+                if (result.EndTime != default && string.IsNullOrEmpty(result.EndTimeString))
+                {
+                    result.EndTimeString = result.EndTime.ToString("o");
+                }
+            }
+
+            // Update activity statistics
+            RebuildActivityStatistics();
+        }
+
+        /// <summary>
+        /// Deserialize DateTime strings back to DateTime objects after loading.
+        /// </summary>
+        public void DeserializeAfterLoad()
+        {
+            foreach (var result in allResults)
+            {
+                if (!string.IsNullOrEmpty(result.StartTimeString))
+                {
+                    DateTime.TryParse(result.StartTimeString, null, DateTimeStyles.RoundtripKind, out result.StartTime);
+                }
+                if (!string.IsNullOrEmpty(result.EndTimeString))
+                {
+                    DateTime.TryParse(result.EndTimeString, null, DateTimeStyles.RoundtripKind, out result.EndTime);
+                }
+            }
+
+            // Rebuild activity statistics from deserialized list
+            RebuildActivityStatistics();
+        }
+
+        private void RebuildActivityStatistics()
+        {
+            activityStatistics.Clear();
+
+            // Group by activity
+            Dictionary<string, List<ActivityResult>> byActivity = new Dictionary<string, List<ActivityResult>>();
+            foreach (var result in allResults)
+            {
+                if (!byActivity.ContainsKey(result.ActivityId))
+                {
+                    byActivity[result.ActivityId] = new List<ActivityResult>();
+                }
+                byActivity[result.ActivityId].Add(result);
+            }
+
+            // Calculate statistics for each activity
+            foreach (var kvp in byActivity)
+            {
+                var stats = CalculateStatistics(kvp.Value);
+                activityStatistics.Add(new ActivityStatisticsEntry
+                {
+                    ActivityId = kvp.Key,
+                    TotalAttempts = stats.TotalAttempts,
+                    SuccessfulAttempts = stats.SuccessfulAttempts,
+                    SuccessRate = stats.SuccessRate,
+                    TotalHintsUsed = stats.TotalHintsUsed,
+                    AverageHintsPerAttempt = stats.AverageHintsPerAttempt,
+                    TotalTimeSpent = stats.TotalTimeSpent,
+                    AverageTimePerAttempt = stats.AverageTimePerAttempt,
+                    BestTime = stats.BestTime,
+                    WorstTime = stats.WorstTime
+                });
+            }
         }
 
         /// <summary>
@@ -379,27 +479,27 @@ namespace Core.Data.LocalStorage
         {
             OverallStatistics overall = new OverallStatistics();
 
-            // Group by activity
-            Dictionary<string, List<ActivityResult>> byActivity = new Dictionary<string, List<ActivityResult>>();
+            DeserializeAfterLoad(); // Ensure statistics are up to date
 
-            foreach (var result in allResults)
+            // Convert list to dictionary for easier access
+            foreach (var entry in activityStatistics)
             {
-                if (!byActivity.ContainsKey(result.ActivityId))
+                var stats = new ActivityStatistics
                 {
-                    byActivity[result.ActivityId] = new List<ActivityResult>();
-                }
-                byActivity[result.ActivityId].Add(result);
+                    TotalAttempts = entry.TotalAttempts,
+                    SuccessfulAttempts = entry.SuccessfulAttempts,
+                    SuccessRate = entry.SuccessRate,
+                    TotalHintsUsed = entry.TotalHintsUsed,
+                    AverageHintsPerAttempt = entry.AverageHintsPerAttempt,
+                    TotalTimeSpent = entry.TotalTimeSpent,
+                    AverageTimePerAttempt = entry.AverageTimePerAttempt,
+                    BestTime = entry.BestTime,
+                    WorstTime = entry.WorstTime
+                };
+                overall.ActivityStatistics[entry.ActivityId] = stats;
             }
 
-            // Calculate per-activity stats
-            foreach (var kvp in byActivity)
-            {
-                var stats = CalculateStatistics(kvp.Value);
-                overall.ActivityStatistics[kvp.Key] = stats;
-            }
-
-            // Calculate overall totals
-            overall.TotalActivitiesCompleted = byActivity.Count;
+            overall.TotalActivitiesCompleted = activityStatistics.Count;
             overall.TotalSessions = GetAllSessionCount();
             overall.TotalResults = allResults.Count;
 
@@ -485,16 +585,42 @@ namespace Core.Data.LocalStorage
     }
 
     /// <summary>
+    /// Fixed version: Serializable entry for activity statistics.
+    /// </summary>
+    [Serializable]
+    public class ActivityStatisticsEntry
+    {
+        public string ActivityId;
+        public int TotalAttempts;
+        public int SuccessfulAttempts;
+        public float SuccessRate;
+        public int TotalHintsUsed;
+        public float AverageHintsPerAttempt;
+        public float TotalTimeSpent;
+        public float AverageTimePerAttempt;
+        public float BestTime;
+        public float WorstTime;
+    }
+
+    /// <summary>
     /// Data for a single learning session.
+    /// Fixed version - uses string for DateTime.
     /// </summary>
     [Serializable]
     public class SessionData
     {
         public string SessionId;
         public string ActivityId;
-        public string StartTime;  // ISO 8601 string
-        public string EndTime;    // ISO 8601 string
-        public float Duration;    // seconds
+        public string StartTimeString;  // ISO 8601 string
+        public string EndTimeString;    // ISO 8601 string
+        public float Duration;          // seconds
+
+        // Runtime properties for convenience
+        [NonSerialized]
+        public DateTime StartTime => DateTime.TryParse(StartTimeString, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : default;
+
+        [NonSerialized]
+        public DateTime EndTime => DateTime.TryParse(EndTimeString, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : default;
 
         [SerializeField]
         private List<ActivityResult> sessionResults = new List<ActivityResult>();
@@ -537,6 +663,7 @@ namespace Core.Data.LocalStorage
 
     /// <summary>
     /// Overall statistics across all activities.
+    /// Fixed version - uses runtime dictionary for access.
     /// </summary>
     [Serializable]
     public class OverallStatistics
@@ -544,9 +671,6 @@ namespace Core.Data.LocalStorage
         public int TotalActivitiesCompleted;
         public int TotalSessions;
         public int TotalResults;
-
-        [SerializeField]
-        private Dictionary<string, string> activityStatisticsJson = new Dictionary<string, string>();
 
         // Runtime access to activity stats
         [NonSerialized]

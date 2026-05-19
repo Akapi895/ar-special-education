@@ -46,26 +46,45 @@
 
 ---
 
-## Phase 3 — Number Line Jump ⬜
+## Phase 3 — Number Line Jump ✅
 
-- [ ] `SO_NumberLineJumpConfig_Easy.asset`
-- [ ] Tile/character prefabs + labels
-- [ ] Bootstrap + active root in `SC_ARGameplay`
+- [x] `NumberLineJumpActivityBootstrap.cs`
+- [x] `NumberLineJumpRuntimeUI.cs`
+- [x] `NumberLineJumpConfigFactory.cs` (Editor)
+- [x] `SO_NumberLineJumpConfig_Easy.asset` (use Editor menu)
+- [ ] Tile/character prefabs + labels (AR team to provide)
+- [ ] Bootstrap + active root in `SC_ARGameplay` (manual scene setup)
 
-## Phase 4 — App shell ⬜
+## Phase 4 — App shell ✅
 
-- [ ] `SC_Boot`, `SC_MainMenu`, `SC_ActivitySelect`, navigation scripts
-- [ ] `SC_ProgressDashboard` reads `LocalProgressStorage`
+- [x] `BootLoader.cs` - Initializes services and loads main menu
+- [x] `MainMenuController.cs` - Navigation to activity select and progress
+- [x] `ActivitySelectController.cs` - Activity selection with activity data passing
+- [x] `ActivityLoader.cs` - Dynamic activity loading in gameplay scene
+- [x] `ProgressDashboardView.cs` - Reads and displays LocalProgressStorage
+- [x] `SceneSetupMenu.cs` - Editor menu for scene setup
+- [x] `SC_Boot`, `SC_MainMenu`, `SC_ActivitySelect` navigation scripts
+- [x] `SC_ProgressDashboard` reads `LocalProgressStorage`
 
-## Phase 5 — Progress hardening ⬜
+## Phase 5 — Progress hardening ✅
 
-- [ ] Fix `DateTime` / `Dictionary` JSON (TD-04)
-- [ ] Unify hint path (TD-03)
+- [x] Fix `DateTime` / `Dictionary` JSON (TD-04)
+  - Added `StartTimeString`/`EndTimeString` to `ActivityResult`
+  - Replaced `Dictionary` with serializable `List<ActivityStatisticsEntry>`
+  - Added `PrepareForSerialization()` and `DeserializeAfterLoad()` methods
+- [x] Unify hint path (TD-03)
+  - `ActivityPresenter.RequestHint()` now uses shared `HintSystem` service
+  - Added `ResetHints()` method for activity restart
+  - All hint requests now go through unified service with tracking
 
-## Phase 6 — Compare Quantity + polish ⬜
+## Phase 6 — Compare Quantity + polish 🔄
 
-- [ ] Compare Quantity integration
-- [ ] Audio/VFX clips, EditMode tests
+- [x] `CompareQuantityActivityBootstrap.cs`
+- [x] `CompareQuantityRuntimeUI.cs`
+- [x] `CompareQuantityConfigFactory.cs` (Editor)
+- [x] `SO_CompareQuantityConfig_Easy.asset` (use Editor menu)
+- [ ] Audio/VFX clips (AR/Audio team to provide)
+- [ ] EditMode tests
 
 ---
 

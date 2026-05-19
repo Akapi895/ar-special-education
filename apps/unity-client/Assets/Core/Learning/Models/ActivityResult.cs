@@ -59,6 +59,52 @@ namespace Core.Learning.Models
         public DateTime EndTime;
 
         /// <summary>
+        /// ISO 8601 string representation of StartTime for JSON serialization.
+        /// JsonUtility doesn't serialize DateTime directly.
+        /// </summary>
+        [SerializeField]
+        private string startTimeString;
+
+        /// <summary>
+        /// ISO 8601 string representation of EndTime for JSON serialization.
+        /// JsonUtility doesn't serialize DateTime directly.
+        /// </summary>
+        [SerializeField]
+        private string endTimeString;
+
+        /// <summary>
+        /// Public access to the serialized start time string.
+        /// </summary>
+        public string StartTimeString
+        {
+            get => startTimeString;
+            set
+            {
+                startTimeString = value;
+                if (DateTime.TryParse(value, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime dt))
+                {
+                    StartTime = dt;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Public access to the serialized end time string.
+        /// </summary>
+        public string EndTimeString
+        {
+            get => endTimeString;
+            set
+            {
+                endTimeString = value;
+                if (DateTime.TryParse(value, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime dt))
+                {
+                    EndTime = dt;
+                }
+            }
+        }
+
+        /// <summary>
         /// The type of error made (if incorrect).
         /// Useful for learning analytics.
         /// </summary>

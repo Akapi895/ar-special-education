@@ -1,6 +1,7 @@
 using Core.Data.LocalStorage;
 using Core.Learning.Models;
 using Core.Support.FeedbackSystem;
+using Core.Support.HintSystem;
 using System;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace Core.Learning.ActivityRunner
     /// <summary>
     /// Base presenter for activities.
     /// Handles all business logic and coordinates between View, AR services, and data.
+    /// Uses unified HintSystem for all hint requests.
     /// </summary>
     public abstract class ActivityPresenter : MonoBehaviour, IActivityRunner, IActivityPresenter
     {
@@ -26,6 +28,9 @@ namespace Core.Learning.ActivityRunner
         protected int currentRound = 0;
         protected int hintsUsedInCurrentRound = 0;
         protected float roundStartTime;
+
+        // Unified hint system - shared across all activities
+        private static HintSystem sharedHintSystem = new HintSystem();
 
         // Events from IActivityRunner
         public event Action<ActivityState> OnStateChanged;
@@ -142,6 +147,7 @@ namespace Core.Learning.ActivityRunner
             currentRound = 0;
             hintsUsedInCurrentRound = 0;
             currentResult = null;
+            ResetHints();
             StartActivity();
         }
 
@@ -229,6 +235,7 @@ namespace Core.Learning.ActivityRunner
 
         /// <summary>
         /// Request a hint for the current question.
+        /// Unified path - uses shared HintSystem service.
         /// </summary>
         public virtual void RequestHint()
         {
@@ -237,35 +244,63 @@ namespace Core.Learning.ActivityRunner
                 return;
             }
 
-            if (hintsUsedInCurrentRound >= config.MaxHintsPerQuestion)
+            // Get available hints from config
+            var hints = config.GetHintsForLevel(currentRound);
+            if (hints == null || hints.Count == 0)
             {
-                Debug.Log($"[ActivityPresenter] Max hints ({config.MaxHintsPerQuestion}) already used.");
+                Debug.LogWarning($"[ActivityPresenter] No hints configured for round {currentRound}");
                 return;
             }
 
-            hintsUsedInCurrentRound++;
-            currentResult.IncrementHintsUsed();
+            // Request hint from unified HintSystem
+            ActivityHint hint = sharedHintSystem.RequestHint(
+                config.ActivityId,
+                currentRound,
+                hints,
+                config.MaxHintsPerQuestion
+            );
 
-            // Get the appropriate hint
-            var hints = config.GetHintsForLevel(currentRound);
-            if (hints != null && hints.Count > 0)
+            if (hint != null)
             {
-                // Return the hint for the current level (or default to first)
-                var hintIndex = Mathf.Min(hintsUsedInCurrentRound - 1, hints.Count - 1);
-                var hint = hints[hintIndex];
+                // Update tracking
+                hintsUsedInCurrentRound = sharedHintSystem.GetHintCount(config.ActivityId, currentRound);
+                currentResult.IncrementHintsUsed();
 
-                // This would be sent to the View - derived classes should handle this
+                // Pass to derived class for View handling
                 OnHintProvided(hint);
+            }
+            else
+            {
+                Debug.Log($"[ActivityPresenter] No more hints available for round {currentRound}");
             }
         }
 
         /// <summary>
         /// Called when a hint is provided.
-        /// Override in derived classes to pass to the View.
+        /// Override in derived classes to pass to the View with proper formatting.
         /// </summary>
         protected virtual void OnHintProvided(ActivityHint hint)
         {
             Debug.Log($"[ActivityPresenter] Hint provided: {hint.HintText}");
+        }
+
+        /// <summary>
+        /// Get the shared hint system instance.
+        /// Available for advanced use cases like contextual hints.
+        /// </summary>
+        protected HintSystem GetHintSystem()
+        {
+            return sharedHintSystem;
+        }
+
+        /// <summary>
+        /// Reset hints for the current activity.
+        /// Called when activity is restarted.
+        /// </summary>
+        protected virtual void ResetHints()
+        {
+            sharedHintSystem.ResetActivityHints(config.ActivityId);
+            hintsUsedInCurrentRound = 0;
         }
 
         /// <summary>
