@@ -28,7 +28,7 @@ namespace Project.App
         [SerializeField]
         private string[] activityIds = new string[] { "QuantityMatch", "NumberLineJump", "CompareQuantity" };
 
-        private ProgressStorageProxy progressStorage;
+        private LocalProgressStorage progressStorage;
 
         private void Start()
         {

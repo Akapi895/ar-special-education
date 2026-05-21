@@ -30,13 +30,28 @@ namespace Core.Data.LocalStorage
         {
             get
             {
-                if (storage == null)
-                {
-                    storage = new LocalProgressStorage();
-                    storage.Initialize();
-                }
+                EnsureStorageInitialized();
                 return storage;
             }
+        }
+
+        /// <summary>
+        /// Initialize the storage service without creating scene lifecycle objects.
+        /// </summary>
+        public static void Initialize()
+        {
+            EnsureStorageInitialized();
+        }
+
+        private static void EnsureStorageInitialized()
+        {
+            if (storage != null)
+            {
+                return;
+            }
+
+            storage = new LocalProgressStorage();
+            storage.Initialize();
         }
 
         private void Awake()
@@ -52,11 +67,7 @@ namespace Core.Data.LocalStorage
             DontDestroyOnLoad(gameObject);
 
             // Initialize storage
-            if (storage == null)
-            {
-                storage = new LocalProgressStorage();
-                storage.Initialize();
-            }
+            EnsureStorageInitialized();
 
             // Clear if requested (for testing)
             if (clearOnStartup)
@@ -125,6 +136,14 @@ namespace Core.Data.LocalStorage
         /// Get statistics for the current activity.
         /// </summary>
         public ActivityStatistics GetStatistics(string activityId)
+        {
+            return Instance.GetActivityStatistics(activityId);
+        }
+
+        /// <summary>
+        /// Get statistics for the current activity.
+        /// </summary>
+        public ActivityStatistics GetActivityStatistics(string activityId)
         {
             return Instance.GetActivityStatistics(activityId);
         }

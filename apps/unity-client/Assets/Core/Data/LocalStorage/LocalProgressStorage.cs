@@ -616,10 +616,8 @@ namespace Core.Data.LocalStorage
         public float Duration;          // seconds
 
         // Runtime properties for convenience
-        [NonSerialized]
         public DateTime StartTime => DateTime.TryParse(StartTimeString, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : default;
 
-        [NonSerialized]
         public DateTime EndTime => DateTime.TryParse(EndTimeString, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt) ? dt : default;
 
         [SerializeField]

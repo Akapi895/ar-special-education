@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using Project.App;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -66,9 +67,8 @@ namespace Project.Editor
             GameObject startButtonObj = CreateUIButton(canvasObj.transform, "StartLearningButton", "Start Learning");
             GameObject progressButtonObj = CreateUIButton(canvasObj.transform, "ViewProgressButton", "View Progress");
 
-            // Assign buttons to controller (will need manual assignment in Inspector)
-            controller.StartLearningButton = startButtonObj.GetComponent<UnityEngine.UI.Button>();
-            controller.ViewProgressButton = progressButtonObj.GetComponent<UnityEngine.UI.Button>();
+            AssignSerializedObjectReference(controller, "startLearningButton", startButtonObj.GetComponent<UnityEngine.UI.Button>());
+            AssignSerializedObjectReference(controller, "viewProgressButton", progressButtonObj.GetComponent<UnityEngine.UI.Button>());
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -106,8 +106,8 @@ namespace Project.Editor
             GameObject cqButtonObj = CreateUIButton(canvasObj.transform, "CompareQuantityButton", "Compare Quantity");
             GameObject backButtonObj = CreateUIButton(canvasObj.transform, "BackButton", "Back");
 
-            // Note: Button-to-activity mapping needs to be done manually in Inspector
-            // This is a limitation of not having serialized references
+            AssignActivityButtons(controller, qmButtonObj, nljButtonObj, cqButtonObj);
+            AssignSerializedObjectReference(controller, "backButton", backButtonObj.GetComponent<UnityEngine.UI.Button>());
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -144,14 +144,61 @@ namespace Project.Editor
             GameObject activityStatsObj = CreateUIText(canvasObj.transform, "ActivityStatsText", "Activity Stats");
             GameObject backButtonObj = CreateUIButton(canvasObj.transform, "BackButton", "Back");
 
-            // Assign references (will need manual adjustment in Inspector)
-            view.OverallStatsText = overallStatsObj.GetComponent<UnityEngine.UI.Text>();
-            view.ActivityStatsText = activityStatsObj.GetComponent<UnityEngine.UI.Text>();
-            view.BackButton = backButtonObj.GetComponent<UnityEngine.UI.Button>();
+            AssignSerializedObjectReference(view, "overallStatsText", overallStatsObj.GetComponent<UnityEngine.UI.Text>());
+            AssignSerializedObjectReference(view, "activityStatsText", activityStatsObj.GetComponent<UnityEngine.UI.Text>());
+            AssignSerializedObjectReference(view, "backButton", backButtonObj.GetComponent<UnityEngine.UI.Button>());
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log("[SceneSetupMenu] Progress Dashboard scene setup complete. Please verify assignments in Inspector.");
+        }
+
+        private static void AssignActivityButtons(ActivitySelectController controller, GameObject quantityMatchButtonObj,
+            GameObject numberLineJumpButtonObj, GameObject compareQuantityButtonObj)
+        {
+            var serializedObject = new SerializedObject(controller);
+            SerializedProperty activitiesProperty = serializedObject.FindProperty("activities");
+
+            if (activitiesProperty == null)
+            {
+                Debug.LogWarning("[SceneSetupMenu] Could not find ActivitySelectController.activities field.");
+                return;
+            }
+
+            activitiesProperty.arraySize = 3;
+            SetActivityButton(activitiesProperty.GetArrayElementAtIndex(0),
+                quantityMatchButtonObj.GetComponent<UnityEngine.UI.Button>(), "QuantityMatch", "QuantityMatch");
+            SetActivityButton(activitiesProperty.GetArrayElementAtIndex(1),
+                numberLineJumpButtonObj.GetComponent<UnityEngine.UI.Button>(), "NumberLineJump", "NumberLineJump");
+            SetActivityButton(activitiesProperty.GetArrayElementAtIndex(2),
+                compareQuantityButtonObj.GetComponent<UnityEngine.UI.Button>(), "CompareQuantity", "CompareQuantity");
+
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(controller);
+        }
+
+        private static void SetActivityButton(SerializedProperty activityProperty, UnityEngine.UI.Button button,
+            string activityId, string sceneName)
+        {
+            activityProperty.FindPropertyRelative("button").objectReferenceValue = button;
+            activityProperty.FindPropertyRelative("activityId").stringValue = activityId;
+            activityProperty.FindPropertyRelative("sceneName").stringValue = sceneName;
+        }
+
+        private static void AssignSerializedObjectReference(Object target, string fieldName, Object reference)
+        {
+            var serializedObject = new SerializedObject(target);
+            SerializedProperty property = serializedObject.FindProperty(fieldName);
+
+            if (property == null)
+            {
+                Debug.LogWarning($"[SceneSetupMenu] Could not find serialized field '{fieldName}' on {target.name}.");
+                return;
+            }
+
+            property.objectReferenceValue = reference;
+            serializedObject.ApplyModifiedProperties();
+            EditorUtility.SetDirty(target);
         }
 
         private static GameObject CreateUIButton(Transform parent, string name, string label)

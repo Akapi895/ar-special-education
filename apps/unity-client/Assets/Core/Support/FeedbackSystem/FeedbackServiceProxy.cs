@@ -26,15 +26,29 @@ namespace Core.Support.FeedbackSystem
         {
             get
             {
-                if (feedbackSystem == null)
-                {
-                    feedbackSystem = new FeedbackSystem();
-                    if (instance != null && instance.feedbackConfig != null)
-                    {
-                        feedbackSystem.Initialize(instance.feedbackConfig);
-                    }
-                }
+                EnsureFeedbackSystemInitialized();
                 return feedbackSystem;
+            }
+        }
+
+        /// <summary>
+        /// Initialize the feedback service without creating scene lifecycle objects.
+        /// </summary>
+        public static void Initialize()
+        {
+            EnsureFeedbackSystemInitialized();
+        }
+
+        private static void EnsureFeedbackSystemInitialized()
+        {
+            if (feedbackSystem == null)
+            {
+                feedbackSystem = new FeedbackSystem();
+            }
+
+            if (instance != null && instance.feedbackConfig != null)
+            {
+                feedbackSystem.Initialize(instance.feedbackConfig);
             }
         }
 
@@ -51,15 +65,7 @@ namespace Core.Support.FeedbackSystem
             DontDestroyOnLoad(gameObject);
 
             // Initialize feedback system
-            if (feedbackSystem == null)
-            {
-                feedbackSystem = new FeedbackSystem();
-            }
-
-            if (feedbackConfig != null)
-            {
-                feedbackSystem.Initialize(feedbackConfig);
-            }
+            EnsureFeedbackSystemInitialized();
 
             // Subscribe to events
             feedbackSystem.OnSoundEffectRequested += HandleSoundRequested;
