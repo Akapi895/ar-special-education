@@ -1,6 +1,7 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Learning.Utils;
+using Features.Activities;
 using Features.Activities.CompareQuantity;
 using System;
 using UnityEngine;
@@ -47,6 +48,7 @@ namespace Features.Activities.CompareQuantity
 
             // Initialize view
             view?.Initialize(this);
+            view?.UpdateButtonLabels(config.MoreButtonLabel, config.FewerButtonLabel, config.EqualButtonLabel);
 
             // Subscribe to view events
             if (view != null)
@@ -124,6 +126,7 @@ namespace Features.Activities.CompareQuantity
             {
                 interactionService.RegisterInteractable(leftGroup, "Left");
             }
+            AddGroupLabel(leftGroup, "Left Group");
 
             // Spawn right group
             rightGroup = ARGroupSpawnUtility.SpawnGroup(
@@ -140,8 +143,35 @@ namespace Features.Activities.CompareQuantity
             {
                 interactionService.RegisterInteractable(rightGroup, "Right");
             }
+            AddGroupLabel(rightGroup, "Right Group");
 
             OnGroupsSpawned?.Invoke();
+        }
+
+        private static void AddGroupLabel(GameObject group, string labelText)
+        {
+            if (group == null)
+            {
+                return;
+            }
+
+            var labelGo = new GameObject("GroupLabel");
+            labelGo.transform.SetParent(group.transform, false);
+            labelGo.transform.localPosition = new Vector3(0f, 0.34f, 0f);
+
+            var label = labelGo.AddComponent<TextMesh>();
+            label.text = labelText;
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.fontSize = 64;
+            label.characterSize = 0.016f;
+            label.color = Color.white;
+
+            Camera camera = Camera.main;
+            if (camera != null)
+            {
+                labelGo.transform.rotation = Quaternion.LookRotation(labelGo.transform.position - camera.transform.position, Vector3.up);
+            }
         }
 
         /// <summary>
@@ -150,9 +180,12 @@ namespace Features.Activities.CompareQuantity
         /// </summary>
         private GameObject GetObjectPrefab()
         {
-            // TODO: Implement prefab loading
-            // For now, return null - AR team will need to provide prefabs
-            Debug.LogWarning("[CompareQuantityPresenter] GetObjectPrefab() not implemented. AR team needs to provide prefabs.");
+            if (ActivityPrefabSetup.Instance != null)
+            {
+                return ActivityPrefabSetup.Instance.GetApplePrefab();
+            }
+
+            Debug.LogWarning("[CompareQuantityPresenter] No object prefab assigned. Add ActivityPrefabSetup for runtime placeholders.");
             return null;
         }
 

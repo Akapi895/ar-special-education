@@ -115,7 +115,8 @@ namespace Features.Activities
             GameObject obj = GameObject.CreatePrimitive(type);
             obj.name = name;
             obj.GetComponent<Renderer>().material.color = color;
-            obj.hideFlags = showInHierarchy ? HideFlags.None : HideFlags.HideInHierarchy;
+            obj.hideFlags = showInHierarchy ? HideFlags.HideInHierarchy : HideFlags.HideAndDontSave;
+            obj.SetActive(false);
             return obj;
         }
 

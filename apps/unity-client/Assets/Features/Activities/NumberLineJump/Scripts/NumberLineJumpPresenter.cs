@@ -164,9 +164,15 @@ namespace Features.Activities.NumberLineJump
                 tile.name = $"NumberTile_{number}";
                 tile.transform.position = position;
                 tile.transform.localScale = new Vector3(0.3f, 0.05f, 0.3f);
+                Renderer renderer = tile.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = number == currentQuestion.StartNumber
+                        ? new Color(0.2f, 0.5f, 0.9f)
+                        : Color.white;
+                }
 
-                // Add text for the number
-                // TODO: AR team to implement proper number display on tiles
+                AddNumberLabel(tile, number);
 
                 numberTiles[i] = tile;
 
@@ -178,6 +184,31 @@ namespace Features.Activities.NumberLineJump
             }
 
             OnNumberLineCreated?.Invoke(min, max);
+        }
+
+        private static void AddNumberLabel(GameObject tile, int number)
+        {
+            var labelGo = new GameObject("NumberLabel");
+            labelGo.transform.SetParent(tile.transform, false);
+            labelGo.transform.localPosition = new Vector3(0f, 0.72f, 0f);
+            labelGo.transform.localScale = new Vector3(
+                1f / tile.transform.localScale.x,
+                1f / tile.transform.localScale.y,
+                1f / tile.transform.localScale.z);
+
+            var label = labelGo.AddComponent<TextMesh>();
+            label.text = number.ToString();
+            label.anchor = TextAnchor.MiddleCenter;
+            label.alignment = TextAlignment.Center;
+            label.fontSize = 64;
+            label.characterSize = 0.018f;
+            label.color = Color.black;
+
+            Camera camera = Camera.main;
+            if (camera != null)
+            {
+                labelGo.transform.rotation = Quaternion.LookRotation(labelGo.transform.position - camera.transform.position, Vector3.up);
+            }
         }
 
         /// <summary>

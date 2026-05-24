@@ -1,8 +1,10 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Features.Activities.NumberLineJump;
+using Project.App;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Features.Activities.NumberLineJump
@@ -69,6 +71,9 @@ namespace Features.Activities.NumberLineJump
         [SerializeField]
         private Button nextRoundButton;
 
+        [SerializeField]
+        private Button progressButton;
+
         // Events from IActivityView
         public event Action OnHintRequested;
         public event Action OnCancelRequested;
@@ -93,6 +98,18 @@ namespace Features.Activities.NumberLineJump
         private int currentMinNumber;
         private int currentMaxNumber;
         private int currentPos;
+        private Transform runtimeUiRoot;
+        private bool activityFinished;
+
+        private static readonly Vector2 RuntimeButtonSize = new Vector2(150f, 56f);
+        private const float RuntimeButtonGap = 16f;
+        private const float RuntimeActionButtonBottomY = 52f;
+        private const float RuntimeJumpButtonBottomY = 124f;
+        private const float RuntimeHintPanelBottomY = 194f;
+        private const float RuntimeEquationPanelBottomY = 262f;
+        private const float RuntimeFeedbackPanelBottomY = 334f;
+
+        public bool HasUiReferences => startNumberText != null;
 
         private void Awake()
         {
@@ -110,6 +127,11 @@ namespace Features.Activities.NumberLineJump
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(false);
+            }
+
+            if (progressButton != null)
+            {
+                progressButton.gameObject.SetActive(false);
             }
 
             // Setup button listeners
@@ -140,13 +162,59 @@ namespace Features.Activities.NumberLineJump
 
             if (cancelButton != null)
             {
-                cancelButton.onClick.AddListener(() => OnCancelRequested?.Invoke());
+                cancelButton.onClick.AddListener(OnCancelClicked);
             }
 
             if (nextRoundButton != null)
             {
                 nextRoundButton.onClick.AddListener(OnNextRoundClicked);
             }
+
+            if (progressButton != null)
+            {
+                progressButton.onClick.AddListener(OnProgressClicked);
+            }
+        }
+
+        /// <summary>
+        /// Builds minimal UI at runtime when prefabs are not assigned.
+        /// </summary>
+        public void BuildRuntimeUi(Canvas canvas)
+        {
+            var panel = CreateUiPanel(canvas.transform, "NumberLineJumpPanel");
+            runtimeUiRoot = panel;
+
+            progressText = CreateTopText(panel, "Progress", "", 24, 24f, new Vector2(620f, 40f));
+            targetNumberText = CreateTopText(panel, "TargetNumber", "Jump to the target number", 34, 68f, new Vector2(820f, 58f));
+            startNumberText = CreateTopText(panel, "StartNumber", "", 22, 124f, new Vector2(360f, 38f));
+            startNumberText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-205f, -124f);
+            currentPositionText = CreateTopText(panel, "CurrentPosition", "", 22, 124f, new Vector2(360f, 38f));
+            currentPositionText.GetComponent<RectTransform>().anchoredPosition = new Vector2(205f, -124f);
+
+            feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0f, RuntimeFeedbackPanelBottomY), new Vector2(760f, 72f));
+            feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 22);
+            feedbackPanel.SetActive(false);
+
+            equationPanel = CreateSubPanel(panel, "EquationPanel", new Vector2(0f, RuntimeEquationPanelBottomY), new Vector2(560f, 54f));
+            equationText = CreatePanelText(equationPanel.transform, "EquationText", "", 24);
+
+            hintPanel = CreateSubPanel(panel, "HintPanel", new Vector2(0f, RuntimeHintPanelBottomY), new Vector2(760f, 64f));
+            hintText = CreatePanelText(hintPanel.transform, "HintText", "", 20);
+            hintPanel.SetActive(false);
+
+            float jumpStartX = -((RuntimeButtonSize.x + RuntimeButtonGap) * 1.5f);
+            leftJumpButton = CreateButton(panel, "LeftJumpButton", "Left", new Vector2(jumpStartX, RuntimeJumpButtonBottomY), () => OnJumpRequested?.Invoke(JumpStepDirection.Left));
+            rightJumpButton = CreateButton(panel, "RightJumpButton", "Right", new Vector2(jumpStartX + RuntimeButtonSize.x + RuntimeButtonGap, RuntimeJumpButtonBottomY), () => OnJumpRequested?.Invoke(JumpStepDirection.Right));
+            confirmButton = CreateButton(panel, "ConfirmButton", "Confirm", new Vector2(jumpStartX + (RuntimeButtonSize.x + RuntimeButtonGap) * 2f, RuntimeJumpButtonBottomY), () => OnConfirmRequested?.Invoke());
+            resetButton = CreateButton(panel, "ResetButton", "Reset", new Vector2(jumpStartX + (RuntimeButtonSize.x + RuntimeButtonGap) * 3f, RuntimeJumpButtonBottomY), () => OnResetRequested?.Invoke());
+
+            float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
+            hintButton = CreateButton(panel, "HintButton", "Hint", new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke());
+            cancelButton = CreateButton(panel, "CancelButton", "Cancel", new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnCancelClicked);
+            nextRoundButton = CreateButton(panel, "NextButton", "Next", new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), OnNextRoundClicked);
+            progressButton = CreateButton(panel, "ProgressButton", "Progress", new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked);
+            nextRoundButton.gameObject.SetActive(false);
+            progressButton.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -182,6 +250,7 @@ namespace Features.Activities.NumberLineJump
             currentMinNumber = minNumber;
             currentMaxNumber = maxNumber;
             currentPos = startNumber;
+            activityFinished = false;
 
             // Update displays
             if (startNumberText != null)
@@ -191,7 +260,7 @@ namespace Features.Activities.NumberLineJump
 
             if (targetNumberText != null)
             {
-                targetNumberText.text = $"Target: {targetNumber}";
+                targetNumberText.text = $"Jump from {startNumber} to {targetNumber}";
             }
 
             UpdateCurrentPosition(startNumber);
@@ -212,8 +281,17 @@ namespace Features.Activities.NumberLineJump
             // Enable hint button
             if (hintButton != null)
             {
+                hintButton.gameObject.SetActive(true);
                 hintButton.interactable = true;
             }
+
+            if (cancelButton != null)
+            {
+                cancelButton.gameObject.SetActive(true);
+            }
+
+            SetJumpControlsActive(true);
+            SetNavigationButtonsActive(false);
 
             // Update button states
             UpdateJumpButtonsState(allowedDirection, startNumber, minNumber, maxNumber);
@@ -383,10 +461,19 @@ namespace Features.Activities.NumberLineJump
                            $"Time: {result.TimeSpentSeconds:F1} seconds";
 
             ShowFeedback(message, Color.green);
+            activityFinished = true;
+            DisableInput();
+            SetJumpControlsActive(false);
+            SetRunningActionButtonsActive(false);
 
             if (nextRoundButton != null)
             {
-                nextRoundButton.gameObject.SetActive(true);
+                nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("NumberLineJump", out _));
+            }
+
+            if (progressButton != null)
+            {
+                progressButton.gameObject.SetActive(true);
             }
         }
 
@@ -400,10 +487,19 @@ namespace Features.Activities.NumberLineJump
                                $"Hints Used: {result.HintsUsedCount}";
 
             ShowFeedback(fullMessage, Color.red);
+            activityFinished = true;
+            DisableInput();
+            SetJumpControlsActive(false);
+            SetRunningActionButtonsActive(false);
 
             if (nextRoundButton != null)
             {
-                nextRoundButton.gameObject.SetActive(true);
+                nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("NumberLineJump", out _));
+            }
+
+            if (progressButton != null)
+            {
+                progressButton.gameObject.SetActive(true);
             }
         }
 
@@ -576,10 +672,31 @@ namespace Features.Activities.NumberLineJump
         {
             Debug.Log("[NumberLineJumpView] Next round / Finish clicked");
 
+            if (activityFinished || presenter?.GetState() == ActivityState.Completed || presenter?.GetState() == ActivityState.Failed)
+            {
+                if (!ActivityFlowNavigator.LoadNextActivity("NumberLineJump"))
+                {
+                    ActivityFlowNavigator.LoadProgressDashboard();
+                }
+                return;
+            }
+
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(false);
             }
+        }
+
+        private void OnProgressClicked()
+        {
+            Debug.Log("[NumberLineJumpView] Progress clicked");
+            ActivityFlowNavigator.LoadProgressDashboard();
+        }
+
+        private void OnCancelClicked()
+        {
+            OnCancelRequested?.Invoke();
+            LoadSceneIfAvailable("SC_ActivitySelect");
         }
 
         /// <summary>
@@ -588,6 +705,157 @@ namespace Features.Activities.NumberLineJump
         public void NotifyTileTapped(int tileNumber)
         {
             OnTileTapped?.Invoke(tileNumber);
+        }
+
+        private void SetJumpControlsActive(bool active)
+        {
+            if (leftJumpButton != null) leftJumpButton.gameObject.SetActive(active);
+            if (rightJumpButton != null) rightJumpButton.gameObject.SetActive(active);
+            if (confirmButton != null) confirmButton.gameObject.SetActive(active);
+            if (resetButton != null) resetButton.gameObject.SetActive(active);
+        }
+
+        private void SetRunningActionButtonsActive(bool active)
+        {
+            if (hintButton != null) hintButton.gameObject.SetActive(active);
+            if (cancelButton != null) cancelButton.gameObject.SetActive(active);
+        }
+
+        private void SetNavigationButtonsActive(bool active)
+        {
+            if (nextRoundButton != null) nextRoundButton.gameObject.SetActive(active);
+            if (progressButton != null) progressButton.gameObject.SetActive(active);
+        }
+
+        private static RectTransform CreateUiPanel(Transform parent, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            return rect;
+        }
+
+        private static Text CreateTopText(Transform parent, string name, string content, int fontSize, float topOffset, Vector2 size)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = new Vector2(0f, -topOffset);
+
+            var text = go.GetComponent<Text>();
+            text.text = content;
+            text.fontSize = fontSize;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = Color.white;
+            text.raycastTarget = false;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            return text;
+        }
+
+        private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = anchoredPosition;
+
+            var image = go.GetComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 0.55f);
+            image.raycastTarget = false;
+            return go;
+        }
+
+        private static Text CreatePanelText(Transform parent, string name, string content, int fontSize)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = new Vector2(16f, 6f);
+            rect.offsetMax = new Vector2(-16f, -6f);
+
+            var text = go.GetComponent<Text>();
+            text.text = content;
+            text.fontSize = fontSize;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 14;
+            text.resizeTextMaxSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = Color.white;
+            text.raycastTarget = false;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            return text;
+        }
+
+        private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.sizeDelta = RuntimeButtonSize;
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = new Color(0.2f, 0.5f, 0.9f, 1f);
+
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(onClick);
+
+            CreateButtonLabel(go.transform, label);
+            return button;
+        }
+
+        private static void CreateButtonLabel(Transform parent, string label)
+        {
+            var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = new Vector2(8f, 4f);
+            rect.offsetMax = new Vector2(-8f, -4f);
+
+            var text = go.GetComponent<Text>();
+            text.text = label;
+            text.fontSize = 22;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 14;
+            text.resizeTextMaxSize = 22;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = Color.white;
+            text.raycastTarget = false;
+        }
+
+        private static void LoadSceneIfAvailable(string sceneName)
+        {
+            if (Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                SceneManager.LoadScene(sceneName);
+            }
+            else
+            {
+                Debug.LogWarning($"[NumberLineJumpView] Scene '{sceneName}' is not available in Build Settings.");
+            }
         }
     }
 }

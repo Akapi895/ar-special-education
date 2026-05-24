@@ -33,6 +33,10 @@ namespace Project.App
         [SerializeField]
         private string gameplaySceneName = "SC_ARGameplay";
 
+        [Header("Playable Activities")]
+        [SerializeField]
+        private string[] playableActivityIds = new string[] { "QuantityMatch", "NumberLineJump", "CompareQuantity" };
+
         private void Start()
         {
             // Setup activity button listeners
@@ -74,9 +78,20 @@ namespace Project.App
 
         private bool IsActivityUnlocked(string activityId)
         {
-            // For MVP, all activities are unlocked
-            // In future, check progress or other criteria
-            return true;
+            if (string.IsNullOrEmpty(activityId))
+            {
+                return false;
+            }
+
+            foreach (string playableActivityId in playableActivityIds)
+            {
+                if (activityId == playableActivityId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void OnActivitySelected(ActivityButton activity)

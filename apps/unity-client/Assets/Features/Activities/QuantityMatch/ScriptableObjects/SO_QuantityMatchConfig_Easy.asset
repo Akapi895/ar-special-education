@@ -38,20 +38,20 @@ MonoBehaviour:
   incorrectFeedback: Not quite. Let's try again!
   failedFeedback: Good effort! Let's try another one.
   hintLevel1:
-    HintId: 
-    HintText: 
-    Level: 0
+    HintId: qm_hint1
+    HintText: Look carefully at the groups.
+    Level: 1
     ARHint: 
   hintLevel2:
-    HintId: 
-    HintText: 
-    Level: 0
+    HintId: qm_hint2
+    HintText: The number shown is X, count each group.
+    Level: 2
     ARHint: 
   hintLevel3:
-    HintId: 
-    HintText: 
-    Level: 0
+    HintId: qm_hint3
+    HintText: One group has exactly X objects.
+    Level: 3
     ARHint: 
   defaultObjectSpacing: 0.3
-  defaultGroupSpacing: 1.5
+  defaultGroupSpacing: 0.92
   groupArrangement: 0

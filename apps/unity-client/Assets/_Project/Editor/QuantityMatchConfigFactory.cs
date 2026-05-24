@@ -17,7 +17,14 @@ namespace Project.Editor
     {
       EnsureFolder("Assets/Features/Activities/QuantityMatch/ScriptableObjects");
 
-      var config = ScriptableObject.CreateInstance<QuantityMatchConfig>();
+      var config = AssetDatabase.LoadAssetAtPath<QuantityMatchConfig>(AssetPath);
+      bool created = false;
+      if (config == null)
+      {
+        config = ScriptableObject.CreateInstance<QuantityMatchConfig>();
+        created = true;
+      }
+
       var so = new SerializedObject(config);
 
       so.FindProperty("activityId").stringValue = "QuantityMatch";
@@ -26,6 +33,9 @@ namespace Project.Editor
       so.FindProperty("numberOfRounds").intValue = 2;
       so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
       so.FindProperty("maxHintsPerQuestion").intValue = 3;
+      so.FindProperty("defaultObjectSpacing").floatValue = 0.3f;
+      so.FindProperty("defaultGroupSpacing").floatValue = 0.92f;
+      so.FindProperty("groupArrangement").enumValueIndex = (int)GroupArrangementPattern.Horizontal;
 
       var questionsProp = so.FindProperty("questions");
       questionsProp.arraySize = 2;
@@ -35,11 +45,23 @@ namespace Project.Editor
       SetQuestion(questionsProp.GetArrayElementAtIndex(1), target: 5, groups: 3,
         counts: new[] { 4, 5, 6 }, correctIndex: 1);
 
+      SetHint(so.FindProperty("hintLevel1"), "qm_hint1", "Look carefully at the groups.", 1);
+      SetHint(so.FindProperty("hintLevel2"), "qm_hint2", "The number shown is X, count each group.", 2);
+      SetHint(so.FindProperty("hintLevel3"), "qm_hint3", "One group has exactly X objects.", 3);
+
       so.ApplyModifiedPropertiesWithoutUndo();
 
-      AssetDatabase.CreateAsset(config, AssetPath);
+      if (created)
+      {
+        AssetDatabase.CreateAsset(config, AssetPath);
+      }
+      else
+      {
+        EditorUtility.SetDirty(config);
+      }
+
       AssetDatabase.SaveAssets();
-      Debug.Log($"[QuantityMatchConfigFactory] Created {AssetPath}");
+      Debug.Log($"[QuantityMatchConfigFactory] Saved {AssetPath}");
     }
 
     private static void SetQuestion(SerializedProperty questionProp, int target, int groups,
@@ -55,6 +77,13 @@ namespace Project.Editor
       {
         countsProp.GetArrayElementAtIndex(i).intValue = counts[i];
       }
+    }
+
+    private static void SetHint(SerializedProperty hintProp, string hintId, string hintText, int level)
+    {
+      hintProp.FindPropertyRelative("HintId").stringValue = hintId;
+      hintProp.FindPropertyRelative("HintText").stringValue = hintText;
+      hintProp.FindPropertyRelative("Level").intValue = level;
     }
 
     private static void EnsureFolder(string path)

@@ -16,7 +16,14 @@ namespace Project.Editor
         {
             EnsureFolder("Assets/Features/Activities/CompareQuantity/ScriptableObjects");
 
-            var config = ScriptableObject.CreateInstance<CompareQuantityConfig>();
+            var config = AssetDatabase.LoadAssetAtPath<CompareQuantityConfig>(AssetPath);
+            bool created = false;
+            if (config == null)
+            {
+                config = ScriptableObject.CreateInstance<CompareQuantityConfig>();
+                created = true;
+            }
+
             var so = new SerializedObject(config);
 
             so.FindProperty("activityId").stringValue = "CompareQuantity";
@@ -27,36 +34,14 @@ namespace Project.Editor
             so.FindProperty("maxHintsPerQuestion").intValue = 3;
 
             // Set up standard hints
-            var hint1Prop = so.FindProperty("hintLevel1");
-            hint1Prop.FindPropertyRelative("hintId").stringValue = "cq_hint1";
-            hint1Prop.FindPropertyRelative("hintText").stringValue = "Count each group carefully.";
-            hint1Prop.FindPropertyRelative("level").intValue = 1;
-
-            var hint2Prop = so.FindProperty("hintLevel2");
-            hint2Prop.FindPropertyRelative("hintId").stringValue = "cq_hint2";
-            hint2Prop.FindPropertyRelative("hintText").stringValue = "The left group has X. Now count the right group.";
-            hint2Prop.FindPropertyRelative("level").intValue = 2;
-
-            var hint3Prop = so.FindProperty("hintLevel3");
-            hint3Prop.FindPropertyRelative("hintId").stringValue = "cq_hint3";
-            hint3Prop.FindPropertyRelative("hintText").stringValue = "Compare X and Y — which is bigger?";
-            hint3Prop.FindPropertyRelative("level").intValue = 3;
+            SetHint(so.FindProperty("hintLevel1"), "cq_hint1", "Count each group carefully.", 1);
+            SetHint(so.FindProperty("hintLevel2"), "cq_hint2", "The left group has X. Now count the right group.", 2);
+            SetHint(so.FindProperty("hintLevel3"), "cq_hint3", "Compare X and Y - which is bigger?", 3);
 
             // Set up equality-specific hints
-            var eqHint1Prop = so.FindProperty("equalityHintLevel1");
-            eqHint1Prop.FindPropertyRelative("hintId").stringValue = "cq_eq_hint1";
-            eqHint1Prop.FindPropertyRelative("hintText").stringValue = "Count both groups — are they the same?";
-            eqHint1Prop.FindPropertyRelative("level").intValue = 1;
-
-            var eqHint2Prop = so.FindProperty("equalityHintLevel2");
-            eqHint2Prop.FindPropertyRelative("hintId").stringValue = "cq_eq_hint2";
-            eqHint2Prop.FindPropertyRelative("hintText").stringValue = "The left group has X. The right group also has X.";
-            eqHint2Prop.FindPropertyRelative("level").intValue = 2;
-
-            var eqHint3Prop = so.FindProperty("equalityHintLevel3");
-            eqHint3Prop.FindPropertyRelative("hintId").stringValue = "cq_eq_hint3";
-            eqHint3Prop.FindPropertyRelative("hintText").stringValue = "X and X are the same number — they're EQUAL!";
-            eqHint3Prop.FindPropertyRelative("level").intValue = 3;
+            SetHint(so.FindProperty("equalityHintLevel1"), "cq_eq_hint1", "Count both groups - are they the same?", 1);
+            SetHint(so.FindProperty("equalityHintLevel2"), "cq_eq_hint2", "The left group has X. The right group also has X.", 2);
+            SetHint(so.FindProperty("equalityHintLevel3"), "cq_eq_hint3", "X and X are the same number - they're EQUAL!", 3);
 
             var questionsProp = so.FindProperty("questions");
             questionsProp.arraySize = 3;
@@ -81,16 +66,31 @@ namespace Project.Editor
 
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            AssetDatabase.CreateAsset(config, AssetPath);
+            if (created)
+            {
+                AssetDatabase.CreateAsset(config, AssetPath);
+            }
+            else
+            {
+                EditorUtility.SetDirty(config);
+            }
+
             AssetDatabase.SaveAssets();
-            Debug.Log($"[CompareQuantityConfigFactory] Created {AssetPath}");
+            Debug.Log($"[CompareQuantityConfigFactory] Saved {AssetPath}");
         }
 
         private static void SetQuestion(SerializedProperty questionProp, int leftCount, int rightCount, int correctAnswer)
         {
-            questionProp.FindPropertyRelative("leftGroupCount").intValue = leftCount;
-            questionProp.FindPropertyRelative("rightGroupCount").intValue = rightCount;
-            questionProp.FindPropertyRelative("correctAnswer").intValue = correctAnswer;
+            questionProp.FindPropertyRelative("LeftGroupCount").intValue = leftCount;
+            questionProp.FindPropertyRelative("RightGroupCount").intValue = rightCount;
+            questionProp.FindPropertyRelative("CorrectAnswer").intValue = correctAnswer;
+        }
+
+        private static void SetHint(SerializedProperty hintProp, string hintId, string hintText, int level)
+        {
+            hintProp.FindPropertyRelative("HintId").stringValue = hintId;
+            hintProp.FindPropertyRelative("HintText").stringValue = hintText;
+            hintProp.FindPropertyRelative("Level").intValue = level;
         }
 
         private static void EnsureFolder(string path)

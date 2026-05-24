@@ -1,5 +1,6 @@
 using Core.Data.LocalStorage;
 using Core.Support.FeedbackSystem;
+using Project.App;
 using UnityEngine;
 
 namespace Project.Runtime
@@ -22,6 +23,11 @@ namespace Project.Runtime
             {
                 var feedbackGo = new GameObject("FeedbackServiceProxy");
                 feedbackGo.AddComponent<FeedbackServiceProxy>();
+            }
+
+            if (FindAnyObjectByType<GameplayActivityRouter>() == null)
+            {
+                gameObject.AddComponent<GameplayActivityRouter>();
             }
 
             ProgressStorageProxy.Instance.StartSession();

@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c46a79b2e4da534f865a2f1558d961c, type: 3}
+  m_Name: SO_CompareQuantityConfig_Easy
+  m_EditorClassIdentifier: 
+  activityId: CompareQuantity
+  displayName: Compare Quantity (Easy)
+  description: Compare two groups of objects to find which has more, fewer, or if
+    they are equal.
+  difficultyLevel: 1
+  maxHintsPerQuestion: 3
+  maxAttemptsPerQuestion: 3
+  timeLimitSeconds: 0
+  numberOfRounds: 3
+  defaultHints: []
+  questions:
+  - LeftGroupCount: 3
+    RightGroupCount: 5
+    CorrectAnswer: 1
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 6
+    RightGroupCount: 4
+    CorrectAnswer: 0
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 4
+    RightGroupCount: 4
+    CorrectAnswer: 2
+    CustomHints: []
+    ObjectPrefabName: 
+  moreButtonLabel: More
+  fewerButtonLabel: Fewer
+  equalButtonLabel: Equal
+  correctMoreFeedback: Yes! The left group has MORE!
+  correctFewerFeedback: Yes! The left group has FEWER!
+  correctEqualFeedback: Yes! Both groups are EQUAL!
+  incorrectMoreFeedback: Not more. Look again!
+  incorrectFewerFeedback: Not fewer. Try counting again!
+  incorrectEqualFeedback: Not equal. Count each group carefully!
+  genericIncorrectFeedback: Not quite. Let's try again!
+  failedFeedback: Good effort! Let's try another one.
+  hintLevel1:
+    HintId: cq_hint1
+    HintText: Count each group carefully.
+    Level: 1
+    ARHint: 
+  hintLevel2:
+    HintId: cq_hint2
+    HintText: The left group has X. Now count the right group.
+    Level: 2
+    ARHint: 
+  hintLevel3:
+    HintId: cq_hint3
+    HintText: Compare X and Y - which is bigger?
+    Level: 3
+    ARHint: 
+  equalityHintLevel1:
+    HintId: cq_eq_hint1
+    HintText: Count both groups - are they the same?
+    Level: 1
+    ARHint: 
+  equalityHintLevel2:
+    HintId: cq_eq_hint2
+    HintText: The left group has X. The right group also has X.
+    Level: 2
+    ARHint: 
+  equalityHintLevel3:
+    HintId: cq_eq_hint3
+    HintText: X and X are the same number - they're EQUAL!
+    Level: 3
+    ARHint: 
+  groupSpacing: 1.5

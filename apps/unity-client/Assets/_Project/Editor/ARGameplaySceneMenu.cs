@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Reflection;
 using Core.AR;
 using Core.AR.ARSession;
 using Core.AR.Interaction;
@@ -63,14 +64,43 @@ namespace Project.Editor
       var bootstrap = activityRoot.AddComponent<QuantityMatchActivityBootstrap>();
 
       var bootstrapSo = new SerializedObject(bootstrap);
-      bootstrapSo.FindProperty("presenter").objectReferenceValue = presenter;
-      bootstrapSo.FindProperty("view").objectReferenceValue = view;
-      bootstrapSo.FindProperty("config").objectReferenceValue = config;
-      bootstrapSo.ApplyModifiedPropertiesWithoutUndo();
+      AssignObjectReference(bootstrapSo, "presenter", presenter);
+      AssignObjectReference(bootstrapSo, "view", view);
+      AssignObjectReference(bootstrapSo, "config", config);
+      bootstrapSo.ApplyModifiedProperties();
+      SetPrivateField(bootstrap, "presenter", presenter);
+      SetPrivateField(bootstrap, "view", view);
+      SetPrivateField(bootstrap, "config", config);
+      EditorUtility.SetDirty(bootstrap);
 
+      EditorSceneManager.MarkSceneDirty(scene);
       EditorSceneManager.SaveScene(scene, GameplayScenePath);
       ARTestSandboxMenu.AddSceneToBuildSettingsIfMissing(GameplayScenePath);
       Debug.Log($"[ARGameplaySceneMenu] Saved {GameplayScenePath}");
+    }
+
+    private static void AssignObjectReference(SerializedObject serializedObject, string fieldName, Object reference)
+    {
+      SerializedProperty property = serializedObject.FindProperty(fieldName);
+      if (property == null)
+      {
+        Debug.LogError($"[ARGameplaySceneMenu] Could not find serialized field '{fieldName}'.");
+        return;
+      }
+
+      property.objectReferenceValue = reference;
+    }
+
+    private static void SetPrivateField(object target, string fieldName, object value)
+    {
+      FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+      if (field == null)
+      {
+        Debug.LogError($"[ARGameplaySceneMenu] Could not find field '{fieldName}'.");
+        return;
+      }
+
+      field.SetValue(target, value);
     }
 
     private static void EnsureSingleAudioListener(GameObject preferredRoot)

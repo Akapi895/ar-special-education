@@ -16,7 +16,14 @@ namespace Project.Editor
         {
             EnsureFolder("Assets/Features/Activities/NumberLineJump/ScriptableObjects");
 
-            var config = ScriptableObject.CreateInstance<NumberLineJumpConfig>();
+            var config = AssetDatabase.LoadAssetAtPath<NumberLineJumpConfig>(AssetPath);
+            bool created = false;
+            if (config == null)
+            {
+                config = ScriptableObject.CreateInstance<NumberLineJumpConfig>();
+                created = true;
+            }
+
             var so = new SerializedObject(config);
 
             so.FindProperty("activityId").stringValue = "NumberLineJump";
@@ -25,22 +32,12 @@ namespace Project.Editor
             so.FindProperty("numberOfRounds").intValue = 3;
             so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
             so.FindProperty("maxHintsPerQuestion").intValue = 3;
+            so.FindProperty("tileSpacing").floatValue = 0.32f;
 
             // Set up default hints
-            var hint1Prop = so.FindProperty("hintLevel1");
-            hint1Prop.FindPropertyRelative("hintId").stringValue = "nlj_hint1";
-            hint1Prop.FindPropertyRelative("hintText").stringValue = "Move the character and count your steps.";
-            hint1Prop.FindPropertyRelative("level").intValue = 1;
-
-            var hint2Prop = so.FindProperty("hintLevel2");
-            hint2Prop.FindPropertyRelative("hintId").stringValue = "nlj_hint2";
-            hint2Prop.FindPropertyRelative("hintText").stringValue = "You started at X. You need to reach Y. How many steps is that?";
-            hint2Prop.FindPropertyRelative("level").intValue = 2;
-
-            var hint3Prop = so.FindProperty("hintLevel3");
-            hint3Prop.FindPropertyRelative("hintId").stringValue = "nlj_hint3";
-            hint3Prop.FindPropertyRelative("hintText").stringValue = "Try jumping [direction] [N] times from where you are.";
-            hint3Prop.FindPropertyRelative("level").intValue = 3;
+            SetHint(so.FindProperty("hintLevel1"), "nlj_hint1", "Move the character and count your steps.", 1);
+            SetHint(so.FindProperty("hintLevel2"), "nlj_hint2", "You started at X. You need to reach Y. How many steps is that?", 2);
+            SetHint(so.FindProperty("hintLevel3"), "nlj_hint3", "Try jumping [direction] [N] times from where you are.", 3);
 
             var questionsProp = so.FindProperty("questions");
             questionsProp.arraySize = 3;
@@ -74,9 +71,17 @@ namespace Project.Editor
 
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            AssetDatabase.CreateAsset(config, AssetPath);
+            if (created)
+            {
+                AssetDatabase.CreateAsset(config, AssetPath);
+            }
+            else
+            {
+                EditorUtility.SetDirty(config);
+            }
+
             AssetDatabase.SaveAssets();
-            Debug.Log($"[NumberLineJumpConfigFactory] Created {AssetPath}");
+            Debug.Log($"[NumberLineJumpConfigFactory] Saved {AssetPath}");
         }
 
         private static void SetQuestion(SerializedProperty questionProp, int startNumber, int targetNumber,
@@ -89,6 +94,13 @@ namespace Project.Editor
             questionProp.FindPropertyRelative("jumpDirection").intValue = jumpDirection;
             questionProp.FindPropertyRelative("maxJumpsAllowed").intValue = maxJumps;
             questionProp.FindPropertyRelative("showEquationDuringJumps").boolValue = true;
+        }
+
+        private static void SetHint(SerializedProperty hintProp, string hintId, string hintText, int level)
+        {
+            hintProp.FindPropertyRelative("HintId").stringValue = hintId;
+            hintProp.FindPropertyRelative("HintText").stringValue = hintText;
+            hintProp.FindPropertyRelative("Level").intValue = level;
         }
 
         private static void EnsureFolder(string path)

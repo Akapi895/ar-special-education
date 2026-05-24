@@ -32,12 +32,11 @@ namespace Project.Editor
             ARTestSandboxMenu.SetupTestSandboxScene();
             ARGameplaySceneMenu.SetupARGameplayScene();
 
-            foreach (string scenePath in ShellScenePaths)
-            {
-                CreateShellScene(scenePath);
-            }
-
-            SetProductBuildSettings();
+            SceneSetupMenu.SetupBootScene();
+            SceneSetupMenu.SetupMainMenuScene();
+            SceneSetupMenu.SetupActivitySelectScene();
+            SceneSetupMenu.SetupProgressDashboardScene();
+            SceneSetupMenu.SetupProductBuildSettings();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 

@@ -12,7 +12,7 @@ namespace Core.AR.Placement
     public class ARPlacementServiceMock : MonoBehaviour, IARPlacementService
     {
         [SerializeField]
-        private Vector3 mockPlacementPosition = new Vector3(0f, 0f, 1.5f);
+        private Vector3 mockPlacementPosition = new Vector3(0f, 0.28f, 2.35f);
 
         [SerializeField]
         private bool alwaysAvailable = true;
@@ -55,6 +55,7 @@ namespace Core.AR.Placement
             }
 
             GameObject instance = Instantiate(prefab, position, rotation, parent);
+            instance.SetActive(true);
             TrackSpawned(instance);
             return instance;
         }

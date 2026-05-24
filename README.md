@@ -304,4 +304,6 @@ Assets/Features/Activities/Ordering/
 - Issue tracker: GitHub Issues
 - Chi tiết contributing: `docs/CONTRIBUTING.md`
 - Unity Editor: 6000.0.71f1
-- AR Framework: AR Foundation + XR Interaction Toolkit
+
+
+- AR Framework: AR Foundation + XR Interaction Toolkit: & 'C:\Program Files\Unity\Hub\Editor\6000.0.71f1\Editor\Unity.exe' -projectPath 'C:\uet-ar\apps\unity-client'

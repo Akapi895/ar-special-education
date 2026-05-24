@@ -86,6 +86,7 @@ namespace Core.AR.Placement
             }
 
             GameObject instance = Instantiate(prefab, position, rotation, parent);
+            instance.SetActive(true);
             TrackSpawned(instance);
             return instance;
         }

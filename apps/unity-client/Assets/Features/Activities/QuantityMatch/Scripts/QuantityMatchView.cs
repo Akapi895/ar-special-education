@@ -1,8 +1,10 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Features.Activities.QuantityMatch;
+using Project.App;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Features.Activities.QuantityMatch
@@ -41,6 +43,13 @@ namespace Features.Activities.QuantityMatch
         [SerializeField]
         private Button nextRoundButton;
 
+        [SerializeField]
+        private Button progressButton;
+
+        [Header("Navigation")]
+        [SerializeField]
+        private string activitySelectSceneName = "SC_ActivitySelect";
+
         [Header("Group Selection UI")]
         [SerializeField]
         private GameObject[] groupSelectionButtons;  // Optional: buttons for each group
@@ -66,6 +75,15 @@ namespace Features.Activities.QuantityMatch
         private int currentNumberOfGroups;
 
         private Button[] runtimeGroupButtons;
+        private Transform runtimeUiRoot;
+        private bool activityFinished;
+
+        private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
+        private const float RuntimeButtonGap = 28f;
+        private const float RuntimeActionButtonBottomY = 52f;
+        private const float RuntimeGroupButtonBottomY = 128f;
+        private const float RuntimeHintPanelBottomY = 202f;
+        private const float RuntimeFeedbackPanelBottomY = 280f;
 
         public bool HasUiReferences => targetNumberText != null;
 
@@ -87,6 +105,11 @@ namespace Features.Activities.QuantityMatch
                 nextRoundButton.gameObject.SetActive(false);
             }
 
+            if (progressButton != null)
+            {
+                progressButton.gameObject.SetActive(false);
+            }
+
             // Setup button listeners
             if (hintButton != null)
             {
@@ -95,12 +118,17 @@ namespace Features.Activities.QuantityMatch
 
             if (cancelButton != null)
             {
-                cancelButton.onClick.AddListener(() => OnCancelRequested?.Invoke());
+                cancelButton.onClick.AddListener(OnCancelClicked);
             }
 
             if (nextRoundButton != null)
             {
                 nextRoundButton.onClick.AddListener(OnNextRoundClicked);
+            }
+
+            if (progressButton != null)
+            {
+                progressButton.onClick.AddListener(OnProgressClicked);
             }
         }
 
@@ -110,22 +138,26 @@ namespace Features.Activities.QuantityMatch
         public void BuildRuntimeUi(Canvas canvas)
         {
             var panel = CreateUiPanel(canvas.transform, "QuantityMatchPanel");
+            runtimeUiRoot = panel;
 
-            targetNumberText = CreateText(panel, "TargetNumber", "?", 72, new Vector2(0, 200));
-            progressText = CreateText(panel, "Progress", "", 28, new Vector2(0, 140));
+            targetNumberText = CreateTopText(panel, "TargetNumber", "Choose the matching group", 36, 28f, new Vector2(920f, 72f));
+            progressText = CreateTopText(panel, "Progress", "", 24, 98f, new Vector2(720f, 42f));
 
-            feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0, -40));
-            feedbackText = CreateText(feedbackPanel.transform, "FeedbackText", "", 32, Vector2.zero);
+            feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0, RuntimeFeedbackPanelBottomY), true);
+            feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 26);
             feedbackPanel.SetActive(false);
 
-            hintPanel = CreateSubPanel(panel, "HintPanel", new Vector2(0, -120));
-            hintText = CreateText(hintPanel.transform, "HintText", "", 26, Vector2.zero);
+            hintPanel = CreateSubPanel(panel, "HintPanel", new Vector2(0, RuntimeHintPanelBottomY), true);
+            hintText = CreatePanelText(hintPanel.transform, "HintText", "", 22);
             hintPanel.SetActive(false);
 
-            hintButton = CreateButton(panel, "HintButton", "Hint", new Vector2(-120, -220), () => OnHintRequested?.Invoke());
-            cancelButton = CreateButton(panel, "CancelButton", "Cancel", new Vector2(120, -220), () => OnCancelRequested?.Invoke());
-            nextRoundButton = CreateButton(panel, "NextButton", "Next", new Vector2(0, -280), OnNextRoundClicked);
+            float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
+            hintButton = CreateButton(panel, "HintButton", "Hint", new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke());
+            cancelButton = CreateButton(panel, "CancelButton", "Cancel", new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnCancelClicked);
+            nextRoundButton = CreateButton(panel, "NextButton", "Next", new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), OnNextRoundClicked);
+            progressButton = CreateButton(panel, "ProgressButton", "Progress", new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked);
             nextRoundButton.gameObject.SetActive(false);
+            progressButton.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -159,17 +191,35 @@ namespace Features.Activities.QuantityMatch
         {
             currentTargetNumber = targetNumber;
             currentNumberOfGroups = numberOfGroups;
+            activityFinished = false;
 
             UpdateTargetNumber(targetNumber);
             HideFeedback();
             HideHint();
             EnsureRuntimeGroupButtons(numberOfGroups);
+            SetRuntimeGroupButtonsActive(true);
 
-            // Enable hint button
+            if (nextRoundButton != null)
+            {
+                nextRoundButton.gameObject.SetActive(false);
+            }
+
+            if (progressButton != null)
+            {
+                progressButton.gameObject.SetActive(false);
+            }
+
             if (hintButton != null)
             {
-                hintButton.interactable = true;
+                hintButton.gameObject.SetActive(true);
             }
+
+            if (cancelButton != null)
+            {
+                cancelButton.gameObject.SetActive(true);
+            }
+
+            EnableInput();
         }
 
         /// <summary>
@@ -179,7 +229,7 @@ namespace Features.Activities.QuantityMatch
         {
             if (targetNumberText != null)
             {
-                targetNumberText.text = targetNumber.ToString();
+                targetNumberText.text = $"Choose the group with exactly {targetNumber} balls";
             }
         }
 
@@ -260,19 +310,23 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         public void ShowActivityComplete(ActivityResult result)
         {
-            string message = $"Activity Complete!\n" +
-                           $"Correct: {result.IsCorrect}\n" +
-                           $"Attempts: {result.TotalAttempts}\n" +
-                           $"Hints Used: {result.HintsUsedCount}\n" +
-                           $"Time: {result.TimeSpentSeconds:F1} seconds";
+            activityFinished = true;
+            DisableInput();
+            SetRuntimeGroupButtonsInteractable(false);
+            SetRuntimeGroupButtonsActive(false);
+            SetRunningActionButtonsActive(false);
+            ShowFeedback("Activity complete! Progress saved.", Color.green);
 
-            ShowFeedback(message, Color.green);
-
-            // Show next button or complete button
             if (nextRoundButton != null)
             {
-                nextRoundButton.gameObject.SetActive(true);
-                // TODO: Change to "Finish" or return to menu
+                SetButtonLabel(nextRoundButton, "Next");
+                nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("QuantityMatch", out _));
+            }
+
+            if (progressButton != null)
+            {
+                SetButtonLabel(progressButton, "Progress");
+                progressButton.gameObject.SetActive(true);
             }
         }
 
@@ -281,15 +335,23 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         public void ShowActivityFailed(string message, ActivityResult result)
         {
-            string fullMessage = $"{message}\n" +
-                               $"Attempts: {result.TotalAttempts}\n" +
-                               $"Hints Used: {result.HintsUsedCount}";
-
-            ShowFeedback(fullMessage, Color.red);
+            activityFinished = true;
+            DisableInput();
+            SetRuntimeGroupButtonsInteractable(false);
+            SetRuntimeGroupButtonsActive(false);
+            SetRunningActionButtonsActive(false);
+            ShowFeedback(message, Color.red);
 
             if (nextRoundButton != null)
             {
-                nextRoundButton.gameObject.SetActive(true);
+                SetButtonLabel(nextRoundButton, "Next");
+                nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("QuantityMatch", out _));
+            }
+
+            if (progressButton != null)
+            {
+                SetButtonLabel(progressButton, "Progress");
+                progressButton.gameObject.SetActive(true);
             }
         }
 
@@ -329,8 +391,7 @@ namespace Features.Activities.QuantityMatch
                 hintButton.interactable = true;
             }
 
-            // Enable group interaction via AR service
-            // TODO: Notify AR interaction service
+            SetRuntimeGroupButtonsInteractable(true);
         }
 
         /// <summary>
@@ -344,8 +405,7 @@ namespace Features.Activities.QuantityMatch
                 hintButton.interactable = false;
             }
 
-            // Disable group interaction via AR service
-            // TODO: Notify AR interaction service
+            SetRuntimeGroupButtonsInteractable(false);
         }
 
         /// <summary>
@@ -377,14 +437,33 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         private void OnNextRoundClicked()
         {
-            // This is called when activity is complete
-            // TODO: Return to menu or load next activity
             Debug.Log("[QuantityMatchView] Next round / Finish clicked");
+
+            if (activityFinished || presenter?.GetState() == ActivityState.Completed || presenter?.GetState() == ActivityState.Failed)
+            {
+                if (!ActivityFlowNavigator.LoadNextActivity("QuantityMatch"))
+                {
+                    ActivityFlowNavigator.LoadProgressDashboard();
+                }
+                return;
+            }
 
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(false);
             }
+        }
+
+        private void OnProgressClicked()
+        {
+            Debug.Log("[QuantityMatchView] Progress clicked");
+            ActivityFlowNavigator.LoadProgressDashboard();
+        }
+
+        private void OnCancelClicked()
+        {
+            OnCancelRequested?.Invoke();
+            LoadSceneIfAvailable(activitySelectSceneName);
         }
 
         /// <summary>
@@ -420,23 +499,70 @@ namespace Features.Activities.QuantityMatch
                 {
                     if (button != null)
                     {
+                        button.gameObject.SetActive(false);
                         Destroy(button.gameObject);
                     }
                 }
             }
 
             runtimeGroupButtons = new Button[numberOfGroups];
-            float startX = -(numberOfGroups - 1) * 80f * 0.5f;
+            float buttonSpacing = RuntimeButtonSize.x + RuntimeButtonGap;
+            float startX = -(numberOfGroups - 1) * buttonSpacing * 0.5f;
 
             for (int i = 0; i < numberOfGroups; i++)
             {
                 int groupIndex = i;
                 runtimeGroupButtons[i] = CreateButton(
-                    transform,
+                    runtimeUiRoot != null ? runtimeUiRoot : transform,
                     $"GroupButton_{i}",
                     $"Group {i + 1}",
-                    new Vector2(startX + i * 80f, -180f),
+                    new Vector2(startX + i * buttonSpacing, RuntimeGroupButtonBottomY),
                     () => OnGroupButtonClicked(groupIndex));
+            }
+        }
+
+        private void SetRuntimeGroupButtonsActive(bool active)
+        {
+            if (runtimeGroupButtons == null)
+            {
+                return;
+            }
+
+            foreach (Button button in runtimeGroupButtons)
+            {
+                if (button != null)
+                {
+                    button.gameObject.SetActive(active);
+                }
+            }
+        }
+
+        private void SetRuntimeGroupButtonsInteractable(bool interactable)
+        {
+            if (runtimeGroupButtons == null)
+            {
+                return;
+            }
+
+            foreach (Button button in runtimeGroupButtons)
+            {
+                if (button != null)
+                {
+                    button.interactable = interactable;
+                }
+            }
+        }
+
+        private void SetRunningActionButtonsActive(bool active)
+        {
+            if (hintButton != null)
+            {
+                hintButton.gameObject.SetActive(active);
+            }
+
+            if (cancelButton != null)
+            {
+                cancelButton.gameObject.SetActive(active);
             }
         }
 
@@ -452,14 +578,22 @@ namespace Features.Activities.QuantityMatch
             return rect;
         }
 
-        private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition)
+        private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition, bool anchorToBottom = false)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
             var rect = go.GetComponent<RectTransform>();
             rect.SetParent(parent, false);
-            rect.sizeDelta = new Vector2(600, 80);
+            if (anchorToBottom)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0f);
+                rect.anchorMax = new Vector2(0.5f, 0f);
+            }
+
+            rect.sizeDelta = new Vector2(720, 64);
             rect.anchoredPosition = anchoredPosition;
-            go.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.5f);
+            var image = go.GetComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 0.5f);
+            image.raycastTarget = false;
             return go;
         }
 
@@ -477,6 +611,49 @@ namespace Features.Activities.QuantityMatch
             text.alignment = TextAnchor.MiddleCenter;
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.color = Color.white;
+            text.raycastTarget = false;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 18;
+            text.resizeTextMaxSize = fontSize;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            return text;
+        }
+
+        private static Text CreateTopText(Transform parent, string name, string content, int fontSize, float topOffset, Vector2 size)
+        {
+            Text text = CreateText(parent, name, content, fontSize, Vector2.zero);
+            var rect = text.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = new Vector2(0f, -topOffset);
+            return text;
+        }
+
+        private static Text CreatePanelText(Transform parent, string name, string content, int fontSize)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = new Vector2(18f, 6f);
+            rect.offsetMax = new Vector2(-18f, -6f);
+
+            var text = go.GetComponent<Text>();
+            text.text = content;
+            text.fontSize = fontSize;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = Color.white;
+            text.raycastTarget = false;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
             return text;
         }
 
@@ -485,15 +662,70 @@ namespace Features.Activities.QuantityMatch
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             var rect = go.GetComponent<RectTransform>();
             rect.SetParent(parent, false);
-            rect.sizeDelta = new Vector2(140, 48);
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.sizeDelta = RuntimeButtonSize;
             rect.anchoredPosition = anchoredPosition;
             go.GetComponent<Image>().color = new Color(0.2f, 0.5f, 0.9f, 1f);
 
             var button = go.GetComponent<Button>();
             button.onClick.AddListener(onClick);
 
-            CreateText(go.transform, "Label", label, 22, Vector2.zero);
+            CreateButtonLabel(go.transform, label);
             return button;
+        }
+
+        private static Text CreateButtonLabel(Transform parent, string label)
+        {
+            var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = new Vector2(8f, 4f);
+            rect.offsetMax = new Vector2(-8f, -4f);
+
+            var text = go.GetComponent<Text>();
+            text.text = label;
+            text.fontSize = 24;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 16;
+            text.resizeTextMaxSize = 24;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = Color.white;
+            text.raycastTarget = false;
+            return text;
+        }
+
+        private static void SetButtonLabel(Button button, string label)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            Text text = button.GetComponentInChildren<Text>();
+            if (text != null)
+            {
+                text.text = label;
+            }
+        }
+
+        private static void LoadSceneIfAvailable(string sceneName)
+        {
+            if (string.IsNullOrEmpty(sceneName))
+            {
+                return;
+            }
+
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                Debug.LogWarning($"[QuantityMatchView] Scene '{sceneName}' is not available in Build Settings.");
+                return;
+            }
+
+            SceneManager.LoadScene(sceneName);
         }
     }
 }

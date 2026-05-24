@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Core.Learning.ActivityRunner;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
 using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
@@ -31,6 +32,7 @@ namespace Core.AR.Interaction
         private GameObject highlightedObject;
         private GameObject selectedObject;
         private GameObject draggingObject;
+        private readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
 
         public event Action<GameObject> OnObjectTapped;
         public event Action<GameObject> OnObjectSelected;
@@ -198,6 +200,11 @@ namespace Core.AR.Interaction
 
         private void ProcessPointerDown(Vector2 screenPosition)
         {
+            if (IsPointerOverUi(screenPosition))
+            {
+                return;
+            }
+
             if (interactionCamera == null)
             {
                 return;
@@ -219,6 +226,22 @@ namespace Core.AR.Interaction
             Select(root);
             OnObjectTapped?.Invoke(root);
             draggingObject = root;
+        }
+
+        private bool IsPointerOverUi(Vector2 screenPosition)
+        {
+            if (EventSystem.current == null)
+            {
+                return false;
+            }
+
+            uiRaycastResults.Clear();
+            var pointerData = new PointerEventData(EventSystem.current)
+            {
+                position = screenPosition
+            };
+            EventSystem.current.RaycastAll(pointerData, uiRaycastResults);
+            return uiRaycastResults.Count > 0;
         }
 
         private void ProcessDrag(Vector2 screenPosition)

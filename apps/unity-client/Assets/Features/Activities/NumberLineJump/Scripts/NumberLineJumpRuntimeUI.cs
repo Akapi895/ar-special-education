@@ -1,6 +1,7 @@
-using Core.AR;
-using Core.Learning.ActivityRunner;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.UI;
 
 namespace Features.Activities.NumberLineJump
 {
@@ -25,9 +26,40 @@ namespace Features.Activities.NumberLineJump
 
         private void CreateRuntimeUI()
         {
-            // This would create UI elements programmatically
-            // For now, it's a placeholder for the UI team to implement
-            Debug.Log("[NumberLineJumpRuntimeUI] Runtime UI creation not yet implemented. Please assign UI prefabs in the scene.");
+            if (view == null || view.HasUiReferences)
+            {
+                return;
+            }
+
+            view.BuildRuntimeUi(CreateCanvas());
+        }
+
+        private static Canvas CreateCanvas()
+        {
+            var go = new GameObject("NumberLineJumpRuntimeCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var canvas = go.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 20;
+
+            var scaler = go.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            EnsureEventSystem();
+            return canvas;
+        }
+
+        private static void EnsureEventSystem()
+        {
+            if (EventSystem.current != null)
+            {
+                return;
+            }
+
+            var eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            EventSystem.current = eventSystem.GetComponent<EventSystem>();
         }
     }
 }
