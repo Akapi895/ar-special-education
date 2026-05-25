@@ -20,7 +20,7 @@ MonoBehaviour:
   maxHintsPerQuestion: 3
   maxAttemptsPerQuestion: 3
   timeLimitSeconds: 0
-  numberOfRounds: 3
+  numberOfRounds: 10
   defaultHints: []
   questions:
   - LeftGroupCount: 3
@@ -36,6 +36,41 @@ MonoBehaviour:
   - LeftGroupCount: 4
     RightGroupCount: 4
     CorrectAnswer: 2
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 2
+    RightGroupCount: 7
+    CorrectAnswer: 1
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 8
+    RightGroupCount: 3
+    CorrectAnswer: 0
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 5
+    RightGroupCount: 5
+    CorrectAnswer: 2
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 9
+    RightGroupCount: 6
+    CorrectAnswer: 0
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 4
+    RightGroupCount: 8
+    CorrectAnswer: 1
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 7
+    RightGroupCount: 7
+    CorrectAnswer: 2
+    CustomHints: []
+    ObjectPrefabName: 
+  - LeftGroupCount: 10
+    RightGroupCount: 6
+    CorrectAnswer: 0
     CustomHints: []
     ObjectPrefabName: 
   moreButtonLabel: More
@@ -79,4 +114,4 @@ MonoBehaviour:
     HintText: X and X are the same number - they're EQUAL!
     Level: 3
     ARHint: 
-  groupSpacing: 1.5
+  groupSpacing: 2.3

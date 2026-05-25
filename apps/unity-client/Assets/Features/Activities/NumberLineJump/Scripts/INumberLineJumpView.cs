@@ -34,7 +34,8 @@ namespace Features.Activities.NumberLineJump
         /// <summary>
         /// Show the question with all relevant data.
         /// </summary>
-        void ShowQuestion(int startNumber, int targetNumber, int minNumber, int maxNumber, JumpDirection allowedDirection);
+        void ShowQuestion(int startNumber, int targetNumber, int minNumber, int maxNumber,
+            JumpDirection allowedDirection, bool useEquationPromptMode = false, string equationPrompt = null);
 
         /// <summary>
         /// Update the equation display.

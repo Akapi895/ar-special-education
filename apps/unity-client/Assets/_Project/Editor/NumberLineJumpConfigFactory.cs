@@ -29,7 +29,7 @@ namespace Project.Editor
             so.FindProperty("activityId").stringValue = "NumberLineJump";
             so.FindProperty("displayName").stringValue = "Number Line Jump (Easy)";
             so.FindProperty("description").stringValue = "Jump along the number line to reach the target number.";
-            so.FindProperty("numberOfRounds").intValue = 3;
+            so.FindProperty("numberOfRounds").intValue = 10;
             so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
             so.FindProperty("maxHintsPerQuestion").intValue = 3;
             so.FindProperty("tileSpacing").floatValue = 0.32f;
@@ -40,7 +40,7 @@ namespace Project.Editor
             SetHint(so.FindProperty("hintLevel3"), "nlj_hint3", "Try jumping [direction] [N] times from where you are.", 3);
 
             var questionsProp = so.FindProperty("questions");
-            questionsProp.arraySize = 3;
+            questionsProp.arraySize = 10;
 
             // Question 1: Start at 3, target at 5 (2 jumps right)
             SetQuestion(questionsProp.GetArrayElementAtIndex(0),
@@ -64,6 +64,62 @@ namespace Project.Editor
             SetQuestion(questionsProp.GetArrayElementAtIndex(2),
                 startNumber: 2,
                 targetNumber: 8,
+                numberLineMin: 0,
+                numberLineMax: 10,
+                jumpDirection: (int)JumpDirection.RightOnly,
+                maxJumps: 10);
+
+            SetQuestion(questionsProp.GetArrayElementAtIndex(3),
+                startNumber: 9,
+                targetNumber: 6,
+                numberLineMin: 0,
+                numberLineMax: 10,
+                jumpDirection: (int)JumpDirection.LeftOnly,
+                maxJumps: 10);
+
+            SetQuestion(questionsProp.GetArrayElementAtIndex(4),
+                startNumber: 1,
+                targetNumber: 4,
+                numberLineMin: 0,
+                numberLineMax: 10,
+                jumpDirection: (int)JumpDirection.RightOnly,
+                maxJumps: 10);
+
+            SetQuestion(questionsProp.GetArrayElementAtIndex(5),
+                startNumber: 2,
+                targetNumber: 6,
+                numberLineMin: 0,
+                numberLineMax: 10,
+                jumpDirection: (int)JumpDirection.RightOnly,
+                maxJumps: 10);
+
+            SetQuestion(questionsProp.GetArrayElementAtIndex(6),
+                startNumber: 8,
+                targetNumber: 3,
+                numberLineMin: 0,
+                numberLineMax: 10,
+                jumpDirection: (int)JumpDirection.LeftOnly,
+                maxJumps: 10);
+
+            SetQuestion(questionsProp.GetArrayElementAtIndex(7),
+                startNumber: 1,
+                targetNumber: 9,
+                numberLineMin: 0,
+                numberLineMax: 10,
+                jumpDirection: (int)JumpDirection.RightOnly,
+                maxJumps: 10);
+
+            SetQuestion(questionsProp.GetArrayElementAtIndex(8),
+                startNumber: 10,
+                targetNumber: 4,
+                numberLineMin: 0,
+                numberLineMax: 10,
+                jumpDirection: (int)JumpDirection.LeftOnly,
+                maxJumps: 10);
+
+            SetQuestion(questionsProp.GetArrayElementAtIndex(9),
+                startNumber: 0,
+                targetNumber: 7,
                 numberLineMin: 0,
                 numberLineMax: 10,
                 jumpDirection: (int)JumpDirection.RightOnly,

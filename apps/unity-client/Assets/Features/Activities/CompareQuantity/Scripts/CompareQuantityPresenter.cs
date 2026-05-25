@@ -126,6 +126,7 @@ namespace Features.Activities.CompareQuantity
             {
                 interactionService.RegisterInteractable(leftGroup, "Left");
             }
+            ActivityPrefabSetup.Instance?.PrepareLearningObjectGroup(leftGroup);
             AddGroupLabel(leftGroup, "Left Group");
 
             // Spawn right group
@@ -143,6 +144,7 @@ namespace Features.Activities.CompareQuantity
             {
                 interactionService.RegisterInteractable(rightGroup, "Right");
             }
+            ActivityPrefabSetup.Instance?.PrepareLearningObjectGroup(rightGroup);
             AddGroupLabel(rightGroup, "Right Group");
 
             OnGroupsSpawned?.Invoke();
@@ -182,7 +184,7 @@ namespace Features.Activities.CompareQuantity
         {
             if (ActivityPrefabSetup.Instance != null)
             {
-                return ActivityPrefabSetup.Instance.GetApplePrefab();
+                return ActivityPrefabSetup.Instance.GetLearningObjectPrefab();
             }
 
             Debug.LogWarning("[CompareQuantityPresenter] No object prefab assigned. Add ActivityPrefabSetup for runtime placeholders.");

@@ -98,13 +98,18 @@ namespace Features.Activities.NumberLineJump
         private int currentMinNumber;
         private int currentMaxNumber;
         private int currentPos;
+        private bool currentUsesEquationPromptMode;
+        private string currentEquationPrompt;
         private Transform runtimeUiRoot;
         private bool activityFinished;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(150f, 56f);
+        private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(104f, 180f);
         private const float RuntimeButtonGap = 16f;
         private const float RuntimeActionButtonBottomY = 52f;
         private const float RuntimeJumpButtonBottomY = 124f;
+        private const float RuntimeEdgeJumpButtonX = 18f;
+        private const float RuntimeEdgeJumpButtonY = -18f;
         private const float RuntimeHintPanelBottomY = 194f;
         private const float RuntimeEquationPanelBottomY = 262f;
         private const float RuntimeFeedbackPanelBottomY = 334f;
@@ -138,11 +143,13 @@ namespace Features.Activities.NumberLineJump
             if (leftJumpButton != null)
             {
                 leftJumpButton.onClick.AddListener(() => OnJumpRequested?.Invoke(JumpStepDirection.Left));
+                SetButtonLabel(leftJumpButton, "<");
             }
 
             if (rightJumpButton != null)
             {
                 rightJumpButton.onClick.AddListener(() => OnJumpRequested?.Invoke(JumpStepDirection.Right));
+                SetButtonLabel(rightJumpButton, ">");
             }
 
             if (confirmButton != null)
@@ -202,11 +209,12 @@ namespace Features.Activities.NumberLineJump
             hintText = CreatePanelText(hintPanel.transform, "HintText", "", 20);
             hintPanel.SetActive(false);
 
-            float jumpStartX = -((RuntimeButtonSize.x + RuntimeButtonGap) * 1.5f);
-            leftJumpButton = CreateButton(panel, "LeftJumpButton", "Left", new Vector2(jumpStartX, RuntimeJumpButtonBottomY), () => OnJumpRequested?.Invoke(JumpStepDirection.Left));
-            rightJumpButton = CreateButton(panel, "RightJumpButton", "Right", new Vector2(jumpStartX + RuntimeButtonSize.x + RuntimeButtonGap, RuntimeJumpButtonBottomY), () => OnJumpRequested?.Invoke(JumpStepDirection.Right));
-            confirmButton = CreateButton(panel, "ConfirmButton", "Confirm", new Vector2(jumpStartX + (RuntimeButtonSize.x + RuntimeButtonGap) * 2f, RuntimeJumpButtonBottomY), () => OnConfirmRequested?.Invoke());
-            resetButton = CreateButton(panel, "ResetButton", "Reset", new Vector2(jumpStartX + (RuntimeButtonSize.x + RuntimeButtonGap) * 3f, RuntimeJumpButtonBottomY), () => OnResetRequested?.Invoke());
+            leftJumpButton = CreateEdgeJumpButton(panel, "LeftJumpButton", "<", true, () => OnJumpRequested?.Invoke(JumpStepDirection.Left));
+            rightJumpButton = CreateEdgeJumpButton(panel, "RightJumpButton", ">", false, () => OnJumpRequested?.Invoke(JumpStepDirection.Right));
+
+            float jumpActionOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
+            confirmButton = CreateButton(panel, "ConfirmButton", "Confirm", new Vector2(-jumpActionOffset, RuntimeJumpButtonBottomY), () => OnConfirmRequested?.Invoke());
+            resetButton = CreateButton(panel, "ResetButton", "Reset", new Vector2(jumpActionOffset, RuntimeJumpButtonBottomY), () => OnResetRequested?.Invoke());
 
             float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
             hintButton = CreateButton(panel, "HintButton", "Hint", new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke());
@@ -244,23 +252,28 @@ namespace Features.Activities.NumberLineJump
         /// <summary>
         /// Show the question with all relevant data.
         /// </summary>
-        public void ShowQuestion(int startNumber, int targetNumber, int minNumber, int maxNumber, JumpDirection allowedDirection)
+        public void ShowQuestion(int startNumber, int targetNumber, int minNumber, int maxNumber,
+            JumpDirection allowedDirection, bool useEquationPromptMode = false, string equationPrompt = null)
         {
             currentAllowedDirection = allowedDirection;
             currentMinNumber = minNumber;
             currentMaxNumber = maxNumber;
             currentPos = startNumber;
+            currentUsesEquationPromptMode = useEquationPromptMode;
+            currentEquationPrompt = equationPrompt;
             activityFinished = false;
 
             // Update displays
             if (startNumberText != null)
             {
-                startNumberText.text = $"Start: {startNumber}";
+                startNumberText.text = currentUsesEquationPromptMode ? $"Start on {startNumber}" : $"Start: {startNumber}";
             }
 
             if (targetNumberText != null)
             {
-                targetNumberText.text = $"Jump from {startNumber} to {targetNumber}";
+                targetNumberText.text = currentUsesEquationPromptMode
+                    ? currentEquationPrompt
+                    : $"Jump from {startNumber} to {targetNumber}";
             }
 
             UpdateCurrentPosition(startNumber);
@@ -273,6 +286,11 @@ namespace Features.Activities.NumberLineJump
             if (equationPanel != null)
             {
                 equationPanel.SetActive(true);
+            }
+
+            if (currentUsesEquationPromptMode && equationText != null)
+            {
+                equationText.text = currentEquationPrompt;
             }
 
             // Enable input
@@ -291,6 +309,7 @@ namespace Features.Activities.NumberLineJump
             }
 
             SetJumpControlsActive(true);
+            LayoutEdgeJumpButtons();
             SetNavigationButtonsActive(false);
 
             // Update button states
@@ -351,6 +370,14 @@ namespace Features.Activities.NumberLineJump
             string fullMessage = string.IsNullOrEmpty(finalEquation) ? message : $"{message}\n{finalEquation}";
             ShowFeedback(fullMessage, Color.green);
             DisableInput();
+            SetJumpControlsActive(false);
+            SetRunningActionButtonsActive(false);
+
+            if (nextRoundButton != null)
+            {
+                SetButtonLabel(nextRoundButton, GetNextButtonLabel("NumberLineJump"));
+                nextRoundButton.gameObject.SetActive(true);
+            }
         }
 
         /// <summary>
@@ -468,6 +495,7 @@ namespace Features.Activities.NumberLineJump
 
             if (nextRoundButton != null)
             {
+                SetButtonLabel(nextRoundButton, GetNextButtonLabel("NumberLineJump"));
                 nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("NumberLineJump", out _));
             }
 
@@ -494,6 +522,7 @@ namespace Features.Activities.NumberLineJump
 
             if (nextRoundButton != null)
             {
+                SetButtonLabel(nextRoundButton, GetNextButtonLabel("NumberLineJump"));
                 nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("NumberLineJump", out _));
             }
 
@@ -552,16 +581,14 @@ namespace Features.Activities.NumberLineJump
         {
             if (leftJumpButton != null)
             {
-                bool canGoLeft = allowedDirection == JumpDirection.LeftOnly || allowedDirection == JumpDirection.Both;
                 bool notAtMin = currentPosition > minNumber;
-                leftJumpButton.interactable = canGoLeft && notAtMin;
+                leftJumpButton.interactable = notAtMin;
             }
 
             if (rightJumpButton != null)
             {
-                bool canGoRight = allowedDirection == JumpDirection.RightOnly || allowedDirection == JumpDirection.Both;
                 bool notAtMax = currentPosition < maxNumber;
-                rightJumpButton.interactable = canGoRight && notAtMax;
+                rightJumpButton.interactable = notAtMax;
             }
 
             // Enable confirm if not at start position
@@ -672,7 +699,7 @@ namespace Features.Activities.NumberLineJump
         {
             Debug.Log("[NumberLineJumpView] Next round / Finish clicked");
 
-            if (activityFinished || presenter?.GetState() == ActivityState.Completed || presenter?.GetState() == ActivityState.Failed)
+            if (activityFinished || presenter?.GetState() == ActivityState.Failed)
             {
                 if (!ActivityFlowNavigator.LoadNextActivity("NumberLineJump"))
                 {
@@ -684,6 +711,17 @@ namespace Features.Activities.NumberLineJump
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(false);
+            }
+
+            if (presenter?.GetState() == ActivityState.Completed)
+            {
+                bool hasMoreRounds = presenter.HasMoreRounds();
+                presenter.ContinueToNextRound();
+
+                if (!hasMoreRounds && !ActivityFlowNavigator.LoadNextActivity("NumberLineJump"))
+                {
+                    ActivityFlowNavigator.LoadProgressDashboard();
+                }
             }
         }
 
@@ -725,6 +763,40 @@ namespace Features.Activities.NumberLineJump
         {
             if (nextRoundButton != null) nextRoundButton.gameObject.SetActive(active);
             if (progressButton != null) progressButton.gameObject.SetActive(active);
+        }
+
+        private void LayoutEdgeJumpButtons()
+        {
+            LayoutEdgeJumpButton(leftJumpButton, true);
+            LayoutEdgeJumpButton(rightJumpButton, false);
+        }
+
+        private static void LayoutEdgeJumpButton(Button button, bool isLeft)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            RectTransform rect = button.GetComponent<RectTransform>();
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchorMin = new Vector2(isLeft ? 0f : 1f, 0.5f);
+            rect.anchorMax = rect.anchorMin;
+            rect.pivot = new Vector2(isLeft ? 0f : 1f, 0.5f);
+            rect.sizeDelta = RuntimeEdgeJumpButtonSize;
+            rect.anchoredPosition = new Vector2(isLeft ? RuntimeEdgeJumpButtonX : -RuntimeEdgeJumpButtonX, RuntimeEdgeJumpButtonY);
+
+            SetButtonLabel(button, isLeft ? "<" : ">");
+            Text label = button.GetComponentInChildren<Text>();
+            if (label != null)
+            {
+                label.fontSize = 58;
+                label.resizeTextMaxSize = 58;
+            }
         }
 
         private static RectTransform CreateUiPanel(Transform parent, string name)
@@ -824,7 +896,28 @@ namespace Features.Activities.NumberLineJump
             return button;
         }
 
-        private static void CreateButtonLabel(Transform parent, string label)
+        private static Button CreateEdgeJumpButton(Transform parent, string name, string label, bool isLeft, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(isLeft ? 0f : 1f, 0.5f);
+            rect.anchorMax = rect.anchorMin;
+            rect.pivot = new Vector2(isLeft ? 0f : 1f, 0.5f);
+            rect.sizeDelta = RuntimeEdgeJumpButtonSize;
+            rect.anchoredPosition = new Vector2(isLeft ? RuntimeEdgeJumpButtonX : -RuntimeEdgeJumpButtonX, RuntimeEdgeJumpButtonY);
+            go.GetComponent<Image>().color = new Color(0.08f, 0.32f, 0.72f, 0.88f);
+
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(onClick);
+
+            Text text = CreateButtonLabel(go.transform, label);
+            text.fontSize = 58;
+            text.resizeTextMaxSize = 58;
+            return button;
+        }
+
+        private static Text CreateButtonLabel(Transform parent, string label)
         {
             var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
             var rect = go.GetComponent<RectTransform>();
@@ -844,6 +937,31 @@ namespace Features.Activities.NumberLineJump
             text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.color = Color.white;
             text.raycastTarget = false;
+            return text;
+        }
+
+        private static void SetButtonLabel(Button button, string label)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            Text text = button.GetComponentInChildren<Text>();
+            if (text != null)
+            {
+                text.text = label;
+            }
+        }
+
+        private string GetNextButtonLabel(string activityId)
+        {
+            if (presenter != null && presenter.HasMoreRounds())
+            {
+                return "Next";
+            }
+
+            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Next Activity" : "Finish";
         }
 
         private static void LoadSceneIfAvailable(string sceneName)

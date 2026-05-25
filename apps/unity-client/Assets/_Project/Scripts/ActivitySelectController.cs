@@ -116,13 +116,69 @@ namespace Project.App
     /// </summary>
     public static class SelectedActivityData
     {
-        public static string ActivityId { get; set; }
-        public static string ConfigPath { get; set; }
+        private const string ActivityIdKey = "SelectedActivityData.ActivityId";
+        private const string ConfigPathKey = "SelectedActivityData.ConfigPath";
+
+        private static string activityId;
+        private static string configPath;
+
+        public static string ActivityId
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(activityId))
+                {
+                    return activityId;
+                }
+
+                return PlayerPrefs.GetString(ActivityIdKey, null);
+            }
+            set
+            {
+                activityId = value;
+                SetStoredValue(ActivityIdKey, value);
+            }
+        }
+
+        public static string ConfigPath
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(configPath))
+                {
+                    return configPath;
+                }
+
+                return PlayerPrefs.GetString(ConfigPathKey, null);
+            }
+            set
+            {
+                configPath = value;
+                SetStoredValue(ConfigPathKey, value);
+            }
+        }
 
         public static void Clear()
         {
-            ActivityId = null;
-            ConfigPath = null;
+            activityId = null;
+            configPath = null;
+            PlayerPrefs.DeleteKey(ActivityIdKey);
+            PlayerPrefs.DeleteKey(ConfigPathKey);
+            PlayerPrefs.Save();
+        }
+
+        private static void SetStoredValue(string key, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                PlayerPrefs.DeleteKey(key);
+            }
+            else
+            {
+                PlayerPrefs.SetString(key, value);
+            }
+
+            PlayerPrefs.Save();
         }
     }
 }

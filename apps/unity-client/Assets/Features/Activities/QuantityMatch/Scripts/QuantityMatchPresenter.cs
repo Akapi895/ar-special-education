@@ -25,9 +25,16 @@ namespace Features.Activities.QuantityMatch
 
         // Spawned objects tracking
         private GameObject[] spawnedGroups;
-        private const float MinimumReadableObjectSpacing = 0.26f;
-        private const float GroupHitboxDepth = 0.35f;
-        private const float GroupHitboxPadding = 0.24f;
+        private const int SelectionQuestionCount = 5;
+        private const float MinimumReadableObjectSpacing = 0.64f;
+        private const float MaximumReadableObjectSpacing = 0.78f;
+        private const float MinimumReadableGroupSpacing = 2.1f;
+        private const float GroupSeparationPadding = 0.5f;
+        private const float GroupHitboxHeight = 0.62f;
+        private const float GroupHitboxPadding = 0.44f;
+        private const float ViewportSafeMarginX = 0.16f;
+        private const float ViewportSafeMarginY = 0.18f;
+        private bool currentUsesNumberInputMode;
 
         [Header("Prefabs")]
         [SerializeField]
@@ -58,6 +65,7 @@ namespace Features.Activities.QuantityMatch
             if (view != null)
             {
                 view.OnGroupSelected += HandleGroupSelected;
+                view.OnNumberAnswerSubmitted += HandleNumberAnswerSubmitted;
                 view.OnHintRequested += HandleHintRequested;
                 view.OnCancelRequested += HandleCancelRequested;
             }
@@ -82,6 +90,7 @@ namespace Features.Activities.QuantityMatch
             }
 
             Debug.Log($"[QuantityMatchPresenter] Loading round {roundNumber}: Target = {currentQuestion.TargetNumber}");
+            currentUsesNumberInputMode = roundNumber > SelectionQuestionCount;
 
             // Clear previous objects
             ClearSpawnedObjects();
@@ -90,7 +99,7 @@ namespace Features.Activities.QuantityMatch
             SpawnGroups();
 
             // Update view
-            view?.ShowQuestion(currentQuestion.TargetNumber, currentQuestion.NumberOfGroups);
+            view?.ShowQuestion(currentQuestion.TargetNumber, currentQuestion.NumberOfGroups, currentUsesNumberInputMode);
             view?.UpdateProgress(roundNumber, quantityConfig.NumberOfRounds);
         }
 
@@ -117,7 +126,6 @@ namespace Features.Activities.QuantityMatch
                 Vector3 groupPosition = groupPositions[i];
                 int objectCount = currentQuestion.ObjectCountsPerGroup[i];
 
-                // Spawn the group as objects arranged in a grid/circle
                 GameObject group = SpawnGroupObjects(i, objectCount, groupPosition);
                 spawnedGroups[i] = group;
 
@@ -140,7 +148,7 @@ namespace Features.Activities.QuantityMatch
         {
             Vector3[] positions = new Vector3[currentQuestion.NumberOfGroups];
             Vector3 center = placementService.CurrentPlacementPosition;
-            float spacing = quantityConfig.DefaultGroupSpacing;
+            float spacing = GetReadableGroupSpacing();
 
             switch (quantityConfig.GroupArrangement)
             {
@@ -170,11 +178,11 @@ namespace Features.Activities.QuantityMatch
                             forward.Normalize();
                         }
 
-                        float sideOffset = spacing * 0.72f;
-                        float depthOffset = spacing * 0.36f;
-                        positions[0] = center - right * sideOffset - forward * depthOffset * 0.25f;
-                        positions[1] = center + forward * depthOffset;
-                        positions[2] = center + right * sideOffset - forward * depthOffset * 0.25f;
+                        float sideOffset = spacing * 0.74f;
+                        float depthOffset = spacing * 0.5f;
+                        positions[0] = center - right * sideOffset + forward * depthOffset * 0.28f;
+                        positions[1] = center - forward * depthOffset * 0.2f;
+                        positions[2] = center + right * sideOffset + forward * depthOffset * 0.28f;
                     }
                     else
                     {
@@ -222,6 +230,7 @@ namespace Features.Activities.QuantityMatch
                     break;
             }
 
+            KeepGroupPositionsInsideCameraView(positions);
             return positions;
         }
 
@@ -230,8 +239,8 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         private GameObject SpawnGroupObjects(int groupIndex, int objectCount, Vector3 position)
         {
-            GameObject prefab = GetObjectPrefab();
-            if (prefab == null)
+            GameObject fallbackPrefab = GetObjectPrefab();
+            if (fallbackPrefab == null)
             {
                 Debug.LogError($"[QuantityMatchPresenter] No prefab available for group {groupIndex}");
                 return new GameObject($"Placeholder_Group{groupIndex}");
@@ -240,23 +249,28 @@ namespace Features.Activities.QuantityMatch
             GameObject group = new GameObject($"QuantityGroup_{groupIndex + 1}_Count{objectCount}");
             group.transform.SetPositionAndRotation(position, CalculateReadableGroupRotation(position));
 
-            float spacing = Mathf.Max(quantityConfig.DefaultObjectSpacing, MinimumReadableObjectSpacing);
-            Vector3[] localPositions = CalculateReadableGridPositions(objectCount, spacing, out float width, out float height);
+            float spacing = GetReadableObjectSpacing();
+            Vector3[] localPositions = CalculateReadableGroundGridPositions(objectCount, spacing, out float width, out float depth);
 
             for (int i = 0; i < localPositions.Length; i++)
             {
                 Vector3 worldPosition = group.transform.TransformPoint(localPositions[i]);
-                GameObject obj = placementService?.SpawnAtPosition(prefab, worldPosition, group.transform.rotation, group.transform);
+                GameObject objectPrefab = GetObjectPrefab() ?? fallbackPrefab;
+                GameObject obj = placementService?.SpawnAtPosition(objectPrefab, worldPosition, group.transform.rotation, group.transform);
                 if (obj != null)
                 {
-                    obj.name = $"Group{groupIndex + 1}_Ball{i + 1}";
+                    obj.name = $"Group{groupIndex + 1}_Animal{i + 1}";
                     obj.transform.localPosition = localPositions[i];
-                    obj.transform.localRotation = Quaternion.identity;
+                    obj.transform.localRotation = Quaternion.Euler(0f, UnityEngine.Random.Range(-14f, 14f), 0f);
+                    ActivityPrefabSetup.Instance?.PrepareLearningObject(obj);
                 }
             }
 
-            AddGroupHitbox(group, width, height);
-            AddGroupLabel(group, groupIndex, height);
+            AddGroupHitbox(group, width, depth);
+            if (!currentUsesNumberInputMode)
+            {
+                AddGroupLabel(group, groupIndex, depth);
+            }
             return group;
         }
 
@@ -268,7 +282,7 @@ namespace Features.Activities.QuantityMatch
                 return Quaternion.identity;
             }
 
-            Vector3 direction = groupPosition - camera.transform.position;
+            Vector3 direction = camera.transform.position - groupPosition;
             direction.y = 0f;
 
             if (direction.sqrMagnitude < 0.0001f)
@@ -279,49 +293,142 @@ namespace Features.Activities.QuantityMatch
             return Quaternion.LookRotation(direction.normalized, Vector3.up);
         }
 
-        private static Vector3[] CalculateReadableGridPositions(int count, float spacing, out float width, out float height)
+        private float GetReadableObjectSpacing()
         {
+            return Mathf.Clamp(quantityConfig.DefaultObjectSpacing, MinimumReadableObjectSpacing, MaximumReadableObjectSpacing);
+        }
+
+        private float GetReadableGroupSpacing()
+        {
+            if (currentQuestion?.ObjectCountsPerGroup == null)
+            {
+                return Mathf.Max(quantityConfig.DefaultGroupSpacing, MinimumReadableGroupSpacing);
+            }
+
+            float objectSpacing = GetReadableObjectSpacing();
+            float largestFootprint = 0f;
+            for (int i = 0; i < currentQuestion.ObjectCountsPerGroup.Length; i++)
+            {
+                CalculateReadableGroundGridPositions(
+                    currentQuestion.ObjectCountsPerGroup[i],
+                    objectSpacing,
+                    out float width,
+                    out float depth);
+
+                largestFootprint = Mathf.Max(largestFootprint, Mathf.Max(width, depth) + objectSpacing);
+            }
+
+            return Mathf.Max(
+                quantityConfig.DefaultGroupSpacing,
+                MinimumReadableGroupSpacing,
+                largestFootprint + GroupSeparationPadding);
+        }
+
+        private static Vector3[] CalculateReadableGroundGridPositions(int count, float spacing, out float width, out float depth)
+        {
+            if (count <= 0)
+            {
+                width = 0f;
+                depth = 0f;
+                return Array.Empty<Vector3>();
+            }
+
             int columns = Mathf.CeilToInt(Mathf.Sqrt(count));
             int rows = Mathf.CeilToInt((float)count / columns);
             var positions = new Vector3[count];
-
-            width = Mathf.Max(0f, (columns - 1) * spacing);
-            height = Mathf.Max(0f, (rows - 1) * spacing);
-            float offsetX = width * 0.5f;
-            float offsetY = height * 0.5f;
 
             for (int i = 0; i < count; i++)
             {
                 int row = i / columns;
                 int col = i % columns;
-                positions[i] = new Vector3(col * spacing - offsetX, offsetY - row * spacing, 0f);
+                int remaining = count - row * columns;
+                int itemsInRow = Mathf.Min(columns, remaining);
+                float rowWidth = Mathf.Max(0f, (itemsInRow - 1) * spacing);
+                float rowStagger = rows > 1 && row % 2 == 1 ? spacing * 0.42f : 0f;
+                positions[i] = new Vector3(col * spacing - rowWidth * 0.5f + rowStagger, 0f, -row * spacing);
             }
+
+            CenterPositionsOnOrigin(positions, out width, out depth);
 
             return positions;
         }
 
-        private static void AddGroupHitbox(GameObject group, float width, float height)
+        private static void CenterPositionsOnOrigin(Vector3[] positions, out float width, out float depth)
         {
-            var collider = group.AddComponent<BoxCollider>();
-            collider.center = Vector3.zero;
-            collider.size = new Vector3(
-                Mathf.Max(0.55f, width + GroupHitboxPadding),
-                Mathf.Max(0.55f, height + GroupHitboxPadding + 0.18f),
-                GroupHitboxDepth);
+            float minX = positions[0].x;
+            float maxX = positions[0].x;
+            float minZ = positions[0].z;
+            float maxZ = positions[0].z;
+
+            for (int i = 1; i < positions.Length; i++)
+            {
+                minX = Mathf.Min(minX, positions[i].x);
+                maxX = Mathf.Max(maxX, positions[i].x);
+                minZ = Mathf.Min(minZ, positions[i].z);
+                maxZ = Mathf.Max(maxZ, positions[i].z);
+            }
+
+            Vector3 offset = new Vector3((minX + maxX) * 0.5f, 0f, (minZ + maxZ) * 0.5f);
+            for (int i = 0; i < positions.Length; i++)
+            {
+                positions[i] -= offset;
+            }
+
+            width = maxX - minX;
+            depth = maxZ - minZ;
         }
 
-        private static void AddGroupLabel(GameObject group, int groupIndex, float groupHeight)
+        private static void KeepGroupPositionsInsideCameraView(Vector3[] positions)
+        {
+            Camera camera = Camera.main;
+            if (camera == null || positions == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < positions.Length; i++)
+            {
+                Vector3 viewport = camera.WorldToViewportPoint(positions[i]);
+                if (viewport.z <= 0f)
+                {
+                    continue;
+                }
+
+                float safeX = Mathf.Clamp(viewport.x, ViewportSafeMarginX, 1f - ViewportSafeMarginX);
+                float safeY = Mathf.Clamp(viewport.y, ViewportSafeMarginY, 1f - ViewportSafeMarginY);
+                if (Mathf.Approximately(safeX, viewport.x) && Mathf.Approximately(safeY, viewport.y))
+                {
+                    continue;
+                }
+
+                Vector3 clampedWorld = camera.ViewportToWorldPoint(new Vector3(safeX, safeY, viewport.z));
+                clampedWorld.y = positions[i].y;
+                positions[i] = clampedWorld;
+            }
+        }
+
+        private static void AddGroupHitbox(GameObject group, float width, float depth)
+        {
+            var collider = group.AddComponent<BoxCollider>();
+            collider.center = Vector3.up * (GroupHitboxHeight * 0.5f);
+            collider.size = new Vector3(
+                Mathf.Max(0.55f, width + GroupHitboxPadding),
+                GroupHitboxHeight,
+                Mathf.Max(0.55f, depth + GroupHitboxPadding));
+        }
+
+        private static void AddGroupLabel(GameObject group, int groupIndex, float groupDepth)
         {
             var labelGo = new GameObject("GroupLabel");
             labelGo.transform.SetParent(group.transform, false);
-            labelGo.transform.localPosition = new Vector3(0f, groupHeight * 0.5f + 0.28f, 0f);
+            labelGo.transform.localPosition = new Vector3(0f, 0.58f, -groupDepth * 0.5f - 0.12f);
 
             var label = labelGo.AddComponent<TextMesh>();
             label.text = $"Group {groupIndex + 1}";
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
-            label.fontSize = 64;
-            label.characterSize = 0.018f;
+            label.fontSize = 56;
+            label.characterSize = 0.012f;
             label.color = Color.white;
 
             Camera camera = Camera.main;
@@ -344,7 +451,7 @@ namespace Features.Activities.QuantityMatch
 
             if (ActivityPrefabSetup.Instance != null)
             {
-                return ActivityPrefabSetup.Instance.GetApplePrefab();
+                return ActivityPrefabSetup.Instance.GetLearningObjectPrefab();
             }
 
             Debug.LogWarning("[QuantityMatchPresenter] No object prefab assigned. Assign defaultObjectPrefab or add ActivityPrefabSetup.");
@@ -362,8 +469,9 @@ namespace Features.Activities.QuantityMatch
                 return false;
             }
 
-            // Check if the selected group's count matches the target number
-            bool isCorrect = currentQuestion.IsCorrectAnswer(quantityAnswer.SelectedGroupIndex);
+            bool isCorrect = currentUsesNumberInputMode
+                ? quantityAnswer.SelectedGroupCount == currentQuestion.TargetNumber
+                : currentQuestion.IsCorrectAnswer(quantityAnswer.SelectedGroupIndex);
 
             Debug.Log($"[QuantityMatchPresenter] Checking answer: Group {quantityAnswer.SelectedGroupIndex} " +
                      $"(count: {quantityAnswer.SelectedGroupCount}) vs Target {currentQuestion.TargetNumber} " +
@@ -408,7 +516,7 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         private void HandleGroupSelected(int groupIndex, int groupObjectCount)
         {
-            if (currentState != ActivityState.InProgress)
+            if (currentState != ActivityState.InProgress || currentUsesNumberInputMode)
             {
                 return;
             }
@@ -435,6 +543,27 @@ namespace Features.Activities.QuantityMatch
             SubmitAnswer(answer);
         }
 
+        private void HandleNumberAnswerSubmitted(int enteredNumber)
+        {
+            if (currentState != ActivityState.InProgress || !currentUsesNumberInputMode)
+            {
+                return;
+            }
+
+            Debug.Log($"[QuantityMatchPresenter] Number answer submitted: {enteredNumber}");
+
+            var answer = new QuantityMatchAnswer(
+                selectedGroupIndex: -1,
+                selectedGroupCount: enteredNumber,
+                targetNumber: currentQuestion.TargetNumber,
+                responseTimeSeconds: Time.time - roundStartTime,
+                attemptNumber: currentResult.TotalAttempts + 1,
+                hintsUsed: hintsUsedInCurrentRound > 0
+            );
+
+            SubmitAnswer(answer);
+        }
+
         /// <summary>
         /// Handle hint request from View.
         /// </summary>
@@ -456,7 +585,7 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         private void HandleObjectTapped(GameObject tappedObject)
         {
-            if (currentState != ActivityState.InProgress)
+            if (currentState != ActivityState.InProgress || currentUsesNumberInputMode)
             {
                 return;
             }
@@ -568,6 +697,7 @@ namespace Features.Activities.QuantityMatch
             if (view != null)
             {
                 view.OnGroupSelected -= HandleGroupSelected;
+                view.OnNumberAnswerSubmitted -= HandleNumberAnswerSubmitted;
                 view.OnHintRequested -= HandleHintRequested;
                 view.OnCancelRequested -= HandleCancelRequested;
             }

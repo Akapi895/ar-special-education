@@ -206,9 +206,6 @@ namespace Core.Learning.ActivityRunner
             PlayAnswerFeedback(isCorrect: true);
             PersistRoundResult();
             ChangeState(ActivityState.Completed);
-
-            // Wait a moment then go to next round or complete
-            Invoke(nameof(StartNextRound), 2f);
         }
 
         /// <summary>
@@ -273,6 +270,28 @@ namespace Core.Learning.ActivityRunner
             {
                 Debug.Log($"[ActivityPresenter] No more hints available for round {currentRound}");
             }
+        }
+
+        /// <summary>
+        /// Continue from a completed round to the next round or finish the activity.
+        /// </summary>
+        public virtual void ContinueToNextRound()
+        {
+            if (currentState != ActivityState.Completed)
+            {
+                Debug.LogWarning($"[ActivityPresenter] Cannot continue from state {currentState}");
+                return;
+            }
+
+            StartNextRound();
+        }
+
+        /// <summary>
+        /// Check whether another round remains in the current activity.
+        /// </summary>
+        public virtual bool HasMoreRounds()
+        {
+            return config != null && currentRound < config.NumberOfRounds;
         }
 
         /// <summary>

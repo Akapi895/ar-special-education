@@ -3,6 +3,7 @@ using Core.Learning.Models;
 using Core.Learning.Utils;
 using Features.Activities.NumberLineJump;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -31,12 +32,29 @@ namespace Features.Activities.NumberLineJump
         private int currentPosition;
         private List<JumpRecord> jumpHistory;
         private int jumpsRemainingBeforeWarning;
+        private bool currentUsesEquationPromptMode;
+        private string currentEquationPrompt;
 
         // State tracking
         private bool hasOvershot;
         private bool hitBoundary;
         private bool exceededMaxJumps;
         private bool isJumping;
+        private Coroutine jumpAnimationCoroutine;
+
+        private const float TileWidth = 0.28f;
+        private const float TileHeight = 0.04f;
+        private const float TileDepth = 0.22f;
+        private const float CharacterYOffset = 0.18f;
+        private const float JumpArcHeight = 0.22f;
+        private const int TargetPromptQuestionCount = 5;
+
+        private static readonly Color NormalTileColor = new Color(0.44f, 0.52f, 0.62f);
+        private static readonly Color AlternateTileColor = new Color(0.52f, 0.59f, 0.68f);
+        private static readonly Color StartTileColor = new Color(0.22f, 0.48f, 0.9f);
+        private static readonly Color TargetTileColor = new Color(0.18f, 0.72f, 0.42f);
+        private static readonly Color CurrentTileColor = new Color(0.12f, 0.42f, 0.95f);
+        private static readonly Color CharacterColor = new Color(0.16f, 0.55f, 1f);
 
         // Events
         public event Action<int> OnCharacterMoved;  // newPosition
@@ -101,6 +119,8 @@ namespace Features.Activities.NumberLineJump
             exceededMaxJumps = false;
             isJumping = false;
             jumpsRemainingBeforeWarning = currentQuestion.MaxJumpsAllowed - jumpConfig.MaxJumpsWarningThreshold;
+            currentUsesEquationPromptMode = roundNumber > TargetPromptQuestionCount;
+            currentEquationPrompt = currentUsesEquationPromptMode ? BuildEquationPrompt(currentQuestion) : null;
 
             // Create the number line
             CreateNumberLine();
@@ -114,7 +134,9 @@ namespace Features.Activities.NumberLineJump
                 currentQuestion.TargetNumber,
                 currentQuestion.NumberLineMin,
                 currentQuestion.NumberLineMax,
-                currentQuestion.JumpDirection
+                currentQuestion.JumpDirection,
+                currentUsesEquationPromptMode,
+                currentEquationPrompt
             );
 
             view?.UpdateProgress(roundNumber, jumpConfig.NumberOfRounds);
@@ -149,30 +171,12 @@ namespace Features.Activities.NumberLineJump
                 arrangementPattern: GroupArrangementPattern.Horizontal
             );
 
-            // Get tile prefab
-            GameObject tilePrefab = GetTilePrefab();
-
             // Create each number tile
             for (int i = 0; i < tileCount; i++)
             {
                 int number = min + i;
-                Vector3 position = positions[i];
-
-                // For now, create a simple placeholder for each tile
-                // TODO: Use actual tile prefab with number display
-                GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                tile.name = $"NumberTile_{number}";
-                tile.transform.position = position;
-                tile.transform.localScale = new Vector3(0.3f, 0.05f, 0.3f);
-                Renderer renderer = tile.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    renderer.material.color = number == currentQuestion.StartNumber
-                        ? new Color(0.2f, 0.5f, 0.9f)
-                        : Color.white;
-                }
-
-                AddNumberLabel(tile, number);
+                Vector3 position = positions[i] + Vector3.up * jumpConfig.NumberLineHeight;
+                GameObject tile = CreateNumberTile(number, position);
 
                 numberTiles[i] = tile;
 
@@ -186,15 +190,35 @@ namespace Features.Activities.NumberLineJump
             OnNumberLineCreated?.Invoke(min, max);
         }
 
+        private GameObject CreateNumberTile(int number, Vector3 position)
+        {
+            var tile = new GameObject($"NumberTile_{number}");
+            tile.transform.position = position;
+
+            var collider = tile.AddComponent<BoxCollider>();
+            collider.size = new Vector3(TileWidth, TileHeight, TileDepth);
+
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            body.name = "TileBody";
+            body.transform.SetParent(tile.transform, false);
+            body.transform.localScale = new Vector3(TileWidth, TileHeight, TileDepth);
+
+            Collider bodyCollider = body.GetComponent<Collider>();
+            if (bodyCollider != null)
+            {
+                Destroy(bodyCollider);
+            }
+
+            ApplyTileColor(tile, number);
+            AddNumberLabel(tile, number);
+            return tile;
+        }
+
         private static void AddNumberLabel(GameObject tile, int number)
         {
             var labelGo = new GameObject("NumberLabel");
             labelGo.transform.SetParent(tile.transform, false);
-            labelGo.transform.localPosition = new Vector3(0f, 0.72f, 0f);
-            labelGo.transform.localScale = new Vector3(
-                1f / tile.transform.localScale.x,
-                1f / tile.transform.localScale.y,
-                1f / tile.transform.localScale.z);
+            labelGo.transform.localPosition = new Vector3(0f, TileHeight * 1.5f, 0f);
 
             var label = labelGo.AddComponent<TextMesh>();
             label.text = number.ToString();
@@ -202,12 +226,56 @@ namespace Features.Activities.NumberLineJump
             label.alignment = TextAlignment.Center;
             label.fontSize = 64;
             label.characterSize = 0.018f;
-            label.color = Color.black;
+            label.color = Color.white;
 
             Camera camera = Camera.main;
             if (camera != null)
             {
                 labelGo.transform.rotation = Quaternion.LookRotation(labelGo.transform.position - camera.transform.position, Vector3.up);
+            }
+        }
+
+        private void ApplyTileColor(GameObject tile, int number)
+        {
+            Renderer renderer = tile != null ? tile.GetComponentInChildren<Renderer>() : null;
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.material.color = GetTileColor(number);
+        }
+
+        private Color GetTileColor(int number)
+        {
+            if (number == currentPosition)
+            {
+                return CurrentTileColor;
+            }
+
+            if (!currentUsesEquationPromptMode && number == currentQuestion.TargetNumber)
+            {
+                return TargetTileColor;
+            }
+
+            if (number == currentQuestion.StartNumber)
+            {
+                return StartTileColor;
+            }
+
+            return number % 2 == 0 ? NormalTileColor : AlternateTileColor;
+        }
+
+        private void RefreshNumberLineVisuals()
+        {
+            if (numberTiles == null || currentQuestion == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < numberTiles.Length; i++)
+            {
+                ApplyTileColor(numberTiles[i], currentQuestion.NumberLineMin + i);
             }
         }
 
@@ -240,18 +308,25 @@ namespace Features.Activities.NumberLineJump
             {
                 characterObject = placementService.SpawnAtPosition(
                     characterPrefab,
-                    startTilePosition + Vector3.up * 0.1f,
+                    startTilePosition + Vector3.up * CharacterYOffset,
                     Quaternion.identity,
                     null
                 );
+                ActivityPrefabSetup.Instance?.PrepareLearningObject(characterObject);
             }
             else
             {
                 // Create placeholder character
                 characterObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 characterObject.name = "JumpCharacter";
-                characterObject.transform.position = startTilePosition + Vector3.up * 0.15f;
-                characterObject.transform.localScale = Vector3.one * 0.15f;
+                characterObject.transform.position = startTilePosition + Vector3.up * CharacterYOffset;
+                characterObject.transform.localScale = Vector3.one * 0.16f;
+
+                Renderer renderer = characterObject.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = CharacterColor;
+                }
             }
 
             currentPosition = currentQuestion.StartNumber;
@@ -271,8 +346,11 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         private GameObject GetCharacterPrefab()
         {
-            // TODO: Implement prefab loading
-            Debug.LogWarning("[NumberLineJumpPresenter] GetCharacterPrefab() not implemented.");
+            if (ActivityPrefabSetup.Instance != null)
+            {
+                return ActivityPrefabSetup.Instance.GetJumpCharacterPrefab();
+            }
+
             return null;
         }
 
@@ -294,14 +372,6 @@ namespace Features.Activities.NumberLineJump
         {
             if (currentState != ActivityState.InProgress || isJumping)
             {
-                return;
-            }
-
-            // Check if direction is allowed
-            if (!currentQuestion.IsDirectionAllowed(direction))
-            {
-                Debug.Log($"[NumberLineJumpPresenter] Direction {direction} not allowed for this question");
-                view?.ShowDirectionNotAllowed(direction);
                 return;
             }
 
@@ -356,8 +426,12 @@ namespace Features.Activities.NumberLineJump
                 Debug.Log($"[NumberLineJumpPresenter] Overshot target at position {currentPosition}");
             }
 
+            view?.UpdateCurrentPosition(currentPosition);
+            RefreshNumberLineVisuals();
+            DisableJumpInput();
+
             // Move the character visually
-            MoveCharacterToPosition(currentPosition);
+            MoveCharacterToPosition(currentPosition, animate: true);
 
             // Update equation display
             if (currentQuestion.ShowEquationDuringJumps)
@@ -378,17 +452,13 @@ namespace Features.Activities.NumberLineJump
 
             OnCharacterMoved?.Invoke(currentPosition);
 
-            // Re-enable input after animation
-            float delay = jumpConfig.JumpAnimationDuration;
-            Invoke(nameof(EnableJumpInput), delay);
-
             Debug.Log($"[NumberLineJumpPresenter] Jumped {direction}: {previousPosition} -> {currentPosition}");
         }
 
         /// <summary>
         /// Move the character to a specific position on the number line.
         /// </summary>
-        private void MoveCharacterToPosition(int position)
+        private void MoveCharacterToPosition(int position, bool animate = false)
         {
             if (characterObject == null || numberTiles == null)
             {
@@ -402,10 +472,44 @@ namespace Features.Activities.NumberLineJump
             }
 
             Vector3 targetPosition = numberTiles[tileIndex].transform.position;
+            Vector3 characterTarget = targetPosition + Vector3.up * CharacterYOffset;
 
-            // TODO: Use AR service for smooth animation
-            // For now, direct position update
-            characterObject.transform.position = targetPosition + Vector3.up * 0.15f;
+            if (!animate || jumpConfig.JumpAnimationDuration <= 0f)
+            {
+                characterObject.transform.position = characterTarget;
+                EnableJumpInput();
+                return;
+            }
+
+            if (jumpAnimationCoroutine != null)
+            {
+                StopCoroutine(jumpAnimationCoroutine);
+            }
+
+            jumpAnimationCoroutine = StartCoroutine(AnimateCharacterJump(
+                characterObject.transform.position,
+                characterTarget,
+                jumpConfig.JumpAnimationDuration));
+        }
+
+        private IEnumerator AnimateCharacterJump(Vector3 startPosition, Vector3 targetPosition, float duration)
+        {
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float t = Mathf.Clamp01(elapsed / duration);
+                float eased = t * t * (3f - 2f * t);
+                float arc = Mathf.Sin(t * Mathf.PI) * JumpArcHeight;
+                characterObject.transform.position = Vector3.Lerp(startPosition, targetPosition, eased) + Vector3.up * arc;
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            characterObject.transform.position = targetPosition;
+            jumpAnimationCoroutine = null;
+            EnableJumpInput();
         }
 
         /// <summary>
@@ -413,11 +517,24 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         private void UpdateEquationDisplay()
         {
+            if (currentUsesEquationPromptMode)
+            {
+                view?.UpdateEquation(currentEquationPrompt);
+                return;
+            }
+
             string equation = NumberLineJumpAnswer.GetCurrentEquation(
                 currentQuestion.StartNumber,
                 currentPosition
             );
             view?.UpdateEquation(equation);
+        }
+
+        private static string BuildEquationPrompt(NumberLineJumpQuestion question)
+        {
+            int change = question.TargetNumber - question.StartNumber;
+            string operation = change >= 0 ? "+" : "-";
+            return $"{question.StartNumber} {operation} {Mathf.Abs(change)} = ?";
         }
 
         /// <summary>
@@ -504,8 +621,17 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         private void ResetCharacterPosition()
         {
+            if (jumpAnimationCoroutine != null)
+            {
+                StopCoroutine(jumpAnimationCoroutine);
+                jumpAnimationCoroutine = null;
+            }
+
+            isJumping = false;
             currentPosition = currentQuestion.StartNumber;
             MoveCharacterToPosition(currentPosition);
+            RefreshNumberLineVisuals();
+            view?.UpdateCurrentPosition(currentPosition);
         }
 
         /// <summary>
@@ -681,6 +807,12 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         private void ClearSpawnedObjects()
         {
+            if (jumpAnimationCoroutine != null)
+            {
+                StopCoroutine(jumpAnimationCoroutine);
+                jumpAnimationCoroutine = null;
+            }
+
             if (characterObject != null)
             {
                 interactionService?.UnregisterInteractable(characterObject);

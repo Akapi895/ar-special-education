@@ -93,7 +93,7 @@ namespace Features.Activities.CompareQuantity
         [Header("Visual Settings")]
         [Tooltip("Spacing between the two groups (meters)")]
         [SerializeField]
-        private float groupSpacing = 1.5f;
+        private float groupSpacing = 2.3f;
 
         // Properties
         public List<CompareQuantityQuestion> Questions => questions;

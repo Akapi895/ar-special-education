@@ -88,6 +88,16 @@ namespace Core.Learning.ActivityRunner
         void RequestHint();
 
         /// <summary>
+        /// Continue after a completed round.
+        /// </summary>
+        void ContinueToNextRound();
+
+        /// <summary>
+        /// Check whether the completed round is followed by another round in the same activity.
+        /// </summary>
+        bool HasMoreRounds();
+
+        /// <summary>
         /// Cancel the current activity.
         /// </summary>
         void Cancel();

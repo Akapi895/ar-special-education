@@ -317,6 +317,13 @@ namespace Features.Activities.CompareQuantity
         {
             ShowFeedback(message, Color.green);
             DisableInput();
+            SetAnswerButtonsActive(false);
+            SetRunningActionButtonsActive(false);
+
+            if (nextRoundButton != null)
+            {
+                nextRoundButton.gameObject.SetActive(true);
+            }
         }
 
         /// <summary>
@@ -509,7 +516,7 @@ namespace Features.Activities.CompareQuantity
         {
             Debug.Log("[CompareQuantityView] Next round / Finish clicked");
 
-            if (activityFinished || presenter?.GetState() == ActivityState.Completed || presenter?.GetState() == ActivityState.Failed)
+            if (activityFinished || presenter?.GetState() == ActivityState.Failed)
             {
                 if (!ActivityFlowNavigator.LoadNextActivity("CompareQuantity"))
                 {
@@ -521,6 +528,17 @@ namespace Features.Activities.CompareQuantity
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(false);
+            }
+
+            if (presenter?.GetState() == ActivityState.Completed)
+            {
+                bool hasMoreRounds = presenter.HasMoreRounds();
+                presenter.ContinueToNextRound();
+
+                if (!hasMoreRounds && !ActivityFlowNavigator.LoadNextActivity("CompareQuantity"))
+                {
+                    ActivityFlowNavigator.LoadProgressDashboard();
+                }
             }
         }
 

@@ -17,7 +17,6 @@ namespace Project.Editor
     {
         private static readonly string[] ShellScenePaths =
         {
-            "Assets/_Project/Scenes/SC_Boot.unity",
             "Assets/_Project/Scenes/SC_MainMenu.unity",
             "Assets/_Project/Scenes/SC_ActivitySelect.unity",
             "Assets/_Project/Scenes/SC_ProgressDashboard.unity"
@@ -32,7 +31,6 @@ namespace Project.Editor
             ARTestSandboxMenu.SetupTestSandboxScene();
             ARGameplaySceneMenu.SetupARGameplayScene();
 
-            SceneSetupMenu.SetupBootScene();
             SceneSetupMenu.SetupMainMenuScene();
             SceneSetupMenu.SetupActivitySelectScene();
             SceneSetupMenu.SetupProgressDashboardScene();
@@ -121,7 +119,6 @@ namespace Project.Editor
         {
             string[] orderedScenes =
             {
-                "Assets/_Project/Scenes/SC_Boot.unity",
                 "Assets/_Project/Scenes/SC_MainMenu.unity",
                 "Assets/_Project/Scenes/SC_ActivitySelect.unity",
                 GameplayScenePath,

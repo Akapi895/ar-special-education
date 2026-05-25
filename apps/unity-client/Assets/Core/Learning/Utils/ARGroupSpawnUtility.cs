@@ -11,6 +11,8 @@ namespace Core.Learning.Utils
     /// </summary>
     public static class ARGroupSpawnUtility
     {
+        private const float DefaultObjectSpacing = 0.68f;
+
         /// <summary>
         /// Spawn a single group with the given number of objects.
         /// </summary>
@@ -43,17 +45,17 @@ namespace Core.Learning.Utils
             switch (arrangementPattern)
             {
                 case ObjectArrangementPattern.Circle:
-                    objects = placementService.SpawnCircle(prefab, position, objectCount, 0.2f);
+                    objects = placementService.SpawnCircle(prefab, position, objectCount, CalculateCircleRadius(objectCount));
                     break;
 
                 case ObjectArrangementPattern.Grid:
                     // For grid, we spawn a simple arrangement
                     // TODO: Add SpawnGrid method to IARPlacementService if needed
-                    objects = placementService.SpawnCircle(prefab, position, objectCount, 0.2f);
+                    objects = placementService.SpawnCircle(prefab, position, objectCount, CalculateCircleRadius(objectCount));
                     break;
 
                 default:
-                    objects = placementService.SpawnCircle(prefab, position, objectCount, 0.2f);
+                    objects = placementService.SpawnCircle(prefab, position, objectCount, CalculateCircleRadius(objectCount));
                     break;
             }
 
@@ -174,13 +176,30 @@ namespace Core.Learning.Utils
                 placeholder.transform.SetParent(group.transform);
                 placeholder.transform.localScale = Vector3.one * 0.1f;
                 placeholder.transform.localPosition = new Vector3(
-                    (i % 3) * 0.15f,
+                    (i % 3) * DefaultObjectSpacing,
                     0,
-                    (i / 3) * 0.15f
+                    (i / 3) * DefaultObjectSpacing
                 );
             }
 
             return group;
+        }
+
+        private static float CalculateCircleRadius(int objectCount)
+        {
+            if (objectCount <= 1)
+            {
+                return 0f;
+            }
+
+            float angleHalfStep = Mathf.PI / objectCount;
+            float sin = Mathf.Sin(angleHalfStep);
+            if (sin <= 0.0001f)
+            {
+                return DefaultObjectSpacing;
+            }
+
+            return DefaultObjectSpacing / (2f * sin);
         }
     }
 

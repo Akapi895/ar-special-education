@@ -32,7 +32,6 @@ namespace Project.Editor
         private const string CompareQuantityConfigPath =
             "Assets/Features/Activities/CompareQuantity/ScriptableObjects/SO_CompareQuantityConfig_Easy.asset";
 
-        private const string BootScenePath = "Assets/_Project/Scenes/SC_Boot.unity";
         private const string MainMenuScenePath = "Assets/_Project/Scenes/SC_MainMenu.unity";
         private const string ActivitySelectScenePath = "Assets/_Project/Scenes/SC_ActivitySelect.unity";
         private const string GameplayScenePath = "Assets/_Project/Scenes/SC_ARGameplay.unity";
@@ -156,7 +155,6 @@ namespace Project.Editor
             ARTestSandboxMenu.SetupTestSandboxScene();
             ARGameplaySceneMenu.SetupARGameplayScene();
 
-            SceneSetupMenu.SetupBootScene();
             SceneSetupMenu.SetupMainMenuScene();
             SceneSetupMenu.SetupActivitySelectScene();
             SceneSetupMenu.SetupProgressDashboardScene();
@@ -173,7 +171,6 @@ namespace Project.Editor
             ValidateConfig<NumberLineJumpConfig>(NumberLineJumpConfigPath);
             ValidateConfig<CompareQuantityConfig>(CompareQuantityConfigPath);
 
-            ValidateFileExists(BootScenePath);
             ValidateFileExists(MainMenuScenePath);
             ValidateFileExists(ActivitySelectScenePath);
             ValidateFileExists(GameplayScenePath);
@@ -181,7 +178,6 @@ namespace Project.Editor
             ValidateFileExists(TestSandboxScenePath);
             ValidateBuildSettings();
 
-            ValidateSceneComponent<BootLoader>(BootScenePath, "BootLoader");
             ValidateMainMenuScene();
             ValidateActivitySelectScene();
             ValidateGameplayScene();
@@ -298,7 +294,7 @@ namespace Project.Editor
                         break;
 
                     case Stage.EnterBoot:
-                        OpenSceneAndPlay(BootScenePath);
+                        OpenSceneAndPlay(MainMenuScenePath);
                         Advance(Stage.WaitMainMenu);
                         break;
 
@@ -656,7 +652,6 @@ namespace Project.Editor
         {
             string[] expected =
             {
-                BootScenePath,
                 MainMenuScenePath,
                 ActivitySelectScenePath,
                 GameplayScenePath,

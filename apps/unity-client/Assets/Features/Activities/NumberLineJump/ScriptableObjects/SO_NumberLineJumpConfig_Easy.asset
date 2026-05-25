@@ -19,7 +19,7 @@ MonoBehaviour:
   maxHintsPerQuestion: 3
   maxAttemptsPerQuestion: 3
   timeLimitSeconds: 0
-  numberOfRounds: 3
+  numberOfRounds: 10
   defaultHints: []
   questions:
   - numberLineMin: 0
@@ -46,6 +46,76 @@ MonoBehaviour:
     numberLineMax: 10
     startNumber: 2
     targetNumber: 8
+    jumpDirection: 0
+    maxJumpsAllowed: 10
+    showEquationDuringJumps: 1
+    customHints: []
+    characterPrefabName: 
+    tilePrefabName: 
+  - numberLineMin: 0
+    numberLineMax: 10
+    startNumber: 9
+    targetNumber: 6
+    jumpDirection: 1
+    maxJumpsAllowed: 10
+    showEquationDuringJumps: 1
+    customHints: []
+    characterPrefabName: 
+    tilePrefabName: 
+  - numberLineMin: 0
+    numberLineMax: 10
+    startNumber: 1
+    targetNumber: 4
+    jumpDirection: 0
+    maxJumpsAllowed: 10
+    showEquationDuringJumps: 1
+    customHints: []
+    characterPrefabName: 
+    tilePrefabName: 
+  - numberLineMin: 0
+    numberLineMax: 10
+    startNumber: 2
+    targetNumber: 6
+    jumpDirection: 0
+    maxJumpsAllowed: 10
+    showEquationDuringJumps: 1
+    customHints: []
+    characterPrefabName: 
+    tilePrefabName: 
+  - numberLineMin: 0
+    numberLineMax: 10
+    startNumber: 8
+    targetNumber: 3
+    jumpDirection: 1
+    maxJumpsAllowed: 10
+    showEquationDuringJumps: 1
+    customHints: []
+    characterPrefabName: 
+    tilePrefabName: 
+  - numberLineMin: 0
+    numberLineMax: 10
+    startNumber: 1
+    targetNumber: 9
+    jumpDirection: 0
+    maxJumpsAllowed: 10
+    showEquationDuringJumps: 1
+    customHints: []
+    characterPrefabName: 
+    tilePrefabName: 
+  - numberLineMin: 0
+    numberLineMax: 10
+    startNumber: 10
+    targetNumber: 4
+    jumpDirection: 1
+    maxJumpsAllowed: 10
+    showEquationDuringJumps: 1
+    customHints: []
+    characterPrefabName: 
+    tilePrefabName: 
+  - numberLineMin: 0
+    numberLineMax: 10
+    startNumber: 0
+    targetNumber: 7
     jumpDirection: 0
     maxJumpsAllowed: 10
     showEquationDuringJumps: 1

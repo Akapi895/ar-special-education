@@ -19,19 +19,67 @@ MonoBehaviour:
   maxHintsPerQuestion: 3
   maxAttemptsPerQuestion: 3
   timeLimitSeconds: 0
-  numberOfRounds: 2
+  numberOfRounds: 10
   defaultHints: []
   questions:
+  - TargetNumber: 2
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 010000000200000003000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 4
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 040000000200000005000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 6
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 050000000600000007000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
   - TargetNumber: 3
     NumberOfGroups: 3
-    ObjectCountsPerGroup: 020000000300000004000000
+    ObjectCountsPerGroup: 010000000300000005000000
     CorrectGroupIndex: 1
     ObjectPrefabName: 
     CustomHints: []
   - TargetNumber: 5
     NumberOfGroups: 3
-    ObjectCountsPerGroup: 040000000500000006000000
-    CorrectGroupIndex: 1
+    ObjectCountsPerGroup: 040000000600000005000000
+    CorrectGroupIndex: 2
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 7
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 07000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 8
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 08000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 9
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 09000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 10
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 0a000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 6
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 06000000
+    CorrectGroupIndex: 0
     ObjectPrefabName: 
     CustomHints: []
   correctFeedback: Great job! You found the right group!
@@ -52,6 +100,6 @@ MonoBehaviour:
     HintText: One group has exactly X objects.
     Level: 3
     ARHint: 
-  defaultObjectSpacing: 0.3
-  defaultGroupSpacing: 0.92
+  defaultObjectSpacing: 0.68
+  defaultGroupSpacing: 2.1
   groupArrangement: 0

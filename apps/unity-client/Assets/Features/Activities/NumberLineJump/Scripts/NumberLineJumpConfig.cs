@@ -172,6 +172,17 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public string GetFeedbackString(NumberLineJumpAnswer answer)
         {
+            if (answer.IsCorrect())
+            {
+                // Check if it was a perfect run (exactly the right number of jumps)
+                int expectedJumps = Mathf.Abs(answer.TargetNumber - answer.StartNumber);
+                if (answer.GetTotalJumps() == expectedJumps)
+                {
+                    return PerfectFeedback;
+                }
+                return CorrectFeedback;
+            }
+
             if (answer.HasOvershot)
             {
                 return OvershootFeedback;
@@ -185,17 +196,6 @@ namespace Features.Activities.NumberLineJump
             if (answer.ExceededMaxJumps)
             {
                 return MaxJumpsFeedback;
-            }
-
-            if (answer.IsCorrect())
-            {
-                // Check if it was a perfect run (exactly the right number of jumps)
-                int expectedJumps = Mathf.Abs(answer.TargetNumber - answer.StartNumber);
-                if (answer.GetTotalJumps() == expectedJumps)
-                {
-                    return PerfectFeedback;
-                }
-                return CorrectFeedback;
             }
 
             return IncorrectFeedback;

@@ -16,9 +16,14 @@ namespace Features.Activities.QuantityMatch
         event Action<int, int> OnGroupSelected;  // groupIndex, objectCount
 
         /// <summary>
+        /// Event fired when a typed number answer is submitted.
+        /// </summary>
+        event Action<int> OnNumberAnswerSubmitted;
+
+        /// <summary>
         /// Show the question with target number and group count.
         /// </summary>
-        void ShowQuestion(int targetNumber, int numberOfGroups);
+        void ShowQuestion(int targetNumber, int numberOfGroups, bool useNumberInputMode = false);
 
         /// <summary>
         /// Show correct feedback with custom message.

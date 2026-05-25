@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using ARSpecialEducation.Core.AR;
 using Core.Learning.ActivityRunner;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -17,6 +19,9 @@ namespace Core.AR.Placement
         private ARRaycastManager raycastManager;
 
         [SerializeField]
+        private ARPlaneManager planeManager;
+
+        [SerializeField]
         private Camera arCamera;
 
         [SerializeField]
@@ -25,10 +30,17 @@ namespace Core.AR.Placement
         [SerializeField]
         private float defaultColliderRadius = 0.08f;
 
+        [SerializeField]
+        private TrackableType placementTrackableTypes = TrackableType.PlaneWithinPolygon;
+
+        [SerializeField]
+        private float minimumPlaneArea = 0.15f;
+
         private readonly List<GameObject> spawnedObjects = new List<GameObject>();
         private readonly List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
 
         private Vector3 currentPlacementPosition;
+        private Quaternion currentPlacementRotation = Quaternion.identity;
         private bool placementAvailable;
 
         public event Action<Vector3> OnPlacementPositionAvailable;
@@ -39,15 +51,7 @@ namespace Core.AR.Placement
 
         private void Awake()
         {
-            if (raycastManager == null)
-            {
-                raycastManager = FindAnyObjectByType<ARRaycastManager>();
-            }
-
-            if (arCamera == null)
-            {
-                arCamera = Camera.main;
-            }
+            ResolveReferences();
         }
 
         private void Update()
@@ -57,6 +61,8 @@ namespace Core.AR.Placement
 
         public void Initialize()
         {
+            ResolveReferences();
+
             if (raycastManager == null)
             {
                 Debug.LogError("[ARPlacementService] ARRaycastManager is missing.");
@@ -74,7 +80,7 @@ namespace Core.AR.Placement
                 return null;
             }
 
-            return SpawnAtPosition(prefab, currentPlacementPosition, Quaternion.identity, parent);
+            return SpawnAtPosition(prefab, currentPlacementPosition, currentPlacementRotation, parent);
         }
 
         public GameObject SpawnAtPosition(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
@@ -162,8 +168,15 @@ namespace Core.AR.Placement
 
         private void UpdatePlacementPosition()
         {
+            ResolveReferences();
+
             if (raycastManager == null || arCamera == null)
             {
+                if (TryUseBestDetectedPlane())
+                {
+                    return;
+                }
+
                 SetPlacementAvailable(false);
                 return;
             }
@@ -171,10 +184,11 @@ namespace Core.AR.Placement
             Vector2 screenPoint = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
             raycastHits.Clear();
 
-            if (raycastManager.Raycast(screenPoint, raycastHits, TrackableType.PlaneWithinPolygon))
+            if (raycastManager.Raycast(screenPoint, raycastHits, placementTrackableTypes))
             {
                 Pose pose = raycastHits[0].pose;
                 currentPlacementPosition = pose.position;
+                currentPlacementRotation = pose.rotation;
 
                 if (!placementAvailable)
                 {
@@ -187,8 +201,136 @@ namespace Core.AR.Placement
             }
             else
             {
-                SetPlacementAvailable(false);
+                if (!TryUseBestDetectedPlane())
+                {
+                    SetPlacementAvailable(false);
+                }
             }
+        }
+
+        private void ResolveReferences()
+        {
+            XROrigin xrOrigin = null;
+            ARSessionBootstrap bootstrap = FindAnyObjectByType<ARSessionBootstrap>();
+            if (bootstrap != null)
+            {
+                bootstrap.ResolveReferences();
+                xrOrigin = bootstrap.Origin;
+
+                if (raycastManager == null)
+                {
+                    raycastManager = bootstrap.RaycastManager;
+                }
+
+                if (planeManager == null)
+                {
+                    planeManager = bootstrap.PlaneManager;
+                }
+
+                if (arCamera == null)
+                {
+                    arCamera = bootstrap.ARCamera;
+                }
+            }
+
+            if (xrOrigin == null)
+            {
+                xrOrigin = FindAnyObjectByType<XROrigin>();
+            }
+
+            if (raycastManager == null)
+            {
+                raycastManager = FindAnyObjectByType<ARRaycastManager>();
+                if (raycastManager == null)
+                {
+                    raycastManager = xrOrigin != null
+                        ? xrOrigin.GetComponent<ARRaycastManager>()
+                        : null;
+
+                    if (raycastManager == null && xrOrigin != null)
+                    {
+                        raycastManager = xrOrigin.gameObject.AddComponent<ARRaycastManager>();
+                    }
+                }
+            }
+
+            if (planeManager == null)
+            {
+                planeManager = FindAnyObjectByType<ARPlaneManager>();
+                if (planeManager == null)
+                {
+                    planeManager = xrOrigin != null
+                        ? xrOrigin.GetComponent<ARPlaneManager>()
+                        : null;
+
+                    if (planeManager == null && xrOrigin != null)
+                    {
+                        planeManager = xrOrigin.gameObject.AddComponent<ARPlaneManager>();
+                    }
+                }
+            }
+
+            if (planeManager != null)
+            {
+                planeManager.requestedDetectionMode = PlaneDetectionMode.Horizontal;
+            }
+
+            if (arCamera == null)
+            {
+                arCamera = Camera.main;
+            }
+        }
+
+        private bool TryUseBestDetectedPlane()
+        {
+            if (planeManager == null)
+            {
+                return false;
+            }
+
+            ARPlane bestPlane = null;
+            float bestArea = 0f;
+
+            foreach (ARPlane plane in planeManager.trackables)
+            {
+                if (plane == null || plane.trackingState != TrackingState.Tracking)
+                {
+                    continue;
+                }
+
+                if (plane.alignment != PlaneAlignment.HorizontalUp)
+                {
+                    continue;
+                }
+
+                float area = plane.size.x * plane.size.y;
+                if (area < minimumPlaneArea || area <= bestArea)
+                {
+                    continue;
+                }
+
+                bestPlane = plane;
+                bestArea = area;
+            }
+
+            if (bestPlane == null)
+            {
+                return false;
+            }
+
+            currentPlacementPosition = bestPlane.transform.position;
+            currentPlacementRotation = bestPlane.transform.rotation;
+
+            if (!placementAvailable)
+            {
+                SetPlacementAvailable(true);
+            }
+            else
+            {
+                OnPlacementPositionAvailable?.Invoke(currentPlacementPosition);
+            }
+
+            return true;
         }
 
         private void SetPlacementAvailable(bool available)

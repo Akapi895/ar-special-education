@@ -30,20 +30,36 @@ namespace Project.Editor
       so.FindProperty("activityId").stringValue = "QuantityMatch";
       so.FindProperty("displayName").stringValue = "Quantity Match (Easy)";
       so.FindProperty("description").stringValue = "Match the number to the correct group of objects.";
-      so.FindProperty("numberOfRounds").intValue = 2;
+      so.FindProperty("numberOfRounds").intValue = 10;
       so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
       so.FindProperty("maxHintsPerQuestion").intValue = 3;
-      so.FindProperty("defaultObjectSpacing").floatValue = 0.3f;
-      so.FindProperty("defaultGroupSpacing").floatValue = 0.92f;
+      so.FindProperty("defaultObjectSpacing").floatValue = 0.68f;
+      so.FindProperty("defaultGroupSpacing").floatValue = 2.1f;
       so.FindProperty("groupArrangement").enumValueIndex = (int)GroupArrangementPattern.Horizontal;
 
       var questionsProp = so.FindProperty("questions");
-      questionsProp.arraySize = 2;
+      questionsProp.arraySize = 10;
 
-      SetQuestion(questionsProp.GetArrayElementAtIndex(0), target: 3, groups: 3,
-        counts: new[] { 2, 3, 4 }, correctIndex: 1);
-      SetQuestion(questionsProp.GetArrayElementAtIndex(1), target: 5, groups: 3,
-        counts: new[] { 4, 5, 6 }, correctIndex: 1);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(0), target: 2, groups: 3,
+        counts: new[] { 1, 2, 3 }, correctIndex: 1);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(1), target: 4, groups: 3,
+        counts: new[] { 4, 2, 5 }, correctIndex: 0);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(2), target: 6, groups: 3,
+        counts: new[] { 5, 6, 7 }, correctIndex: 1);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(3), target: 3, groups: 3,
+        counts: new[] { 1, 3, 5 }, correctIndex: 1);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(4), target: 5, groups: 3,
+        counts: new[] { 4, 6, 5 }, correctIndex: 2);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(5), target: 7, groups: 1,
+        counts: new[] { 7 }, correctIndex: 0);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(6), target: 8, groups: 1,
+        counts: new[] { 8 }, correctIndex: 0);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(7), target: 9, groups: 1,
+        counts: new[] { 9 }, correctIndex: 0);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(8), target: 10, groups: 1,
+        counts: new[] { 10 }, correctIndex: 0);
+      SetQuestion(questionsProp.GetArrayElementAtIndex(9), target: 6, groups: 1,
+        counts: new[] { 6 }, correctIndex: 0);
 
       SetHint(so.FindProperty("hintLevel1"), "qm_hint1", "Look carefully at the groups.", 1);
       SetHint(so.FindProperty("hintLevel2"), "qm_hint2", "The number shown is X, count each group.", 2);

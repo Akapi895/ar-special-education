@@ -48,6 +48,7 @@ namespace Project.App
         private string defaultActivityId = "QuantityMatch";
 
         private Core.AR.ARServiceBootstrap arBootstrap;
+        private const float PlacementRetrySeconds = 0.5f;
 
         private void Start()
         {
@@ -66,6 +67,19 @@ namespace Project.App
             string activityId = SelectedActivityData.ActivityId ?? defaultActivityId;
 
             Debug.Log($"[ActivityLoader] Loading activity: {activityId}");
+
+            if (arBootstrap == null || arBootstrap.Placement == null || arBootstrap.Interaction == null)
+            {
+                Debug.LogError("[ActivityLoader] AR services not available.");
+                return;
+            }
+
+            if (!arBootstrap.Placement.IsPlacementAvailable)
+            {
+                Debug.Log("[ActivityLoader] Waiting for AR plane placement before starting activity.");
+                Invoke(nameof(LoadSelectedActivity), PlacementRetrySeconds);
+                return;
+            }
 
             switch (activityId)
             {

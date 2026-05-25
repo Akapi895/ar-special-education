@@ -19,12 +19,13 @@ namespace Features.Activities.QuantityMatch
                 return;
             }
 
-            view.BuildRuntimeUi(CreateCanvas());
+            view.BuildRuntimeUi(CreateCanvas(transform));
         }
 
-        private Canvas CreateCanvas()
+        private static Canvas CreateCanvas(Transform parent)
         {
             var canvasGo = new GameObject("QuantityMatchCanvas");
+            canvasGo.transform.SetParent(parent, false);
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             var scaler = canvasGo.AddComponent<CanvasScaler>();

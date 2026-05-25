@@ -31,12 +31,13 @@ namespace Features.Activities.NumberLineJump
                 return;
             }
 
-            view.BuildRuntimeUi(CreateCanvas());
+            view.BuildRuntimeUi(CreateCanvas(transform));
         }
 
-        private static Canvas CreateCanvas()
+        private static Canvas CreateCanvas(Transform parent)
         {
             var go = new GameObject("NumberLineJumpRuntimeCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            go.transform.SetParent(parent, false);
             var canvas = go.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 20;
