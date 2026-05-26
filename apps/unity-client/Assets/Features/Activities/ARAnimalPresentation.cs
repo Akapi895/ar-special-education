@@ -28,6 +28,21 @@ namespace Features.Activities
         private float nextActionTime;
         private float nextExpressionTime;
 
+        [Header("Wandering Behavior")]
+        [SerializeField] private bool enableWandering = false;
+        [SerializeField] private float wanderRadius = 0.38f;
+        [SerializeField] private float wanderSpeed = 0.2f;
+        [SerializeField] private float wanderRotateSpeed = 5.0f;
+        [SerializeField] private float minWanderWaitTime = 2.0f;
+        [SerializeField] private float maxWanderWaitTime = 5.0f;
+
+        private Vector3 originLocalPos;
+        private Vector3 currentBaseLocalPos;
+        private Vector3 targetLocalPos;
+        private Quaternion currentBaseLocalRot;
+        private bool isMoving;
+        private float wanderWaitTimer;
+
         private static readonly string[] MainActionStates =
         {
             "Idle_A", "Idle_B", "Idle_C", "Bounce", "Jump", "Eat", "Sit", "Spin", "Walk", "Fly", "Swim"
@@ -52,18 +67,37 @@ namespace Features.Activities
 
         private void Update()
         {
+            if (enableWandering)
+            {
+                UpdateWandering();
+            }
+
             if (usingBuiltInAnimation)
             {
                 UpdateBuiltInAnimation();
+                if (enableWandering)
+                {
+                    transform.localPosition = currentBaseLocalPos;
+                    transform.localRotation = currentBaseLocalRot;
+                }
                 return;
             }
 
             float wave = Mathf.Sin(Time.time * bobFrequency + phaseOffset);
             float hopWave = Mathf.Max(0f, Mathf.Sin(Time.time * hopFrequency + phaseOffset));
             Vector3 nextBobOffset = Vector3.up * (wave * bobAmplitude + hopWave * hopWave * hopHeight);
-            transform.localPosition += nextBobOffset - appliedBobOffset;
-            appliedBobOffset = nextBobOffset;
-            transform.localRotation = baseLocalRotation * Quaternion.Euler(0f, wave * turnAmplitude, Mathf.Sin(Time.time * 0.9f + phaseOffset) * 2f);
+
+            if (enableWandering)
+            {
+                transform.localPosition = currentBaseLocalPos + nextBobOffset;
+                transform.localRotation = currentBaseLocalRot * Quaternion.Euler(0f, wave * turnAmplitude, Mathf.Sin(Time.time * 0.9f + phaseOffset) * 2f);
+            }
+            else
+            {
+                transform.localPosition += nextBobOffset - appliedBobOffset;
+                appliedBobOffset = nextBobOffset;
+                transform.localRotation = baseLocalRotation * Quaternion.Euler(0f, wave * turnAmplitude, Mathf.Sin(Time.time * 0.9f + phaseOffset) * 2f);
+            }
             transform.localScale = baseLocalScale * (1f + Mathf.Max(0f, wave) * scalePulse);
         }
 
@@ -72,6 +106,13 @@ namespace Features.Activities
             RemoveAppliedBobOffset();
             baseLocalRotation = transform.localRotation;
             baseLocalScale = transform.localScale;
+
+            originLocalPos = transform.localPosition;
+            currentBaseLocalPos = originLocalPos;
+            currentBaseLocalRot = baseLocalRotation;
+            isMoving = false;
+            wanderWaitTimer = Random.Range(0.5f, minWanderWaitTime);
+
             usingBuiltInAnimation = TryInitializeBuiltInAnimation();
         }
 
@@ -150,13 +191,21 @@ namespace Features.Activities
 
             if (Time.time >= nextActionTime)
             {
-                if (!PlayRandomAvailableState(MainActionStates, baseLayerIndex, actionCrossFadeDuration))
+                if (!(enableWandering && isMoving))
                 {
-                    usingBuiltInAnimation = false;
-                    return;
-                }
+                    if (!PlayRandomAvailableState(MainActionStates, baseLayerIndex, actionCrossFadeDuration))
+                    {
+                        usingBuiltInAnimation = false;
+                        return;
+                    }
 
-                ScheduleNextBuiltInAction();
+                    ScheduleNextBuiltInAction();
+                }
+                else
+                {
+                    // Postpone random idle actions during wandering movement
+                    nextActionTime = Time.time + 1.0f;
+                }
             }
 
             if (shapeLayerIndex >= 0 && Time.time >= nextExpressionTime)
@@ -266,6 +315,67 @@ namespace Features.Activities
 
             transform.localPosition -= appliedBobOffset;
             appliedBobOffset = Vector3.zero;
+        }
+
+        public void SetWandering(bool enable)
+        {
+            enableWandering = enable;
+        }
+
+        private void UpdateWandering()
+        {
+            if (!enableWandering)
+            {
+                currentBaseLocalPos = originLocalPos;
+                return;
+            }
+
+            if (isMoving)
+            {
+                Vector3 toTarget = targetLocalPos - currentBaseLocalPos;
+                toTarget.y = 0f; // wander horizontally only
+                float dist = toTarget.magnitude;
+
+                if (dist > 0.015f)
+                {
+                    float moveStep = wanderSpeed * Time.deltaTime;
+                    currentBaseLocalPos = Vector3.MoveTowards(currentBaseLocalPos, targetLocalPos, moveStep);
+
+                    if (toTarget.sqrMagnitude > 0.0001f)
+                    {
+                        Quaternion targetRot = Quaternion.LookRotation(toTarget, Vector3.up);
+                        currentBaseLocalRot = Quaternion.Slerp(currentBaseLocalRot, targetRot, wanderRotateSpeed * Time.deltaTime);
+                    }
+                }
+                else
+                {
+                    isMoving = false;
+                    wanderWaitTimer = Random.Range(minWanderWaitTime, maxWanderWaitTime);
+
+                    if (usingBuiltInAnimation && animator != null)
+                    {
+                        PlayRandomAvailableState(new[] { "Idle_A", "Idle_B", "Idle_C", "Bounce", "Sit" }, baseLayerIndex, actionCrossFadeDuration);
+                    }
+                }
+            }
+            else
+            {
+                wanderWaitTimer -= Time.deltaTime;
+                if (wanderWaitTimer <= 0f)
+                {
+                    Vector2 randomCircle = Random.insideUnitCircle * wanderRadius;
+                    targetLocalPos = originLocalPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
+                    isMoving = true;
+
+                    if (usingBuiltInAnimation && animator != null)
+                    {
+                        if (!PlayRandomAvailableState(new[] { "Walk", "Fly", "Swim", "Jump", "Bounce" }, baseLayerIndex, actionCrossFadeDuration))
+                        {
+                            PlayRandomAvailableState(MainActionStates, baseLayerIndex, actionCrossFadeDuration);
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -33,7 +33,7 @@ namespace Features.Activities
         [Header("Animal Learning Objects")]
         [SerializeField] private GameObject[] animalPrefabs;
         [SerializeField] private bool preferAnimalPrefabs = true;
-        [SerializeField] private float learningObjectTargetHeight = 0.3f;
+        [SerializeField] private float learningObjectTargetHeight = 0.48f;
         [SerializeField] private string resourcesAnimalFolder = "ARAnimals";
         [SerializeField] private bool faceLearningObjectsToCamera = true;
         [SerializeField] private float animalFacingYawOffset;
@@ -86,6 +86,16 @@ namespace Features.Activities
             Debug.Log($"[ActivityPrefabSetup] Prepared activity prefabs. Animal source: {(usingGeneratedAnimalPrefabs ? "generated fallback" : "imported/resources")}.");
         }
 
+        public GameObject GetAnimalPrefab(int index)
+        {
+            LoadAnimalPrefabsIfNeeded();
+            if (!HasAnimalPrefabs())
+            {
+                return null;
+            }
+            return animalPrefabs[index % animalPrefabs.Length];
+        }
+
         public GameObject GetRandomAnimalPrefab()
         {
             if (!preferAnimalPrefabs)
@@ -113,7 +123,7 @@ namespace Features.Activities
             return null;
         }
 
-        public void PrepareLearningObject(GameObject obj)
+        public void PrepareLearningObject(GameObject obj, bool enableWander = false)
         {
             if (obj == null)
             {
@@ -130,6 +140,7 @@ namespace Features.Activities
                 presentation = obj.AddComponent<ARAnimalPresentation>();
             }
 
+            presentation.SetWandering(enableWander);
             presentation.ResetBasePose();
         }
 

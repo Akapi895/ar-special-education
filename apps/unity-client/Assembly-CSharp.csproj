@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
   <!-- Generated file, do not modify, your changes will be overwritten (use AssetPostprocessor.OnGeneratedCSProject) -->
   <PropertyGroup>
     <BaseIntermediateOutputPath>Temp\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
@@ -9,6 +9,20 @@
   </PropertyGroup>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>
+    <Compile Include="Assets\Core\UI\Localization\SimpleLocalization.cs" />
+    <Compile Include="Assets\Core\UI\Localization\SO_Strings_VI.cs" />
+    <Compile Include="Assets\Core\Data\UserPreferences.cs" />
+    <Compile Include="Assets\Core\Support\SessionManager\SessionTimeManager.cs" />
+    <Compile Include="Assets\Core\Support\AudioManager\AudioClipLibrary.cs" />
+    <Compile Include="Assets\Core\Support\AudioManager\SimpleAudioManager.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIHintBubble.cs" />
+    <Compile Include="Assets\Core\UI\DesignSystem\UIDesignTokens.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIButtonKids.cs" />
+    <Compile Include="Assets\Core\UI\Components\UICardPanel.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIProgressBar.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIFeedbackOverlay.cs" />
+    <Compile Include="Assets\Core\UI\Navigation\UIScreen.cs" />
+    <Compile Include="Assets\Core\UI\Navigation\UIScreenManager.cs" />
     <ProjectCapability Include="Unity" />
     <ProjectCapability Include="EnableOnDemandExcludedFolderLoading" />
   </ItemGroup>
@@ -43,7 +57,6 @@
     <UnityVersion>6000.0.71f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Users\Admin\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.2.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.71f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.71f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.71f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -56,6 +69,7 @@
     <Compile Include="Assets\MobileARTemplateAssets\UI\Scripts\CutoutMaskUI.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\NumberLineJumpActivityBootstrap.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchPresenter.cs" />
+    <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\GroupAreaIndicator.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\ARTemplateMenuManager.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\IQuantityMatchView.cs" />
     <Compile Include="Assets\Core\Learning\Models\ActivityResult.cs" />

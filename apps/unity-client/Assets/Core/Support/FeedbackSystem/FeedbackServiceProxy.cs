@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections;
+using Core.Support.AudioManager;
 
 namespace Core.Support.FeedbackSystem
 {
@@ -8,6 +9,7 @@ namespace Core.Support.FeedbackSystem
     /// MonoBehaviour proxy for the FeedbackSystem.
     /// Attach to a GameObject in the scene to enable feedback functionality.
     /// Provides a singleton instance for easy access across activities.
+    /// Incorporates SimpleAudioManager and visual particle prefabs.
     /// </summary>
     public class FeedbackServiceProxy : MonoBehaviour
     {
@@ -18,6 +20,12 @@ namespace Core.Support.FeedbackSystem
         [Tooltip("Feedback config asset to use")]
         [SerializeField]
         private FeedbackConfig feedbackConfig;
+
+        [Header("Feedback Particles Prefabs (Optional)")]
+        [SerializeField] private GameObject correctVfxPrefab;
+        [SerializeField] private GameObject incorrectVfxPrefab;
+        [SerializeField] private GameObject successVfxPrefab;
+        [SerializeField] private float vfxDestroyDelay = 3f;
 
         /// <summary>
         /// Get the singleton FeedbackSystem instance.
@@ -74,22 +82,74 @@ namespace Core.Support.FeedbackSystem
 
         /// <summary>
         /// Handle sound effect requests.
-        /// TODO: Audio team to implement actual sound playback.
+        /// Plays SFX via SimpleAudioManager.
         /// </summary>
         private void HandleSoundRequested(string soundName)
         {
-            // TODO: Play actual sound via audio manager
-            Debug.Log($"[FeedbackServiceProxy] Sound requested: {soundName}");
+            if (SimpleAudioManager.Instance != null)
+            {
+                SimpleAudioManager.Instance.PlaySound(soundName);
+            }
+            else
+            {
+                Debug.Log($"[FeedbackServiceProxy] SimpleAudioManager not found. Sound requested: {soundName}");
+            }
         }
 
         /// <summary>
         /// Handle visual effect requests.
-        /// TODO: VFX team to implement actual effect playback.
+        /// Spawns particle prefabs.
         /// </summary>
         private void HandleVisualEffectRequested(string effectName)
         {
-            // TODO: Play actual VFX via VFX manager
-            Debug.Log($"[FeedbackServiceProxy] VFX requested: {effectName}");
+            GameObject prefabToSpawn = null;
+            string lowerName = effectName.ToLower();
+
+            if (lowerName.Contains("correct") || lowerName.Contains("praise") || lowerName.Contains("win"))
+            {
+                prefabToSpawn = correctVfxPrefab;
+            }
+            else if (lowerName.Contains("incorrect") || lowerName.Contains("fail") || lowerName.Contains("encouragement"))
+            {
+                prefabToSpawn = incorrectVfxPrefab;
+            }
+            else if (lowerName.Contains("success") || lowerName.Contains("complete") || lowerName.Contains("congrats"))
+            {
+                prefabToSpawn = successVfxPrefab;
+            }
+
+            if (prefabToSpawn != null)
+            {
+                try
+                {
+                    // Spawn at center of camera or at (0, 0, 0)
+                    Camera cam = Camera.main;
+                    Vector3 spawnPos = Vector3.zero;
+                    Quaternion spawnRot = Quaternion.identity;
+
+                    if (cam != null)
+                    {
+                        // Spawn 2 meters in front of main camera so it's visible in AR/3D space
+                        spawnPos = cam.transform.position + cam.transform.forward * 2f;
+                        spawnRot = cam.transform.rotation;
+                    }
+
+                    GameObject vfxInstance = Instantiate(prefabToSpawn, spawnPos, spawnRot);
+                    Destroy(vfxInstance, vfxDestroyDelay);
+
+                    #if UNITY_EDITOR
+                    Debug.Log($"[FeedbackServiceProxy] Spawned VFX: {effectName}");
+                    #endif
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[FeedbackServiceProxy] Failed to spawn VFX '{effectName}': {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.Log($"[FeedbackServiceProxy] VFX requested: {effectName} (no prefab bound)");
+            }
         }
 
         /// <summary>

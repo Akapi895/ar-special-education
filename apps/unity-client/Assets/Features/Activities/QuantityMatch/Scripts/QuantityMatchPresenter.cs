@@ -30,11 +30,12 @@ namespace Features.Activities.QuantityMatch
         private const float MaximumReadableObjectSpacing = 0.78f;
         private const float MinimumReadableGroupSpacing = 2.1f;
         private const float GroupSeparationPadding = 0.5f;
-        private const float GroupHitboxHeight = 0.62f;
-        private const float GroupHitboxPadding = 0.44f;
+        private const float GroupHitboxHeight = 0.95f;
+        private const float GroupHitboxPadding = 0.7f;
         private const float ViewportSafeMarginX = 0.16f;
         private const float ViewportSafeMarginY = 0.18f;
         private bool currentUsesNumberInputMode;
+        private int currentRoundNumber;
 
         [Header("Prefabs")]
         [SerializeField]
@@ -90,6 +91,7 @@ namespace Features.Activities.QuantityMatch
             }
 
             Debug.Log($"[QuantityMatchPresenter] Loading round {roundNumber}: Target = {currentQuestion.TargetNumber}");
+            currentRoundNumber = roundNumber;
             currentUsesNumberInputMode = roundNumber > SelectionQuestionCount;
 
             // Clear previous objects
@@ -178,11 +180,12 @@ namespace Features.Activities.QuantityMatch
                             forward.Normalize();
                         }
 
-                        float sideOffset = spacing * 0.74f;
-                        float depthOffset = spacing * 0.5f;
-                        positions[0] = center - right * sideOffset + forward * depthOffset * 0.28f;
-                        positions[1] = center - forward * depthOffset * 0.2f;
-                        positions[2] = center + right * sideOffset + forward * depthOffset * 0.28f;
+                        float sideOffset = spacing * 0.85f;
+                        float depthOffset = spacing * 0.65f;
+                        // Inverted V shape layout (triangle pointing away from camera to fill lower screen space)
+                        positions[0] = center - right * sideOffset - forward * depthOffset * 0.35f;
+                        positions[1] = center + forward * depthOffset * 0.35f;
+                        positions[2] = center + right * sideOffset - forward * depthOffset * 0.35f;
                     }
                     else
                     {
@@ -252,21 +255,48 @@ namespace Features.Activities.QuantityMatch
             float spacing = GetReadableObjectSpacing();
             Vector3[] localPositions = CalculateReadableGroundGridPositions(objectCount, spacing, out float width, out float depth);
 
+            // Get a specific animal prefab for this group to ensure only 1 species of animal per group
+            GameObject groupPrefab = null;
+            if (ActivityPrefabSetup.Instance != null)
+            {
+                int animalIndex = (currentRoundNumber * 3 + groupIndex);
+                groupPrefab = ActivityPrefabSetup.Instance.GetAnimalPrefab(animalIndex);
+            }
+            if (groupPrefab == null)
+            {
+                groupPrefab = GetObjectPrefab() ?? fallbackPrefab;
+            }
+
             for (int i = 0; i < localPositions.Length; i++)
             {
                 Vector3 worldPosition = group.transform.TransformPoint(localPositions[i]);
-                GameObject objectPrefab = GetObjectPrefab() ?? fallbackPrefab;
-                GameObject obj = placementService?.SpawnAtPosition(objectPrefab, worldPosition, group.transform.rotation, group.transform);
+                GameObject obj = placementService?.SpawnAtPosition(groupPrefab, worldPosition, group.transform.rotation, group.transform);
                 if (obj != null)
                 {
                     obj.name = $"Group{groupIndex + 1}_Animal{i + 1}";
                     obj.transform.localPosition = localPositions[i];
                     obj.transform.localRotation = Quaternion.Euler(0f, UnityEngine.Random.Range(-14f, 14f), 0f);
-                    ActivityPrefabSetup.Instance?.PrepareLearningObject(obj);
+                    ActivityPrefabSetup.Instance?.PrepareLearningObject(obj, true);
                 }
             }
 
             AddGroupHitbox(group, width, depth);
+
+            // Add Area Indicator visual effect on ground
+            var indicatorGo = new GameObject("AreaIndicator");
+            indicatorGo.transform.SetParent(group.transform, false);
+            indicatorGo.transform.localPosition = Vector3.zero;
+            var indicator = indicatorGo.AddComponent<GroupAreaIndicator>();
+            
+            Color groupColor;
+            if (groupIndex == 0) groupColor = new Color(0.45f, 0.68f, 0.9f); // blue
+            else if (groupIndex == 1) groupColor = new Color(0.95f, 0.6f, 0.4f); // orange
+            else groupColor = new Color(0.45f, 0.8f, 0.5f); // green
+            
+            float maxFootprint = Mathf.Max(width, depth);
+            indicator.radius = Mathf.Max(0.7f, maxFootprint * 0.5f + 0.35f);
+            indicator.SetColor(groupColor);
+
             if (!currentUsesNumberInputMode)
             {
                 AddGroupLabel(group, groupIndex, depth);
@@ -421,21 +451,39 @@ namespace Features.Activities.QuantityMatch
         {
             var labelGo = new GameObject("GroupLabel");
             labelGo.transform.SetParent(group.transform, false);
-            labelGo.transform.localPosition = new Vector3(0f, 0.58f, -groupDepth * 0.5f - 0.12f);
+            // Position it above the animal group center (y = 0.65f)
+            labelGo.transform.localPosition = new Vector3(0f, 0.65f, 0f);
 
-            var label = labelGo.AddComponent<TextMesh>();
-            label.text = $"Group {groupIndex + 1}";
+            // Background Board (Pill shape)
+            var bgGo = new GameObject("LabelBackground");
+            bgGo.transform.SetParent(labelGo.transform, false);
+            bgGo.transform.localPosition = Vector3.zero;
+            bgGo.transform.localScale = new Vector3(0.35f, 0.22f, 1f);
+            
+            var spriteRenderer = bgGo.AddComponent<SpriteRenderer>();
+            Color bgColor;
+            if (groupIndex == 0) bgColor = new Color(0.2f, 0.5f, 0.9f, 0.85f); // blue
+            else if (groupIndex == 1) bgColor = new Color(0.95f, 0.55f, 0.2f, 0.85f); // orange
+            else bgColor = new Color(0.3f, 0.75f, 0.4f, 0.85f); // green
+
+            spriteRenderer.sprite = CreateRoundedRectSprite(128, 64, 18, bgColor);
+
+            // Large White Number
+            var textGo = new GameObject("LabelText");
+            textGo.transform.SetParent(labelGo.transform, false);
+            textGo.transform.localPosition = new Vector3(0f, 0f, -0.01f); // slightly forward to prevent z-fighting
+
+            var label = textGo.AddComponent<TextMesh>();
+            label.text = $"{groupIndex + 1}"; // Just "1", "2", "3"
             label.anchor = TextAnchor.MiddleCenter;
             label.alignment = TextAlignment.Center;
-            label.fontSize = 56;
-            label.characterSize = 0.012f;
+            label.fontSize = 80;
+            label.characterSize = 0.007f;
             label.color = Color.white;
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-            Camera camera = Camera.main;
-            if (camera != null)
-            {
-                labelGo.transform.rotation = Quaternion.LookRotation(labelGo.transform.position - camera.transform.position, Vector3.up);
-            }
+            // Billboard component
+            labelGo.AddComponent<BillboardBehavior>();
         }
 
         /// <summary>
@@ -596,6 +644,13 @@ namespace Features.Activities.QuantityMatch
                 object data = interactionService.GetInteractableData(tappedObject);
                 if (data is int groupIndex)
                 {
+                    // Trigger indicator highlight
+                    var indicator = tappedObject.GetComponentInChildren<GroupAreaIndicator>();
+                    if (indicator != null)
+                    {
+                        indicator.Highlight();
+                    }
+
                     // Get the object count for this group
                     int objectCount = currentQuestion.ObjectCountsPerGroup[groupIndex];
                     HandleGroupSelected(groupIndex, objectCount);
@@ -626,17 +681,41 @@ namespace Features.Activities.QuantityMatch
             // Show feedback in view
             view?.ShowCorrectFeedback(quantityConfig.CorrectFeedback);
 
+            if (answer is QuantityMatchAnswer qAnswer && qAnswer.SelectedGroupIndex >= 0)
+            {
+                int groupIdx = qAnswer.SelectedGroupIndex;
+                if (spawnedGroups != null && groupIdx >= 0 && groupIdx < spawnedGroups.Length)
+                {
+                    var indicator = spawnedGroups[groupIdx].GetComponentInChildren<GroupAreaIndicator>();
+                    if (indicator != null)
+                    {
+                        indicator.SetColor(Color.green);
+                        indicator.Highlight();
+                    }
+                }
+            }
+
             // Call base to complete the round
             base.HandleCorrectAnswer(answer);
         }
 
-        /// <summary>
-        /// Handle incorrect answer with feedback.
-        /// </summary>
         protected override void HandleIncorrectAnswer(ActivityAnswer answer)
         {
             // Show feedback in view
             view?.ShowIncorrectFeedback(quantityConfig.IncorrectFeedback);
+
+            if (answer is QuantityMatchAnswer qAnswer && qAnswer.SelectedGroupIndex >= 0)
+            {
+                int groupIdx = qAnswer.SelectedGroupIndex;
+                if (spawnedGroups != null && groupIdx >= 0 && groupIdx < spawnedGroups.Length)
+                {
+                    var indicator = spawnedGroups[groupIdx].GetComponentInChildren<GroupAreaIndicator>();
+                    if (indicator != null)
+                    {
+                        indicator.FlashIncorrect();
+                    }
+                }
+            }
 
             // Call base to handle retry or failure
             base.HandleIncorrectAnswer(answer);
@@ -644,6 +723,19 @@ namespace Features.Activities.QuantityMatch
             if (currentState == ActivityState.Failed)
             {
                 view?.ShowActivityFailed(quantityConfig.FailedFeedback, currentResult);
+            }
+            else if (answer.AttemptNumber >= 2)
+            {
+                // Auto-show hint after 1.5 seconds when incorrect feedback hides
+                Invoke(nameof(AutoProvideHint), 1.5f);
+            }
+        }
+
+        private void AutoProvideHint()
+        {
+            if (currentState == ActivityState.InProgress)
+            {
+                RequestHint();
             }
         }
 
@@ -710,6 +802,76 @@ namespace Features.Activities.QuantityMatch
             ClearSpawnedObjects();
 
             base.Cleanup();
+        }
+
+        private static Sprite CreateRoundedRectSprite(int width, int height, int radius, Color color)
+        {
+            Texture2D texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            Color[] pixels = new Color[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int cx = x < radius ? radius : (x >= width - radius ? width - radius - 1 : x);
+                    int cy = y < radius ? radius : (y >= height - radius ? height - radius - 1 : y);
+                    
+                    float dx = x - cx;
+                    float dy = y - cy;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    
+                    if (dist > radius)
+                    {
+                        float diff = dist - radius;
+                        if (diff < 1f)
+                        {
+                            pixels[y * width + x] = new Color(color.r, color.g, color.b, color.a * (1f - diff));
+                        }
+                        else
+                        {
+                            pixels[y * width + x] = Color.clear;
+                        }
+                    }
+                    else
+                    {
+                        pixels[y * width + x] = color;
+                    }
+                }
+            }
+            texture.SetPixels(pixels);
+            texture.Apply();
+            return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f));
+        }
+    }
+
+    public class BillboardBehavior : MonoBehaviour
+    {
+        private Camera mainCamera;
+        private Vector3 baseScale;
+
+        private void Start()
+        {
+            mainCamera = Camera.main;
+            baseScale = transform.localScale;
+        }
+
+        private void LateUpdate()
+        {
+            if (mainCamera == null)
+            {
+                mainCamera = Camera.main;
+                if (mainCamera == null) return;
+            }
+
+            Vector3 direction = transform.position - mainCamera.transform.position;
+
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                transform.rotation = Quaternion.LookRotation(direction.normalized, mainCamera.transform.up);
+            }
+
+            // Gently pulsate label size to signify interactivity for kids
+            float pulse = 1f + Mathf.Sin(Time.time * 2.5f) * 0.06f;
+            transform.localScale = baseScale * pulse;
         }
     }
 }

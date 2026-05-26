@@ -74,6 +74,9 @@ namespace Features.Activities.NumberLineJump
         [SerializeField]
         private Button progressButton;
 
+        [SerializeField]
+        private Core.UI.Components.UIFeedbackOverlay feedbackOverlay;
+
         // Events from IActivityView
         public event Action OnHintRequested;
         public event Action OnCancelRequested;
@@ -368,7 +371,14 @@ namespace Features.Activities.NumberLineJump
         public void ShowCorrectFeedback(string message, string finalEquation)
         {
             string fullMessage = string.IsNullOrEmpty(finalEquation) ? message : $"{message}\n{finalEquation}";
-            ShowFeedback(fullMessage, Color.green);
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowCorrect(fullMessage);
+            }
+            else
+            {
+                ShowFeedback(fullMessage, Color.green);
+            }
             DisableInput();
             SetJumpControlsActive(false);
             SetRunningActionButtonsActive(false);
@@ -394,7 +404,14 @@ namespace Features.Activities.NumberLineJump
         public void ShowIncorrectFeedback(string message, string attemptedEquation)
         {
             string fullMessage = string.IsNullOrEmpty(attemptedEquation) ? message : $"{message}\n{attemptedEquation}";
-            ShowFeedback(fullMessage, Color.red);
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowIncorrect(fullMessage);
+            }
+            else
+            {
+                ShowFeedback(fullMessage, Color.red);
+            }
             EnableInput();
         }
 
@@ -487,11 +504,19 @@ namespace Features.Activities.NumberLineJump
                            $"Hints Used: {result.HintsUsedCount}\n" +
                            $"Time: {result.TimeSpentSeconds:F1} seconds";
 
-            ShowFeedback(message, Color.green);
             activityFinished = true;
             DisableInput();
             SetJumpControlsActive(false);
             SetRunningActionButtonsActive(false);
+
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowSuccess("Activity Complete! Progress saved.");
+            }
+            else
+            {
+                ShowFeedback(message, Color.green);
+            }
 
             if (nextRoundButton != null)
             {
@@ -514,11 +539,19 @@ namespace Features.Activities.NumberLineJump
                                $"Attempts: {result.TotalAttempts}\n" +
                                $"Hints Used: {result.HintsUsedCount}";
 
-            ShowFeedback(fullMessage, Color.red);
             activityFinished = true;
             DisableInput();
             SetJumpControlsActive(false);
             SetRunningActionButtonsActive(false);
+
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowIncorrect(message);
+            }
+            else
+            {
+                ShowFeedback(fullMessage, Color.red);
+            }
 
             if (nextRoundButton != null)
             {
@@ -684,9 +717,13 @@ namespace Features.Activities.NumberLineJump
         /// <summary>
         /// Hide feedback panel.
         /// </summary>
-        private void HideFeedback()
+        public void HideFeedback()
         {
-            if (feedbackPanel != null)
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.Hide();
+            }
+            else if (feedbackPanel != null)
             {
                 feedbackPanel.SetActive(false);
             }

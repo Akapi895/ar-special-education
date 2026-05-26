@@ -6,7 +6,8 @@ using UnityEngine.UI;
 namespace Project.App
 {
     /// <summary>
-    /// Activity select controller - displays available activities and loads selected one.
+    /// Activity select controller - displays available activities, checks locking status, 
+    /// and displays progress markers using the Design System components.
     /// </summary>
     public class ActivitySelectController : MonoBehaviour
     {
@@ -16,6 +17,11 @@ namespace Project.App
             public Button button;
             public string activityId;
             public string sceneName;
+            
+            [Header("Visual Progress (Optional)")]
+            public Slider progressSlider;
+            public Text progressText;
+            public GameObject lockIcon;
         }
 
         [Header("Activity Buttons")]
@@ -46,7 +52,16 @@ namespace Project.App
                 {
                     bool isUnlocked = IsActivityUnlocked(activity.activityId);
                     activity.button.interactable = isUnlocked;
+                    
+                    if (activity.lockIcon != null)
+                    {
+                        activity.lockIcon.SetActive(!isUnlocked);
+                    }
+                    
                     activity.button.onClick.AddListener(() => OnActivitySelected(activity));
+                    
+                    // Display progress if possible
+                    UpdateActivityProgress(activity);
                 }
             }
 
@@ -57,6 +72,42 @@ namespace Project.App
             }
 
             Debug.Log("[ActivitySelectController] Activity select loaded.");
+        }
+
+        private void UpdateActivityProgress(ActivityButton activity)
+        {
+            try
+            {
+                // Retrieve statistics from local storage
+                ActivityStatistics stats = ProgressStorageProxy.Instance.GetActivityStatistics(activity.activityId);
+                
+                if (stats != null)
+                {
+                    // Target 10 rounds for 100% completion in Easy level
+                    float progressFraction = Mathf.Clamp01(stats.TotalAttempts / 10f);
+                    
+                    if (activity.progressSlider != null)
+                    {
+                        activity.progressSlider.value = progressFraction;
+                    }
+                    
+                    if (activity.progressText != null)
+                    {
+                        activity.progressText.text = $"{Mathf.RoundToInt(progressFraction * 100f)}%";
+                    }
+                }
+                else
+                {
+                    if (activity.progressSlider != null) activity.progressSlider.value = 0f;
+                    if (activity.progressText != null) activity.progressText.text = "0%";
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[ActivitySelectController] Could not fetch progress for {activity.activityId}: {ex.Message}");
+                if (activity.progressSlider != null) activity.progressSlider.value = 0f;
+                if (activity.progressText != null) activity.progressText.text = "0%";
+            }
         }
 
         private void OnDestroy()

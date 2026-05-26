@@ -72,6 +72,9 @@ namespace Features.Activities.CompareQuantity
         [SerializeField]
         private Button progressButton;
 
+        [SerializeField]
+        private Core.UI.Components.UIFeedbackOverlay feedbackOverlay;
+
         public event Action OnHintRequested;
         public event Action OnCancelRequested;
 
@@ -315,7 +318,14 @@ namespace Features.Activities.CompareQuantity
         /// </summary>
         public void ShowCorrectFeedback(string message)
         {
-            ShowFeedback(message, Color.green);
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowCorrect(message);
+            }
+            else
+            {
+                ShowFeedback(message, Color.green);
+            }
             DisableInput();
             SetAnswerButtonsActive(false);
             SetRunningActionButtonsActive(false);
@@ -339,7 +349,14 @@ namespace Features.Activities.CompareQuantity
         /// </summary>
         public void ShowIncorrectFeedback(string message)
         {
-            ShowFeedback(message, Color.red);
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowIncorrect(message);
+            }
+            else
+            {
+                ShowFeedback(message, Color.red);
+            }
             EnableAnswerButtons(true);  // Allow retry
         }
 
@@ -381,11 +398,19 @@ namespace Features.Activities.CompareQuantity
                            $"Hints Used: {result.HintsUsedCount}\n" +
                            $"Time: {result.TimeSpentSeconds:F1} seconds";
 
-            ShowFeedback(message, Color.green);
             activityFinished = true;
             DisableInput();
             SetAnswerButtonsActive(false);
             SetRunningActionButtonsActive(false);
+
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowSuccess("Activity Complete! Progress saved.");
+            }
+            else
+            {
+                ShowFeedback(message, Color.green);
+            }
 
             if (nextRoundButton != null)
             {
@@ -407,11 +432,19 @@ namespace Features.Activities.CompareQuantity
                                $"Attempts: {result.TotalAttempts}\n" +
                                $"Hints Used: {result.HintsUsedCount}";
 
-            ShowFeedback(fullMessage, Color.red);
             activityFinished = true;
             DisableInput();
             SetAnswerButtonsActive(false);
             SetRunningActionButtonsActive(false);
+
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.ShowIncorrect(message);
+            }
+            else
+            {
+                ShowFeedback(fullMessage, Color.red);
+            }
 
             if (nextRoundButton != null)
             {
@@ -492,9 +525,13 @@ namespace Features.Activities.CompareQuantity
         /// <summary>
         /// Hide feedback panel.
         /// </summary>
-        private void HideFeedback()
+        public void HideFeedback()
         {
-            if (feedbackPanel != null)
+            if (feedbackOverlay != null)
+            {
+                feedbackOverlay.Hide();
+            }
+            else if (feedbackPanel != null)
             {
                 feedbackPanel.SetActive(false);
             }

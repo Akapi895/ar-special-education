@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c05df00d452093de3f8a459cf9da1111, type: 3}
+  m_Name: SO_Strings_VI
+  m_EditorClassIdentifier: 
+  entries:
+  - key: app_title
+    value: Học Toán Vui
+  - key: btn_start
+    value: Học tiếp
+  - key: btn_progress
+    value: Tiến bộ của con
+  - key: btn_hint
+    value: Gợi ý
+  - key: btn_confirm
+    value: Xác nhận
+  - key: btn_retry
+    value: Thử lại nhé
+  - key: btn_home
+    value: Về menu
+  - key: btn_next
+    value: Học tiếp
+  - key: btn_listen
+    value: Nghe lại
+  - key: activity_quantity_match
+    value: Ghép Số Lượng
+  - key: activity_compare_quantity
+    value: So Sánh Số Lượng
+  - key: activity_number_line
+    value: Nhảy Trên Trục Số
+  - key: feedback_correct
+    value: Con làm đúng rồi!
+  - key: feedback_incorrect
+    value: Chưa đúng, thử lại nhé!
+  - key: feedback_success
+    value: Con làm tốt lắm!
+  - key: feedback_great
+    value: Giỏi quá!
+  - key: label_round
+    value: "Câu {0}/{1}"
+  - key: label_score
+    value: "Đúng: {0}/{1}"
+  - key: label_time
+    value: "Thời gian: {0} phút"
+  - key: label_hints_used
+    value: "Gợi ý đã dùng: {0}"
+  - key: compare_more
+    value: Nhiều hơn
+  - key: compare_fewer
+    value: Ít hơn
+  - key: compare_equal
+    value: Bằng nhau
+  - key: progress_doing_well
+    value: "Con đang tốt ở:"
+  - key: progress_practice_more
+    value: "Nên luyện thêm:"
+  - key: quantity_choose_group
+    value: "Chọn nhóm có {0} con"
+  - key: numberline_jump_left
+    value: Nhảy trái
+  - key: numberline_jump_right
+    value: Nhảy phải
+  - key: numberline_jumped
+    value: "Đã nhảy: {0} bước"
