@@ -6,8 +6,20 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 4755b35b590504809a7525fd2109c2e2
+    path: Assets/_Project/Scenes/SC_MainMenu.unity
+    guid: bcd8224156e0d2640868bfad872a59c4
+  - enabled: 1
+    path: Assets/_Project/Scenes/SC_ActivitySelect.unity
+    guid: 9edd6b7398b9a1845b798cfd1788a50c
+  - enabled: 1
+    path: Assets/_Project/Scenes/SC_ARGameplay.unity
+    guid: 81182becf12cd234d91af74598b252c0
+  - enabled: 1
+    path: Assets/_Project/Scenes/SC_ProgressDashboard.unity
+    guid: 08c4db0188b30fe4e874c6a7def83319
+  - enabled: 1
+    path: Assets/_Project/Scenes/SC_TestSandbox.unity
+    guid: d483289249a685145815fdb79d7d0324
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 6ee72d15cf39dd748a13eac57397b9af, type: 2}
     UnityEditor.XR.ARKit.ARKitSettings: {fileID: 11400000, guid: 0465d33c6aee55f44b0237db8b0e0259, type: 2}

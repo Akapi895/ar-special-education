@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f0191487998df4cbacb454cd48d516, type: 3}
+  m_Name: SO_QuantityMatchConfig_Easy
+  m_EditorClassIdentifier: 
+  activityId: QuantityMatch
+  displayName: Quantity Match (Easy)
+  description: Match the number to the correct group of objects.
+  difficultyLevel: 1
+  maxHintsPerQuestion: 3
+  maxAttemptsPerQuestion: 3
+  timeLimitSeconds: 0
+  numberOfRounds: 10
+  defaultHints: []
+  questions:
+  - TargetNumber: 2
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 010000000200000003000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 4
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 040000000200000005000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 6
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 050000000600000007000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 3
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 010000000300000005000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 5
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 040000000600000005000000
+    CorrectGroupIndex: 2
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 7
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 07000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 8
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 08000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 9
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 09000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 10
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 0a000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 6
+    NumberOfGroups: 1
+    ObjectCountsPerGroup: 06000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  correctFeedback: Great job! You found the right group!
+  incorrectFeedback: Not quite. Let's try again!
+  failedFeedback: Good effort! Let's try another one.
+  hintLevel1:
+    HintId: qm_hint1
+    HintText: Look carefully at the groups.
+    Level: 1
+    ARHint: 
+  hintLevel2:
+    HintId: qm_hint2
+    HintText: The number shown is X, count each group.
+    Level: 2
+    ARHint: 
+  hintLevel3:
+    HintId: qm_hint3
+    HintText: One group has exactly X objects.
+    Level: 3
+    ARHint: 
+  defaultObjectSpacing: 0.68
+  defaultGroupSpacing: 2.1
+  groupArrangement: 0
