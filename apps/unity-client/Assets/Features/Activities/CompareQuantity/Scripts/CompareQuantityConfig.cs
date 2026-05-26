@@ -21,15 +21,15 @@ namespace Features.Activities.CompareQuantity
         [Header("Button Labels")]
         [Tooltip("Text for the 'More' button")]
         [SerializeField]
-        private string moreButtonLabel = "More";
+        private string moreButtonLabel = "B\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n";
 
         [Tooltip("Text for the 'Fewer' button")]
         [SerializeField]
-        private string fewerButtonLabel = "Fewer";
+        private string fewerButtonLabel = "B\u00ean tr\u00e1i \u00edt h\u01a1n";
 
         [Tooltip("Text for the 'Equal' button")]
         [SerializeField]
-        private string equalButtonLabel = "Equal";
+        private string equalButtonLabel = "B\u1eb1ng nhau";
 
         [Header("Feedback Strings - Outcome Specific")]
         [Tooltip("Feedback when user answers 'More' correctly")]
@@ -93,7 +93,7 @@ namespace Features.Activities.CompareQuantity
         [Header("Visual Settings")]
         [Tooltip("Spacing between the two groups (meters)")]
         [SerializeField]
-        private float groupSpacing = 2.3f;
+        private float groupSpacing = 3.0f;
 
         // Properties
         public List<CompareQuantityQuestion> Questions => questions;
@@ -102,6 +102,45 @@ namespace Features.Activities.CompareQuantity
         public string EqualButtonLabel => equalButtonLabel;
         public string FailedFeedback => failedFeedback;
         public float GroupSpacing => groupSpacing;
+
+        public void ConfigureRuntime(
+            string activityId,
+            string displayName,
+            string description,
+            List<CompareQuantityQuestion> questions,
+            string moreButtonLabel,
+            string fewerButtonLabel,
+            string equalButtonLabel,
+            ActivityHint hintLevel1,
+            ActivityHint hintLevel2,
+            ActivityHint hintLevel3,
+            ActivityHint equalityHintLevel1,
+            ActivityHint equalityHintLevel2,
+            ActivityHint equalityHintLevel3,
+            float groupSpacing,
+            int maxAttemptsPerQuestion = 3,
+            int maxHintsPerQuestion = 3)
+        {
+            this.questions = questions ?? new List<CompareQuantityQuestion>();
+            this.moreButtonLabel = moreButtonLabel;
+            this.fewerButtonLabel = fewerButtonLabel;
+            this.equalButtonLabel = equalButtonLabel;
+            this.hintLevel1 = hintLevel1;
+            this.hintLevel2 = hintLevel2;
+            this.hintLevel3 = hintLevel3;
+            this.equalityHintLevel1 = equalityHintLevel1;
+            this.equalityHintLevel2 = equalityHintLevel2;
+            this.equalityHintLevel3 = equalityHintLevel3;
+            this.groupSpacing = groupSpacing;
+
+            ConfigureBase(
+                activityId,
+                displayName,
+                description,
+                this.questions.Count,
+                maxAttemptsPerQuestion,
+                maxHintsPerQuestion);
+        }
 
         /// <summary>
         /// Get a specific question by index.

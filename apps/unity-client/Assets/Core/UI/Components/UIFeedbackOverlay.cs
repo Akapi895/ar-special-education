@@ -50,7 +50,7 @@ namespace Core.UI.Components
             // Soft green background glow
             if (overlayBackground != null)
             {
-                overlayBackground.color = new Color(0.4f, 0.8f, 0.5f, 0.35f);
+                overlayBackground.color = new Color(0.4f, 0.8f, 0.5f, 0.18f);
             }
 
             if (confettiParticleSystem != null)
@@ -72,7 +72,7 @@ namespace Core.UI.Components
             // Soft orange background glow (not harsh red)
             if (overlayBackground != null)
             {
-                overlayBackground.color = new Color(1.0f, 0.8f, 0.5f, 0.45f);
+                overlayBackground.color = new Color(1.0f, 0.8f, 0.5f, 0.2f);
             }
 
             TriggerEntranceAnimation();
@@ -89,7 +89,7 @@ namespace Core.UI.Components
             // Warm yellow/gold background glow
             if (overlayBackground != null)
             {
-                overlayBackground.color = new Color(0.98f, 0.85f, 0.35f, 0.45f);
+                overlayBackground.color = new Color(0.98f, 0.85f, 0.35f, 0.22f);
             }
 
             if (successParticleSystem != null)
@@ -140,6 +140,11 @@ namespace Core.UI.Components
             if (overlayContainer != null)
             {
                 overlayContainer.SetActive(true);
+            }
+
+            if (overlayBackground != null)
+            {
+                overlayBackground.raycastTarget = false;
             }
 
             if (contentPanel != null)

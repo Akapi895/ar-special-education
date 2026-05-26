@@ -25,8 +25,14 @@ namespace Core.AR.Interaction
         [SerializeField]
         private Color highlightColor = new Color(1f, 0.92f, 0.3f, 1f);
 
+        [SerializeField]
+        private bool enableDrag;
+
         private readonly Dictionary<GameObject, InteractableEntry> interactables =
             new Dictionary<GameObject, InteractableEntry>();
+
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
 
         private bool interactionEnabled = true;
         private GameObject highlightedObject;
@@ -152,12 +158,12 @@ namespace Core.AR.Interaction
                 highlightedObject = root;
                 entry.OriginalScale = root.transform.localScale;
                 root.transform.localScale = entry.OriginalScale * highlightScaleMultiplier;
-                ApplyHighlightColor(root, true);
+                ApplyHighlightColor(root, true, entry);
             }
             else
             {
                 root.transform.localScale = entry.OriginalScale;
-                ApplyHighlightColor(root, false);
+                ApplyHighlightColor(root, false, entry);
 
                 if (highlightedObject == root)
                 {
@@ -211,7 +217,7 @@ namespace Core.AR.Interaction
             }
 
             Ray ray = interactionCamera.ScreenPointToRay(screenPosition);
-            if (!Physics.Raycast(ray, out RaycastHit hit, 100f))
+            if (!Physics.Raycast(ray, out RaycastHit hit, 100f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
             {
                 return;
             }
@@ -225,7 +231,10 @@ namespace Core.AR.Interaction
 
             Select(root);
             OnObjectTapped?.Invoke(root);
-            draggingObject = root;
+            if (enableDrag)
+            {
+                draggingObject = root;
+            }
         }
 
         private bool IsPointerOverUi(Vector2 screenPosition)
@@ -377,29 +386,83 @@ namespace Core.AR.Interaction
             return Mouse.current != null && Mouse.current.leftButton.wasReleasedThisFrame;
         }
 
-        private void ApplyHighlightColor(GameObject root, bool enabled)
+        private void ApplyHighlightColor(GameObject root, bool enabled, InteractableEntry entry)
         {
             Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
             foreach (Renderer renderer in renderers)
             {
-                if (renderer.material != null && renderer.material.HasProperty("_Color"))
+                if (renderer == null)
                 {
-                    if (enabled)
-                    {
-                        renderer.material.color = highlightColor;
-                    }
-                    else
-                    {
-                        renderer.material.color = Color.white;
-                    }
+                    continue;
                 }
+
+                if (!enabled)
+                {
+                    if (entry.OriginalPropertyBlocks.TryGetValue(renderer, out MaterialPropertyBlock originalBlock))
+                    {
+                        renderer.SetPropertyBlock(originalBlock);
+                    }
+
+                    continue;
+                }
+
+                Material sharedMaterial = renderer.sharedMaterial;
+                if (sharedMaterial == null)
+                {
+                    continue;
+                }
+
+                bool hasBaseColor = sharedMaterial.HasProperty(BaseColorId);
+                bool hasColor = sharedMaterial.HasProperty(ColorId);
+                if (!hasBaseColor && !hasColor)
+                {
+                    continue;
+                }
+
+                if (!entry.OriginalPropertyBlocks.ContainsKey(renderer))
+                {
+                    var originalBlock = new MaterialPropertyBlock();
+                    renderer.GetPropertyBlock(originalBlock);
+                    entry.OriginalPropertyBlocks[renderer] = originalBlock;
+                }
+
+                var highlightBlock = new MaterialPropertyBlock();
+                renderer.GetPropertyBlock(highlightBlock);
+                if (hasBaseColor)
+                {
+                    highlightBlock.SetColor(BaseColorId, highlightColor);
+                }
+                else
+                {
+                    highlightBlock.SetColor(ColorId, highlightColor);
+                }
+
+                renderer.SetPropertyBlock(highlightBlock);
             }
+
+            if (!enabled)
+            {
+                entry.OriginalPropertyBlocks.Clear();
+            }
+        }
+
+        private void ApplyHighlightColor(GameObject root, bool enabled)
+        {
+            GameObject registeredRoot = ResolveRegisteredRoot(root);
+            if (registeredRoot == null || !interactables.TryGetValue(registeredRoot, out InteractableEntry entry))
+            {
+                return;
+            }
+
+            ApplyHighlightColor(registeredRoot, enabled, entry);
         }
 
         private class InteractableEntry
         {
             public object Data;
             public Vector3 OriginalScale;
+            public readonly Dictionary<Renderer, MaterialPropertyBlock> OriginalPropertyBlocks =
+                new Dictionary<Renderer, MaterialPropertyBlock>();
         }
     }
 }

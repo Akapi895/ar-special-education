@@ -8,14 +8,15 @@ namespace Features.Activities
     public class ARAnimalPresentation : MonoBehaviour
     {
         [SerializeField] private bool useBuiltInAnimation = true;
-        [SerializeField] private float bobAmplitude = 0.016f;
+        [SerializeField] private float bobAmplitude = 0f;
         [SerializeField] private float bobFrequency = 1.45f;
         [SerializeField] private float turnAmplitude = 7f;
         [SerializeField] private Vector2 actionIntervalRange = new Vector2(1.8f, 3.8f);
         [SerializeField] private float actionCrossFadeDuration = 0.16f;
-        [SerializeField] private float hopHeight = 0.028f;
+        [SerializeField] private float hopHeight = 0f;
         [SerializeField] private float hopFrequency = 0.55f;
         [SerializeField] private float scalePulse = 0.025f;
+        [SerializeField] private bool preventAirborneAnimations = true;
 
         private Quaternion baseLocalRotation;
         private Vector3 appliedBobOffset;
@@ -35,6 +36,12 @@ namespace Features.Activities
         [SerializeField] private float wanderRotateSpeed = 5.0f;
         [SerializeField] private float minWanderWaitTime = 2.0f;
         [SerializeField] private float maxWanderWaitTime = 5.0f;
+        [SerializeField] private bool snapWanderToGround;
+        [SerializeField] private float groundProbeHeight = 1.5f;
+        [SerializeField] private float groundProbeDistance = 3.5f;
+        [SerializeField] private float groundOffset;
+        [SerializeField] private float groundRenderClearance = 0.035f;
+        [SerializeField] private float minimumGroundNormalY = 0.65f;
 
         private Vector3 originLocalPos;
         private Vector3 currentBaseLocalPos;
@@ -42,16 +49,26 @@ namespace Features.Activities
         private Quaternion currentBaseLocalRot;
         private bool isMoving;
         private float wanderWaitTimer;
+        private bool useFixedWanderArea;
+        private Vector3 fixedWanderCenterLocal;
+        private float fixedWanderRadius;
+        private bool hasGroundWorldY;
+        private float groundWorldY;
 
         private static readonly string[] MainActionStates =
         {
-            "Idle_A", "Idle_B", "Idle_C", "Bounce", "Jump", "Eat", "Sit", "Spin", "Walk", "Fly", "Swim"
+            "Idle_A", "Idle_B", "Idle_C", "Eat", "Sit", "Spin", "Walk"
         };
 
         private static readonly string[] ExpressionStates =
         {
             "Eyes_Blink", "Eyes_Happy", "Eyes_Excited", "Eyes_LookUp", "Eyes_LookDown",
             "Eyes_LookIn", "Eyes_LookOut", "Eyes_Squint"
+        };
+
+        private static readonly string[] AirborneKeywords =
+        {
+            "fly", "flying", "flight", "glide", "hover", "soar", "swim", "floating", "float"
         };
 
         private void OnEnable()
@@ -101,13 +118,19 @@ namespace Features.Activities
             transform.localScale = baseLocalScale * (1f + Mathf.Max(0f, wave) * scalePulse);
         }
 
+        private void LateUpdate()
+        {
+            CorrectRenderableGroundPenetration();
+        }
+
         public void ResetBasePose()
         {
             RemoveAppliedBobOffset();
             baseLocalRotation = transform.localRotation;
             baseLocalScale = transform.localScale;
 
-            originLocalPos = transform.localPosition;
+            originLocalPos = SnapLocalPositionToGround(ClampLocalPositionToWanderArea(transform.localPosition));
+            transform.localPosition = originLocalPos;
             currentBaseLocalPos = originLocalPos;
             currentBaseLocalRot = baseLocalRotation;
             isMoving = false;
@@ -126,6 +149,12 @@ namespace Features.Activities
             animator = GetComponentInChildren<Animator>();
             if (animator != null && animator.runtimeAnimatorController != null)
             {
+                if (preventAirborneAnimations && IsAirborneClipName(gameObject.name))
+                {
+                    animator.enabled = false;
+                    return false;
+                }
+
                 animator.applyRootMotion = false;
                 baseLayerIndex = 0;
                 shapeLayerIndex = animator.layerCount > 1 ? 1 : -1;
@@ -134,7 +163,12 @@ namespace Features.Activities
                     animator.SetLayerWeight(shapeLayerIndex, 1f);
                 }
 
-                PlayRandomAvailableState(MainActionStates, baseLayerIndex, 0f);
+                if (!PlayRandomAvailableState(MainActionStates, baseLayerIndex, 0f))
+                {
+                    animator.enabled = false;
+                    return false;
+                }
+
                 if (shapeLayerIndex >= 0)
                 {
                     PlayRandomAvailableState(ExpressionStates, shapeLayerIndex, 0f);
@@ -158,6 +192,11 @@ namespace Features.Activities
                     continue;
                 }
 
+                if (preventAirborneAnimations && IsAirborneClipName(state.name))
+                {
+                    continue;
+                }
+
                 if (preferredState == null || IsPreferredClipName(state.name))
                 {
                     preferredState = state;
@@ -172,6 +211,7 @@ namespace Features.Activities
 
             if (preferredState == null)
             {
+                legacyAnimation.enabled = false;
                 return false;
             }
 
@@ -232,6 +272,11 @@ namespace Features.Activities
             for (int i = 0; i < stateNames.Length; i++)
             {
                 string stateName = stateNames[(startIndex + i) % stateNames.Length];
+                if (preventAirborneAnimations && IsAirborneClipName(stateName))
+                {
+                    continue;
+                }
+
                 int stateHash = Animator.StringToHash(stateName);
                 if (!animator.HasState(layerIndex, stateHash))
                 {
@@ -301,9 +346,26 @@ namespace Features.Activities
             return lower.Contains("idle")
                 || lower.Contains("bounce")
                 || lower.Contains("jump")
-                || lower.Contains("swim")
-                || lower.Contains("fly")
                 || lower.Contains("walk");
+        }
+
+        private static bool IsAirborneClipName(string clipName)
+        {
+            if (string.IsNullOrEmpty(clipName))
+            {
+                return false;
+            }
+
+            string lower = clipName.ToLowerInvariant();
+            for (int i = 0; i < AirborneKeywords.Length; i++)
+            {
+                if (lower.Contains(AirborneKeywords[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void RemoveAppliedBobOffset()
@@ -320,6 +382,24 @@ namespace Features.Activities
         public void SetWandering(bool enable)
         {
             enableWandering = enable;
+        }
+
+        public void ConfigureWandering(bool enable, float radius, float speed, float minWaitTime, float maxWaitTime, bool snapToGround)
+        {
+            enableWandering = enable;
+            wanderRadius = Mathf.Max(0f, radius);
+            wanderSpeed = Mathf.Max(0.01f, speed);
+            minWanderWaitTime = Mathf.Max(0f, minWaitTime);
+            maxWanderWaitTime = Mathf.Max(minWanderWaitTime, maxWaitTime);
+            snapWanderToGround = snapToGround;
+        }
+
+        public void ConfigureFixedWanderArea(Vector3 centerLocalPosition, float radius)
+        {
+            useFixedWanderArea = true;
+            fixedWanderCenterLocal = centerLocalPosition;
+            fixedWanderRadius = Mathf.Max(0.1f, radius);
+            wanderRadius = fixedWanderRadius;
         }
 
         private void UpdateWandering()
@@ -340,6 +420,7 @@ namespace Features.Activities
                 {
                     float moveStep = wanderSpeed * Time.deltaTime;
                     currentBaseLocalPos = Vector3.MoveTowards(currentBaseLocalPos, targetLocalPos, moveStep);
+                    currentBaseLocalPos = SnapLocalPositionToGround(ClampLocalPositionToWanderArea(currentBaseLocalPos));
 
                     if (toTarget.sqrMagnitude > 0.0001f)
                     {
@@ -363,19 +444,208 @@ namespace Features.Activities
                 wanderWaitTimer -= Time.deltaTime;
                 if (wanderWaitTimer <= 0f)
                 {
-                    Vector2 randomCircle = Random.insideUnitCircle * wanderRadius;
-                    targetLocalPos = originLocalPos + new Vector3(randomCircle.x, 0f, randomCircle.y);
+                    targetLocalPos = SnapLocalPositionToGround(GetRandomWanderTargetLocal());
                     isMoving = true;
 
                     if (usingBuiltInAnimation && animator != null)
                     {
-                        if (!PlayRandomAvailableState(new[] { "Walk", "Fly", "Swim", "Jump", "Bounce" }, baseLayerIndex, actionCrossFadeDuration))
+                        if (!PlayRandomAvailableState(new[] { "Walk", "Idle_A", "Idle_B", "Idle_C" }, baseLayerIndex, actionCrossFadeDuration))
                         {
                             PlayRandomAvailableState(MainActionStates, baseLayerIndex, actionCrossFadeDuration);
                         }
                     }
                 }
             }
+        }
+
+        private Vector3 GetRandomWanderTargetLocal()
+        {
+            Vector2 randomCircle = Random.insideUnitCircle * wanderRadius;
+            Vector3 center = useFixedWanderArea ? fixedWanderCenterLocal : originLocalPos;
+            Vector3 target = center + new Vector3(randomCircle.x, 0f, randomCircle.y);
+            target.y = originLocalPos.y;
+            return ClampLocalPositionToWanderArea(target);
+        }
+
+        private Vector3 ClampLocalPositionToWanderArea(Vector3 localPosition)
+        {
+            if (!useFixedWanderArea)
+            {
+                return localPosition;
+            }
+
+            Vector2 offset = new Vector2(
+                localPosition.x - fixedWanderCenterLocal.x,
+                localPosition.z - fixedWanderCenterLocal.z);
+
+            if (offset.sqrMagnitude <= fixedWanderRadius * fixedWanderRadius)
+            {
+                return localPosition;
+            }
+
+            Vector2 clamped = offset.normalized * fixedWanderRadius;
+            return new Vector3(
+                fixedWanderCenterLocal.x + clamped.x,
+                localPosition.y,
+                fixedWanderCenterLocal.z + clamped.y);
+        }
+
+        private Vector3 SnapLocalPositionToGround(Vector3 localPosition)
+        {
+            if (!snapWanderToGround)
+            {
+                return localPosition;
+            }
+
+            Transform parent = transform.parent;
+            Vector3 worldPosition = parent != null ? parent.TransformPoint(localPosition) : localPosition;
+            Vector3 rayOrigin = worldPosition + Vector3.up * groundProbeHeight;
+            float rayDistance = groundProbeHeight + groundProbeDistance;
+            RaycastHit[] hits = Physics.RaycastAll(
+                rayOrigin,
+                Vector3.down,
+                rayDistance,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Ignore);
+
+            bool foundGround = false;
+            RaycastHit bestHit = default;
+            float bestDistance = float.PositiveInfinity;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                RaycastHit hit = hits[i];
+                if (!IsValidGroundHit(hit)
+                    || hit.distance >= bestDistance)
+                {
+                    continue;
+                }
+
+                bestHit = hit;
+                bestDistance = hit.distance;
+                foundGround = true;
+            }
+
+            if (!foundGround)
+            {
+                return localPosition;
+            }
+
+            groundWorldY = bestHit.point.y;
+            hasGroundWorldY = true;
+            worldPosition.y = groundWorldY + groundOffset + groundRenderClearance - GetRenderableBottomOffsetFromRoot();
+            return parent != null ? parent.InverseTransformPoint(worldPosition) : worldPosition;
+        }
+
+        private bool IsValidGroundHit(RaycastHit hit)
+        {
+            if (hit.collider == null
+                || hit.collider.isTrigger
+                || IsSelfHit(hit.collider)
+                || IsOtherAnimalHit(hit.collider)
+                || hit.normal.y < minimumGroundNormalY)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsSelfHit(Collider hitCollider)
+        {
+            if (hitCollider == null)
+            {
+                return false;
+            }
+
+            return hitCollider.transform == transform || hitCollider.transform.IsChildOf(transform);
+        }
+
+        private bool IsOtherAnimalHit(Collider hitCollider)
+        {
+            ARAnimalPresentation animal = hitCollider != null
+                ? hitCollider.GetComponentInParent<ARAnimalPresentation>()
+                : null;
+            return animal != null && animal != this;
+        }
+
+        private void CorrectRenderableGroundPenetration()
+        {
+            if (!snapWanderToGround || !hasGroundWorldY)
+            {
+                return;
+            }
+
+            if (!TryGetRenderableBounds(out Bounds bounds))
+            {
+                return;
+            }
+
+            float targetMinY = groundWorldY + groundOffset + groundRenderClearance;
+            float penetration = targetMinY - bounds.min.y;
+            if (penetration <= 0.001f)
+            {
+                return;
+            }
+
+            transform.position += Vector3.up * penetration;
+            SyncBaseLocalYToCurrentTransform();
+        }
+
+        private void SyncBaseLocalYToCurrentTransform()
+        {
+            float localY = transform.localPosition.y;
+            originLocalPos.y = localY;
+            currentBaseLocalPos.y = localY;
+            targetLocalPos.y = localY;
+            fixedWanderCenterLocal.y = localY;
+        }
+
+        private float GetRenderableBottomOffsetFromRoot()
+        {
+            if (!TryGetRenderableBounds(out Bounds bounds))
+            {
+                return 0f;
+            }
+
+            float offset = bounds.min.y - transform.position.y;
+            if (float.IsNaN(offset) || float.IsInfinity(offset))
+            {
+                return 0f;
+            }
+
+            return Mathf.Clamp(offset, -2f, 2f);
+        }
+
+        private bool TryGetRenderableBounds(out Bounds bounds)
+        {
+            Renderer[] renderers = GetComponentsInChildren<Renderer>();
+            bool hasBounds = false;
+            bounds = default;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                if (renderer == null || !renderer.enabled || renderer is LineRenderer)
+                {
+                    continue;
+                }
+
+                if (!hasBounds)
+                {
+                    bounds = renderer.bounds;
+                    hasBounds = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            if (!hasBounds)
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

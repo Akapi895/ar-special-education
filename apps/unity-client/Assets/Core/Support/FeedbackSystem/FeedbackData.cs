@@ -25,14 +25,12 @@ namespace Core.Support.FeedbackSystem
         public FeedbackIntensity Intensity;
 
         /// <summary>
-        /// Sound effect to play (audio clip name or path).
-        /// TODO: Audio team to implement sound effect references.
+        /// Sound effect key resolved by SimpleAudioManager/AudioClipLibrary.
         /// </summary>
         public string SoundEffect;
 
         /// <summary>
-        /// Visual effect to play (particle system or animation name).
-        /// TODO: VFX team to implement visual effect references.
+        /// Visual effect key resolved by FeedbackServiceProxy.
         /// </summary>
         public string VisualEffect;
 

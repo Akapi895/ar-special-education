@@ -73,9 +73,9 @@ MonoBehaviour:
     CorrectAnswer: 0
     CustomHints: []
     ObjectPrefabName: 
-  moreButtonLabel: More
-  fewerButtonLabel: Fewer
-  equalButtonLabel: Equal
+  moreButtonLabel: Bên trái nhiều hơn
+  fewerButtonLabel: Bên trái ít hơn
+  equalButtonLabel: Bằng nhau
   correctMoreFeedback: Yes! The left group has MORE!
   correctFewerFeedback: Yes! The left group has FEWER!
   correctEqualFeedback: Yes! Both groups are EQUAL!
@@ -114,4 +114,4 @@ MonoBehaviour:
     HintText: X and X are the same number - they're EQUAL!
     Level: 3
     ARHint: 
-  groupSpacing: 2.3
+  groupSpacing: 3

@@ -32,6 +32,7 @@ namespace Project.Editor
         private const string CompareQuantityConfigPath =
             "Assets/Features/Activities/CompareQuantity/ScriptableObjects/SO_CompareQuantityConfig_Easy.asset";
 
+        private const string BootScenePath = "Assets/_Project/Scenes/SC_Boot.unity";
         private const string MainMenuScenePath = "Assets/_Project/Scenes/SC_MainMenu.unity";
         private const string ActivitySelectScenePath = "Assets/_Project/Scenes/SC_ActivitySelect.unity";
         private const string GameplayScenePath = "Assets/_Project/Scenes/SC_ARGameplay.unity";
@@ -155,6 +156,7 @@ namespace Project.Editor
             ARTestSandboxMenu.SetupTestSandboxScene();
             ARGameplaySceneMenu.SetupARGameplayScene();
 
+            SceneSetupMenu.SetupBootScene();
             SceneSetupMenu.SetupMainMenuScene();
             SceneSetupMenu.SetupActivitySelectScene();
             SceneSetupMenu.SetupProgressDashboardScene();
@@ -171,12 +173,17 @@ namespace Project.Editor
             ValidateConfig<NumberLineJumpConfig>(NumberLineJumpConfigPath);
             ValidateConfig<CompareQuantityConfig>(CompareQuantityConfigPath);
 
+            ValidateFileExists(BootScenePath);
             ValidateFileExists(MainMenuScenePath);
             ValidateFileExists(ActivitySelectScenePath);
             ValidateFileExists(GameplayScenePath);
             ValidateFileExists(ProgressDashboardScenePath);
             ValidateFileExists(TestSandboxScenePath);
             ValidateBuildSettings();
+            ValidateProgressSchema();
+            ValidateProductionRuntimePath();
+            ValidatePerformanceAndDeviceReadiness();
+            ValidateLearnerProfileAndAdaptiveReadiness();
 
             ValidateMainMenuScene();
             ValidateActivitySelectScene();
@@ -265,9 +272,8 @@ namespace Project.Editor
                         break;
 
                     case Stage.WaitQuantityCompletionControls:
-                        if (IsActiveButton("NextButton") && IsActiveButton("ProgressButton"))
+                        if (IsActiveButton("NextButton"))
                         {
-                            Require(!ButtonsOverlap("NextButton", "ProgressButton"), "Next and Progress buttons do not overlap.");
                             ClickButton("NextButton");
                             Advance(Stage.WaitNumberLineReady);
                         }
@@ -294,7 +300,7 @@ namespace Project.Editor
                         break;
 
                     case Stage.EnterBoot:
-                        OpenSceneAndPlay(MainMenuScenePath);
+                        OpenSceneAndPlay(BootScenePath);
                         Advance(Stage.WaitMainMenu);
                         break;
 
@@ -373,6 +379,8 @@ namespace Project.Editor
             Require(bootstrap != null, "SC_TestSandbox has ARServiceBootstrap at runtime.");
             Require(bootstrap?.Placement != null, "SC_TestSandbox has placement service.");
             Require(bootstrap?.Placement?.GetType().Name == "ARPlacementServiceMock", "SC_TestSandbox uses ARPlacementServiceMock in Editor.");
+            Require(bootstrap?.Placement?.HasLearningArea == true, "SC_TestSandbox mock creates a learning area.");
+            Require(bootstrap?.Placement?.LearningAreaContentRoot != null, "SC_TestSandbox mock exposes a learning area content root.");
             Require(bootstrap?.Interaction != null, "SC_TestSandbox has interaction service.");
             Require(Object.FindFirstObjectByType<ARSandboxController>() != null, "SC_TestSandbox has ARSandboxController.");
 
@@ -413,6 +421,8 @@ namespace Project.Editor
 
             ClickButton("GroupButton_1");
             Require(IsPresenterInState(ActivityState.Completed), "Correct answer completes round 1.");
+            Require(IsActiveButton("NextButton"), "Correct answer shows explicit Next button.");
+            ClickButton("NextButton");
             Notes.Add("Phase 2 round 1 hint/wrong/correct checks passed.");
         }
 
@@ -479,7 +489,7 @@ namespace Project.Editor
         private static void ValidateDashboardPlayMode()
         {
             Require(Object.FindFirstObjectByType<ProgressDashboardView>() != null, "Progress Dashboard view exists at runtime.");
-            Require(FindText("OverallStatsText")?.text.Contains("Overall Progress") == true, "Dashboard shows overall progress.");
+            Require(FindText("OverallStatsText")?.text.Contains("Learning Progress") == true, "Dashboard shows learning progress.");
             Require(FindText("ActivityStatsText")?.text.Contains("QuantityMatch") == true, "Dashboard shows QuantityMatch statistics.");
         }
 
@@ -487,8 +497,8 @@ namespace Project.Editor
         {
             Require(Object.FindFirstObjectByType<ActivitySelectController>() != null, "Activity Select controller exists at runtime.");
             Require(FindButton("QuantityMatchButton")?.interactable == true, "Quantity Match button is playable.");
-            Require(FindButton("NumberLineJumpButton")?.interactable == true, "Number Line Jump button is playable.");
-            Require(FindButton("CompareQuantityButton")?.interactable == true, "Compare Quantity button is playable.");
+            Require(FindButton("NumberLineJumpButton") != null, "Number Line Jump button exists.");
+            Require(FindButton("CompareQuantityButton") != null, "Compare Quantity button exists.");
         }
 
         private static bool IsGameplayReady()
@@ -652,6 +662,7 @@ namespace Project.Editor
         {
             string[] expected =
             {
+                BootScenePath,
                 MainMenuScenePath,
                 ActivitySelectScenePath,
                 GameplayScenePath,
@@ -665,6 +676,68 @@ namespace Project.Editor
                 .ToArray();
 
             Require(actual.SequenceEqual(expected), "Build Settings scene order matches the guide.");
+        }
+
+        private static void ValidateProgressSchema()
+        {
+            ActivityResult result = new ActivityResult("QuantityMatch", "schema-test", 1, DifficultyLevel.Easy);
+            result.SetLessonContext("L01", new[] { "Counting", "Subitizing" });
+            result.Complete(false, ErrorType.WrongQuantity);
+
+            string json = JsonUtility.ToJson(result);
+            Require(json.Contains("learningIssue"), "ActivityResult serializes learning issue structure.");
+            Require(json.Contains("LessonId"), "ActivityResult serializes lesson id.");
+            Require(json.Contains("skillTags"), "ActivityResult serializes skill tags.");
+
+            ActivityResult technicalResult = new ActivityResult("ARPlacement", "schema-test", 0, DifficultyLevel.Easy);
+            technicalResult.SetTechnicalIssue(TechnicalIssueType.ARPlaneNotFound, "No plane", "LocalUnityFullTestRunner");
+            json = JsonUtility.ToJson(technicalResult);
+            Require(json.Contains("technicalIssue"), "ActivityResult serializes technical issue structure.");
+            Require(technicalResult.CountsTowardMastery == false, "Technical issue does not count toward mastery.");
+            Require(LessonMapRegistry.AllLessons.Count >= 6, "Lesson map contains at least six lessons.");
+        }
+
+        private static void ValidateProductionRuntimePath()
+        {
+            string routerPath = Path.Combine(Application.dataPath, "_Project/Scripts/GameplayActivityRouter.cs");
+            string routerSource = File.Exists(routerPath) ? File.ReadAllText(routerPath) : string.Empty;
+
+            Require(!routerSource.Contains("System.Reflection"), "Gameplay router does not use runtime reflection.");
+            Require(!routerSource.Contains("AssetDatabase"), "Gameplay router does not use editor-only AssetDatabase.");
+            Require(!routerSource.Contains("SetInstanceField"), "Gameplay router uses public configure APIs.");
+
+            string architectureNotesPath = Path.Combine(Application.dataPath, "Docs/ArchitectureNotes.md");
+            Require(File.Exists(architectureNotesPath), "Architecture notes document runtime namespaces and asmdef plan.");
+        }
+
+        private static void ValidatePerformanceAndDeviceReadiness()
+        {
+            Require(Core.Support.Performance.RuntimePerformanceSettings.TargetFrameRate == 60,
+                "Runtime target frame rate is configured.");
+            Require(Core.Support.Performance.RuntimePerformanceSettings.MaxLearningObjectsPerGroup <= 12,
+                "Per-group object count is budgeted for mobile AR.");
+            Require(Core.Support.Performance.RuntimePerformanceSettings.MaxVisibleLearningObjects <= 48,
+                "Visible learning object budget is bounded.");
+
+            string qaPath = Path.GetFullPath(Path.Combine(Application.dataPath, "../../../.agent/device_qa_checklist.md"));
+            Require(File.Exists(qaPath), "Device QA checklist exists.");
+        }
+
+        private static void ValidateLearnerProfileAndAdaptiveReadiness()
+        {
+            LearnerProfile profile = LearnerProfileStore.GetActiveOrCreateDefault();
+            Require(profile != null && !string.IsNullOrEmpty(profile.LearnerId), "Default learner profile is available.");
+
+            AdaptiveLearningRecommendation recommendation = ProgressStorageProxy.Instance.GetAdaptiveRecommendation();
+            Require(recommendation != null && !string.IsNullOrEmpty(recommendation.SuggestedLessonId),
+                "Adaptive recommendation API returns a lesson.");
+
+            ActivityResult result = new ActivityResult("QuantityMatch", "learner-schema", 1, DifficultyLevel.Easy)
+            {
+                LearnerId = profile.LearnerId
+            };
+            string json = JsonUtility.ToJson(result);
+            Require(json.Contains("LearnerId"), "ActivityResult serializes learner id.");
         }
 
         private static void ValidateSceneComponent<T>(string scenePath, string componentName) where T : Object

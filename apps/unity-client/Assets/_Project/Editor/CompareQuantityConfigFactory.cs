@@ -32,7 +32,7 @@ namespace Project.Editor
             so.FindProperty("numberOfRounds").intValue = 10;
             so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
             so.FindProperty("maxHintsPerQuestion").intValue = 3;
-            so.FindProperty("groupSpacing").floatValue = 2.3f;
+            so.FindProperty("groupSpacing").floatValue = 3.0f;
 
             // Set up standard hints
             SetHint(so.FindProperty("hintLevel1"), "cq_hint1", "Count each group carefully.", 1);

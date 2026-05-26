@@ -27,6 +27,20 @@ namespace Features.Activities.QuantityMatch
 
         private bool started;
 
+        public void Configure(QuantityMatchPresenter presenter, QuantityMatchView view, QuantityMatchConfig config,
+            bool autoStartWhenReady = false)
+        {
+            this.presenter = presenter;
+            this.view = view;
+            this.config = config;
+            this.autoStartWhenReady = autoStartWhenReady;
+        }
+
+        public void SetAutoStartWhenReady(bool value)
+        {
+            autoStartWhenReady = value;
+        }
+
         private void Awake()
         {
             if (presenter == null)
@@ -83,9 +97,9 @@ namespace Features.Activities.QuantityMatch
                 return;
             }
 
-            if (!bootstrap.Placement.IsPlacementAvailable)
+            if (!bootstrap.Placement.IsPlacementAvailable || !bootstrap.Placement.HasLearningArea)
             {
-                Debug.Log("[QuantityMatchActivityBootstrap] Waiting for placement...");
+                Debug.Log("[QuantityMatchActivityBootstrap] Waiting for learning area placement...");
                 Invoke(nameof(TryStartActivity), 0.5f);
                 return;
             }

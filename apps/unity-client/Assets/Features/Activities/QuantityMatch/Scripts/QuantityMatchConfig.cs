@@ -51,7 +51,7 @@ namespace Features.Activities.QuantityMatch
 
         [Tooltip("Spacing between groups (meters)")]
         [SerializeField]
-        private float defaultGroupSpacing = 2.1f;
+        private float defaultGroupSpacing = 1.6f;
 
         [Tooltip("Arrangement pattern for groups")]
         [SerializeField]

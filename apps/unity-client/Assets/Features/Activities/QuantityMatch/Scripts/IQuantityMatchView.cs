@@ -51,6 +51,11 @@ namespace Features.Activities.QuantityMatch
         void HighlightGroup(int groupIndex, bool highlight);
 
         /// <summary>
+        /// Show non-submitting AR counting feedback for a tapped group.
+        /// </summary>
+        void ShowCountingFeedback(int groupIndex, int countedSoFar, int groupObjectCount);
+
+        /// <summary>
         /// Update the displayed target number.
         /// </summary>
         void UpdateTargetNumber(int targetNumber);

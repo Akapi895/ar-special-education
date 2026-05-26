@@ -7,8 +7,7 @@ namespace Core.Learning.ActivityRunner
     /// Interface for AR session management services.
     /// Learning activities use this to check AR session state.
     ///
-    /// TODO: KHÁNH'S TEAM - Implement this interface in the AR Core module.
-    /// This interface is defined by Learning layer but implemented by AR layer.
+    /// Defined by the learning layer and implemented by AR session adapters.
     /// </summary>
     public interface IARSessionService
     {

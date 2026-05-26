@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections;
+using Core.Data;
 using Core.Support.AudioManager;
 
 namespace Core.Support.FeedbackSystem
@@ -86,14 +87,7 @@ namespace Core.Support.FeedbackSystem
         /// </summary>
         private void HandleSoundRequested(string soundName)
         {
-            if (SimpleAudioManager.Instance != null)
-            {
-                SimpleAudioManager.Instance.PlaySound(soundName);
-            }
-            else
-            {
-                Debug.Log($"[FeedbackServiceProxy] SimpleAudioManager not found. Sound requested: {soundName}");
-            }
+            SimpleAudioManager.EnsureExists().PlaySound(soundName);
         }
 
         /// <summary>
@@ -102,6 +96,11 @@ namespace Core.Support.FeedbackSystem
         /// </summary>
         private void HandleVisualEffectRequested(string effectName)
         {
+            if (!UserPreferences.AnimationsEnabled)
+            {
+                return;
+            }
+
             GameObject prefabToSpawn = null;
             string lowerName = effectName.ToLower();
 
@@ -148,8 +147,58 @@ namespace Core.Support.FeedbackSystem
             }
             else
             {
-                Debug.Log($"[FeedbackServiceProxy] VFX requested: {effectName} (no prefab bound)");
+                SpawnProceduralVfx(effectName);
             }
+        }
+
+        private void SpawnProceduralVfx(string effectName)
+        {
+            Camera cam = Camera.main;
+            Vector3 spawnPos = cam != null ? cam.transform.position + cam.transform.forward * 1.8f : Vector3.zero;
+
+            GameObject vfxGo = new GameObject($"Procedural_{effectName}");
+            vfxGo.transform.position = spawnPos;
+
+            ParticleSystem particles = vfxGo.AddComponent<ParticleSystem>();
+            var main = particles.main;
+            main.duration = 0.7f;
+            main.loop = false;
+            main.startLifetime = 0.65f;
+            main.startSpeed = effectName.ToLower().Contains("incorrect") ? 0.45f : 1.15f;
+            main.startSize = 0.06f;
+            main.maxParticles = 32;
+            main.startColor = ResolveEffectColor(effectName);
+
+            var emission = particles.emission;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)24) });
+
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.25f;
+
+            particles.Play();
+            Destroy(vfxGo, vfxDestroyDelay);
+        }
+
+        private static Color ResolveEffectColor(string effectName)
+        {
+            string lowerName = effectName.ToLower();
+            if (lowerName.Contains("incorrect") || lowerName.Contains("wrong"))
+            {
+                return new Color(1f, 0.35f, 0.25f);
+            }
+
+            if (lowerName.Contains("boundary"))
+            {
+                return new Color(1f, 0.82f, 0.2f);
+            }
+
+            if (lowerName.Contains("success"))
+            {
+                return new Color(0.35f, 0.9f, 0.4f);
+            }
+
+            return new Color(0.2f, 0.85f, 1f);
         }
 
         /// <summary>
@@ -216,7 +265,7 @@ namespace Core.Support.FeedbackSystem
         /// </summary>
         public void ShowSuccess(string message = null)
         {
-            Instance.ShowSuccess(message ?? "Activity Complete!");
+            Instance.ShowSuccess(message ?? Core.UI.Localization.SimpleLocalization.Get("feedback_success"));
         }
     }
 }

@@ -1,4 +1,6 @@
+using Core.Data;
 using Core.Data.LocalStorage;
+using Core.Learning.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -16,6 +18,7 @@ namespace Project.App
         {
             public Button button;
             public string activityId;
+            public string lessonId;
             public string sceneName;
             
             [Header("Visual Progress (Optional)")]
@@ -50,7 +53,7 @@ namespace Project.App
             {
                 if (activity.button != null)
                 {
-                    bool isUnlocked = IsActivityUnlocked(activity.activityId);
+                    bool isUnlocked = IsActivityUnlocked(activity);
                     activity.button.interactable = isUnlocked;
                     
                     if (activity.lockIcon != null)
@@ -79,12 +82,15 @@ namespace Project.App
             try
             {
                 // Retrieve statistics from local storage
-                ActivityStatistics stats = ProgressStorageProxy.Instance.GetActivityStatistics(activity.activityId);
+                string lessonId = ResolveLessonId(activity);
+                ActivityStatistics stats = string.IsNullOrEmpty(lessonId)
+                    ? ProgressStorageProxy.Instance.GetActivityStatistics(activity.activityId)
+                    : ProgressStorageProxy.Instance.GetLessonStatistics(lessonId);
                 
                 if (stats != null)
                 {
                     // Target 10 rounds for 100% completion in Easy level
-                    float progressFraction = Mathf.Clamp01(stats.TotalAttempts / 10f);
+                    float progressFraction = Mathf.Clamp01(stats.TotalLearningRounds / 10f);
                     
                     if (activity.progressSlider != null)
                     {
@@ -127,33 +133,76 @@ namespace Project.App
             }
         }
 
-        private bool IsActivityUnlocked(string activityId)
+        private bool IsActivityUnlocked(ActivityButton activity)
         {
+            string activityId = activity?.activityId;
             if (string.IsNullOrEmpty(activityId))
             {
                 return false;
             }
 
+            bool isPlayable = false;
             foreach (string playableActivityId in playableActivityIds)
             {
                 if (activityId == playableActivityId)
                 {
-                    return true;
+                    isPlayable = true;
+                    break;
                 }
             }
 
-            return false;
+            if (!isPlayable)
+            {
+                return false;
+            }
+
+            if (!UserPreferences.EnforceLessonPrerequisites)
+            {
+                return true;
+            }
+
+            string lessonId = ResolveLessonId(activity);
+            return string.IsNullOrEmpty(lessonId) || LessonMapRegistry.IsLessonUnlocked(lessonId, IsLessonMastered);
+        }
+
+        private bool IsLessonMastered(string lessonId)
+        {
+            LessonDefinition lesson = LessonMapRegistry.GetLesson(lessonId);
+            if (lesson == null)
+            {
+                return false;
+            }
+
+            ActivityStatistics stats = ProgressStorageProxy.Instance.GetLessonStatistics(lessonId);
+            return stats.TotalLearningRounds >= lesson.MinimumRoundsForMastery
+                && stats.SuccessRate >= lesson.MinimumAccuracyForMastery;
+        }
+
+        private static string ResolveLessonId(ActivityButton activity)
+        {
+            if (activity == null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrEmpty(activity.lessonId))
+            {
+                return activity.lessonId;
+            }
+
+            LessonDefinition lesson = LessonMapRegistry.GetFirstLessonForActivity(activity.activityId);
+            return lesson?.LessonId;
         }
 
         private void OnActivitySelected(ActivityButton activity)
         {
             // Store selected activity ID for the gameplay scene to load
             SelectedActivityData.ActivityId = activity.activityId;
-            SelectedActivityData.ConfigPath = activity.sceneName;
+            SelectedActivityData.LessonId = ResolveLessonId(activity);
 
             SceneManager.LoadScene(gameplaySceneName);
 
-            Debug.Log($"[ActivitySelectController] Selected activity: {activity.activityId}");
+            Debug.Log($"[ActivitySelectController] Selected activity: {activity.activityId}, lesson: {SelectedActivityData.LessonId}");
         }
 
         private void OnBack()
@@ -168,9 +217,11 @@ namespace Project.App
     public static class SelectedActivityData
     {
         private const string ActivityIdKey = "SelectedActivityData.ActivityId";
+        private const string LessonIdKey = "SelectedActivityData.LessonId";
         private const string ConfigPathKey = "SelectedActivityData.ConfigPath";
 
         private static string activityId;
+        private static string lessonId;
         private static string configPath;
 
         public static string ActivityId
@@ -188,6 +239,24 @@ namespace Project.App
             {
                 activityId = value;
                 SetStoredValue(ActivityIdKey, value);
+            }
+        }
+
+        public static string LessonId
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(lessonId))
+                {
+                    return lessonId;
+                }
+
+                return PlayerPrefs.GetString(LessonIdKey, null);
+            }
+            set
+            {
+                lessonId = value;
+                SetStoredValue(LessonIdKey, value);
             }
         }
 
@@ -212,8 +281,10 @@ namespace Project.App
         public static void Clear()
         {
             activityId = null;
+            lessonId = null;
             configPath = null;
             PlayerPrefs.DeleteKey(ActivityIdKey);
+            PlayerPrefs.DeleteKey(LessonIdKey);
             PlayerPrefs.DeleteKey(ConfigPathKey);
             PlayerPrefs.Save();
         }

@@ -98,6 +98,37 @@ namespace Features.Activities.NumberLineJump
         public float NumberLineHeight => numberLineHeight;
         public float JumpAnimationDuration => jumpAnimationDuration;
 
+        public void ConfigureRuntime(
+            string activityId,
+            string displayName,
+            string description,
+            List<NumberLineJumpQuestion> questions,
+            ActivityHint hintLevel1,
+            ActivityHint hintLevel2,
+            ActivityHint hintLevel3,
+            float tileSpacing,
+            float numberLineHeight,
+            float jumpAnimationDuration,
+            int maxAttemptsPerQuestion = 3,
+            int maxHintsPerQuestion = 3)
+        {
+            this.questions = questions ?? new List<NumberLineJumpQuestion>();
+            this.hintLevel1 = hintLevel1;
+            this.hintLevel2 = hintLevel2;
+            this.hintLevel3 = hintLevel3;
+            this.tileSpacing = tileSpacing;
+            this.numberLineHeight = numberLineHeight;
+            this.jumpAnimationDuration = jumpAnimationDuration;
+
+            ConfigureBase(
+                activityId,
+                displayName,
+                description,
+                this.questions.Count,
+                maxAttemptsPerQuestion,
+                maxHintsPerQuestion);
+        }
+
         /// <summary>
         /// Get a specific question by index.
         /// </summary>

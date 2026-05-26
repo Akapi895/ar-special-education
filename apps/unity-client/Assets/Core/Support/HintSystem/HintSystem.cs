@@ -213,9 +213,6 @@ namespace Core.Support.HintSystem
         public ActivityHint GetContextualHint(string activityId, int questionNumber,
             List<ActivityHint> availableHints, ErrorType? errorType, object contextData)
         {
-            // For now, return the next hint in sequence
-            // TODO: Implement contextual hint selection based on error type and context
-
             string key = GetHintKey(activityId, questionNumber);
             int currentHintCount = GetHintCount(key);
             int hintLevel = currentHintCount + 1;

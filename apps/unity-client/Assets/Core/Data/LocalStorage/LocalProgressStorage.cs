@@ -22,6 +22,7 @@ namespace Core.Data.LocalStorage
 
         private ProgressData progressData;
         private SessionData currentSession;
+        private LearnerProfile currentLearner;
 
         // Events
         public event Action<ActivityResult> OnResultSaved;
@@ -33,14 +34,13 @@ namespace Core.Data.LocalStorage
         /// </summary>
         public void Initialize()
         {
-            // Set file paths
-            progressFilePath = Path.Combine(Application.persistentDataPath, ProgressFileName);
-            sessionFilePath = Path.Combine(Application.persistentDataPath, SessionFileName);
+            currentLearner = LearnerProfileStore.GetActiveOrCreateDefault();
+            SetStoragePathsForLearner(currentLearner.LearnerId);
 
             // Load existing progress or create new
             LoadProgress();
 
-            Debug.Log($"[LocalProgressStorage] Initialized. Progress path: {progressFilePath}");
+            Debug.Log($"[LocalProgressStorage] Initialized for learner {currentLearner.LearnerId}. Progress path: {progressFilePath}");
         }
 
         /// <summary>
@@ -52,7 +52,8 @@ namespace Core.Data.LocalStorage
             {
                 SessionId = Guid.NewGuid().ToString(),
                 StartTimeString = DateTime.UtcNow.ToString("o"),
-                ActivityId = activityId
+                ActivityId = activityId,
+                LearnerId = currentLearner?.LearnerId
             };
 
             OnSessionStarted?.Invoke(currentSession);
@@ -108,6 +109,7 @@ namespace Core.Data.LocalStorage
             }
 
             // Ensure DateTime fields are serialized as strings
+            result.LearnerId = currentLearner?.LearnerId;
             if (result.StartTime != default)
             {
                 result.StartTimeString = result.StartTime.ToString("o");
@@ -135,12 +137,33 @@ namespace Core.Data.LocalStorage
                      $"Correct: {result.IsCorrect}, Time: {result.TimeSpentSeconds:F1}s");
         }
 
+        public void SaveTechnicalIssue(
+            TechnicalIssueType issueType,
+            string activityId = null,
+            string lessonId = null,
+            string note = null,
+            string source = null)
+        {
+            string sessionId = GetCurrentSessionId() ?? Guid.NewGuid().ToString();
+            ActivityResult result = new ActivityResult(activityId ?? "TechnicalIssue", sessionId, 0, DifficultyLevel.Easy);
+            result.LessonId = lessonId;
+            result.RoundId = $"{result.ActivityId}-TECH-{DateTime.UtcNow:yyyyMMddHHmmss}";
+            result.SetTechnicalIssue(issueType, note, source);
+            result.Complete(false, null);
+            SaveResult(result);
+        }
+
         /// <summary>
         /// Get all results for a specific activity.
         /// </summary>
         public List<ActivityResult> GetResultsForActivity(string activityId)
         {
             return progressData.GetResultsForActivity(activityId);
+        }
+
+        public List<ActivityResult> GetResultsForLesson(string lessonId)
+        {
+            return progressData.GetResultsForLesson(lessonId);
         }
 
         /// <summary>
@@ -159,6 +182,21 @@ namespace Core.Data.LocalStorage
             return progressData.GetStatisticsForActivity(activityId);
         }
 
+        public ActivityStatistics GetLessonStatistics(string lessonId)
+        {
+            return progressData.GetStatisticsForLesson(lessonId);
+        }
+
+        public List<SkillMastery> GetSkillMasteries()
+        {
+            return progressData.GetSkillMasteries();
+        }
+
+        public SkillMastery GetWeakestSkillMastery()
+        {
+            return progressData.GetWeakestSkillMastery();
+        }
+
         /// <summary>
         /// Get overall statistics across all activities.
         /// </summary>
@@ -173,6 +211,75 @@ namespace Core.Data.LocalStorage
         public SessionData GetCurrentSession()
         {
             return currentSession;
+        }
+
+        public LearnerProfile GetActiveLearnerProfile()
+        {
+            return currentLearner;
+        }
+
+        public List<LearnerProfile> GetLearnerProfiles()
+        {
+            return LearnerProfileStore.LoadProfiles();
+        }
+
+        public LearnerProfile CreateOrUpdateLearnerProfile(string displayName, int ageYears = 0, string grade = null)
+        {
+            LearnerProfile profile = LearnerProfileStore.CreateOrUpdate(displayName, ageYears, grade);
+            SetActiveLearnerProfile(profile.LearnerId);
+            return profile;
+        }
+
+        public bool SetActiveLearnerProfile(string learnerId)
+        {
+            LearnerProfile profile = LearnerProfileStore.GetProfile(learnerId);
+            if (profile == null)
+            {
+                return false;
+            }
+
+            if (currentSession != null)
+            {
+                EndSession();
+            }
+
+            currentLearner = profile;
+            LearnerProfileStore.SetActiveLearnerId(profile.LearnerId);
+            SetStoragePathsForLearner(profile.LearnerId);
+            LoadProgress();
+            return true;
+        }
+
+        public AdaptiveLearningRecommendation GetAdaptiveRecommendation()
+        {
+            OverallStatistics overall = GetOverallStatistics();
+            string lessonId = !string.IsNullOrEmpty(overall.RecommendedLessonId)
+                ? overall.RecommendedLessonId
+                : "L01";
+
+            bool guidedMode = overall.WeakestSkillScore > 0f && overall.WeakestSkillScore < 0.7f;
+            return new AdaptiveLearningRecommendation
+            {
+                LearnerId = currentLearner?.LearnerId,
+                SuggestedLessonId = lessonId,
+                WeakestSkillTag = overall.WeakestSkillTag,
+                GuidedModeRecommended = guidedMode,
+                DifficultyAdjustment = guidedMode ? "DecreaseChoices" : "Maintain",
+                Reason = guidedMode
+                    ? $"Practice {overall.WeakestSkillTag} with fewer choices and more prompts."
+                    : "Continue current lesson path."
+            };
+        }
+
+        public ParentTeacherSummary GetParentTeacherSummary()
+        {
+            return new ParentTeacherSummary
+            {
+                Learner = currentLearner,
+                Overall = GetOverallStatistics(),
+                Recommendation = GetAdaptiveRecommendation(),
+                ExportedAtString = DateTime.UtcNow.ToString("o")
+            };
         }
 
         /// <summary>
@@ -230,6 +337,13 @@ namespace Core.Data.LocalStorage
             }
 
             return false;
+        }
+
+        private void SetStoragePathsForLearner(string learnerId)
+        {
+            string safeLearnerId = LearnerProfileStore.SanitizeLearnerId(learnerId);
+            progressFilePath = Path.Combine(Application.persistentDataPath, $"{Path.GetFileNameWithoutExtension(ProgressFileName)}_{safeLearnerId}.json");
+            sessionFilePath = Path.Combine(Application.persistentDataPath, $"{Path.GetFileNameWithoutExtension(SessionFileName)}_{safeLearnerId}.json");
         }
 
         /// <summary>
@@ -413,7 +527,14 @@ namespace Core.Data.LocalStorage
                     TotalTimeSpent = stats.TotalTimeSpent,
                     AverageTimePerAttempt = stats.AverageTimePerAttempt,
                     BestTime = stats.BestTime,
-                    WorstTime = stats.WorstTime
+                    WorstTime = stats.WorstTime,
+                    TotalLearningRounds = stats.TotalLearningRounds,
+                    TechnicalIssueCount = stats.TechnicalIssueCount,
+                    MostCommonErrorType = stats.MostCommonErrorType,
+                    MostCommonErrorCount = stats.MostCommonErrorCount,
+                    WeakestSkillTag = stats.WeakestSkillTag,
+                    RecommendedLessonId = stats.RecommendedLessonId,
+                    RecommendationReason = stats.RecommendationReason
                 });
             }
         }
@@ -437,6 +558,21 @@ namespace Core.Data.LocalStorage
             foreach (var result in allResults)
             {
                 if (result.ActivityId == activityId)
+                {
+                    results.Add(result);
+                }
+            }
+
+            return results;
+        }
+
+        public List<ActivityResult> GetResultsForLesson(string lessonId)
+        {
+            List<ActivityResult> results = new List<ActivityResult>();
+
+            foreach (var result in allResults)
+            {
+                if (result.LessonId == lessonId)
                 {
                     results.Add(result);
                 }
@@ -472,6 +608,36 @@ namespace Core.Data.LocalStorage
             return CalculateStatistics(results);
         }
 
+        public ActivityStatistics GetStatisticsForLesson(string lessonId)
+        {
+            var results = GetResultsForLesson(lessonId);
+            return CalculateStatistics(results);
+        }
+
+        public List<SkillMastery> GetSkillMasteries()
+        {
+            return CalculateSkillMasteries(allResults);
+        }
+
+        public SkillMastery GetWeakestSkillMastery()
+        {
+            SkillMastery weakest = null;
+            foreach (SkillMastery mastery in CalculateSkillMasteries(allResults))
+            {
+                if (mastery.Attempts <= 0)
+                {
+                    continue;
+                }
+
+                if (weakest == null || mastery.MasteryScore < weakest.MasteryScore)
+                {
+                    weakest = mastery;
+                }
+            }
+
+            return weakest;
+        }
+
         /// <summary>
         /// Get overall statistics across all activities.
         /// </summary>
@@ -494,14 +660,34 @@ namespace Core.Data.LocalStorage
                     TotalTimeSpent = entry.TotalTimeSpent,
                     AverageTimePerAttempt = entry.AverageTimePerAttempt,
                     BestTime = entry.BestTime,
-                    WorstTime = entry.WorstTime
+                    WorstTime = entry.WorstTime,
+                    TotalLearningRounds = entry.TotalLearningRounds,
+                    TechnicalIssueCount = entry.TechnicalIssueCount,
+                    MostCommonErrorType = entry.MostCommonErrorType,
+                    MostCommonErrorCount = entry.MostCommonErrorCount,
+                    WeakestSkillTag = entry.WeakestSkillTag,
+                    RecommendedLessonId = entry.RecommendedLessonId,
+                    RecommendationReason = entry.RecommendationReason
                 };
                 overall.ActivityStatistics[entry.ActivityId] = stats;
             }
 
-            overall.TotalActivitiesCompleted = activityStatistics.Count;
+            overall.TotalActivityTypesWithProgress = activityStatistics.Count;
             overall.TotalSessions = GetAllSessionCount();
             overall.TotalResults = allResults.Count;
+            overall.TotalLearningRoundsCompleted = CountLearningRounds(allResults);
+            overall.TotalTechnicalIssues = CountTechnicalIssues(allResults);
+            overall.SkillMasteries = CalculateSkillMasteries(allResults);
+
+            SkillMastery weakest = GetWeakestSkillMastery();
+            if (weakest != null)
+            {
+                overall.WeakestSkillTag = weakest.SkillTag;
+                overall.WeakestSkillScore = weakest.MasteryScore;
+                overall.RecommendedLessonId = RecommendLessonForSkill(weakest.SkillTag);
+            }
+
+            overall.TotalActivitiesCompleted = overall.TotalLearningRoundsCompleted;
 
             return overall;
         }
@@ -527,10 +713,24 @@ namespace Core.Data.LocalStorage
                 return stats;
             }
 
-            stats.TotalAttempts = results.Count;
+            Dictionary<string, int> errorCounts = new Dictionary<string, int>();
 
             foreach (var result in results)
             {
+                if (result.HasTechnicalIssue)
+                {
+                    stats.TechnicalIssueCount++;
+                    continue;
+                }
+
+                if (!result.CountsTowardMastery)
+                {
+                    continue;
+                }
+
+                stats.TotalAttempts++;
+                stats.TotalLearningRounds++;
+
                 if (result.IsCorrect)
                 {
                     stats.SuccessfulAttempts++;
@@ -538,6 +738,26 @@ namespace Core.Data.LocalStorage
 
                 stats.TotalHintsUsed += result.HintsUsedCount;
                 stats.TotalTimeSpent += result.TimeSpentSeconds;
+
+                if (result.LearningIssue.HasError)
+                {
+                    string errorKey = string.IsNullOrEmpty(result.LearningIssue.ErrorCode)
+                        ? result.LearningIssue.ErrorType.ToString()
+                        : result.LearningIssue.ErrorCode;
+
+                    if (!errorCounts.ContainsKey(errorKey))
+                    {
+                        errorCounts[errorKey] = 0;
+                    }
+
+                    errorCounts[errorKey]++;
+                }
+            }
+
+            if (stats.TotalAttempts == 0)
+            {
+                stats.WeakestSkillTag = string.Empty;
+                return stats;
             }
 
             // Calculate averages
@@ -551,6 +771,11 @@ namespace Core.Data.LocalStorage
 
             foreach (var result in results)
             {
+                if (result.HasTechnicalIssue || !result.CountsTowardMastery)
+                {
+                    continue;
+                }
+
                 if (result.TimeSpentSeconds < bestTime)
                 {
                     bestTime = result.TimeSpentSeconds;
@@ -564,8 +789,162 @@ namespace Core.Data.LocalStorage
 
             stats.BestTime = bestTime < float.MaxValue ? bestTime : 0f;
             stats.WorstTime = worstTime;
+            ApplyMostCommonError(stats, errorCounts);
+            ApplySkillRecommendation(stats, CalculateSkillMasteries(results));
 
             return stats;
+        }
+
+        private static void ApplyMostCommonError(ActivityStatistics stats, Dictionary<string, int> errorCounts)
+        {
+            foreach (var kvp in errorCounts)
+            {
+                if (kvp.Value > stats.MostCommonErrorCount)
+                {
+                    stats.MostCommonErrorType = kvp.Key;
+                    stats.MostCommonErrorCount = kvp.Value;
+                }
+            }
+        }
+
+        private static void ApplySkillRecommendation(ActivityStatistics stats, List<SkillMastery> masteries)
+        {
+            SkillMastery weakest = null;
+            foreach (SkillMastery mastery in masteries)
+            {
+                if (mastery.Attempts <= 0)
+                {
+                    continue;
+                }
+
+                if (weakest == null || mastery.MasteryScore < weakest.MasteryScore)
+                {
+                    weakest = mastery;
+                }
+            }
+
+            if (weakest == null)
+            {
+                return;
+            }
+
+            stats.WeakestSkillTag = weakest.SkillTag;
+            stats.RecommendedLessonId = RecommendLessonForSkill(weakest.SkillTag);
+            stats.RecommendationReason = weakest.MasteryScore < 0.7f
+                ? $"Practice {weakest.SkillTag}: accuracy/hint score is {weakest.MasteryScore:P0}."
+                : $"Keep reinforcing {weakest.SkillTag}.";
+        }
+
+        private static List<SkillMastery> CalculateSkillMasteries(List<ActivityResult> results)
+        {
+            Dictionary<string, SkillAccumulator> bySkill = new Dictionary<string, SkillAccumulator>();
+
+            foreach (ActivityResult result in results)
+            {
+                if (result.HasTechnicalIssue || !result.CountsTowardMastery || result.SkillTags == null)
+                {
+                    continue;
+                }
+
+                foreach (string skill in result.SkillTags)
+                {
+                    if (string.IsNullOrEmpty(skill))
+                    {
+                        continue;
+                    }
+
+                    if (!bySkill.TryGetValue(skill, out SkillAccumulator accumulator))
+                    {
+                        accumulator = new SkillAccumulator();
+                        bySkill[skill] = accumulator;
+                    }
+
+                    accumulator.Attempts++;
+                    accumulator.HintsUsed += result.HintsUsedCount;
+                    accumulator.TotalTimeSeconds += result.TimeSpentSeconds;
+                    if (result.IsCorrect)
+                    {
+                        accumulator.CorrectAttempts++;
+                    }
+                }
+            }
+
+            List<SkillMastery> masteries = new List<SkillMastery>();
+            foreach (var kvp in bySkill)
+            {
+                SkillAccumulator accumulator = kvp.Value;
+                float accuracy = accumulator.Attempts > 0 ? (float)accumulator.CorrectAttempts / accumulator.Attempts : 0f;
+                float hintPenalty = accumulator.Attempts > 0 ? Mathf.Clamp01((float)accumulator.HintsUsed / (accumulator.Attempts * 3f)) : 0f;
+
+                masteries.Add(new SkillMastery
+                {
+                    SkillTag = kvp.Key,
+                    Attempts = accumulator.Attempts,
+                    CorrectAttempts = accumulator.CorrectAttempts,
+                    HintsUsed = accumulator.HintsUsed,
+                    AverageTimeSeconds = accumulator.Attempts > 0 ? accumulator.TotalTimeSeconds / accumulator.Attempts : 0f,
+                    MasteryScore = Mathf.Clamp01(accuracy * (1f - hintPenalty * 0.35f))
+                });
+            }
+
+            return masteries;
+        }
+
+        private static int CountLearningRounds(List<ActivityResult> results)
+        {
+            int count = 0;
+            foreach (ActivityResult result in results)
+            {
+                if (!result.HasTechnicalIssue && result.CountsTowardMastery)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static int CountTechnicalIssues(List<ActivityResult> results)
+        {
+            int count = 0;
+            foreach (ActivityResult result in results)
+            {
+                if (result.HasTechnicalIssue)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static string RecommendLessonForSkill(string skillTag)
+        {
+            foreach (LessonDefinition lesson in LessonMapRegistry.AllLessons)
+            {
+                if (lesson.SkillTags == null)
+                {
+                    continue;
+                }
+
+                foreach (string lessonSkill in lesson.SkillTags)
+                {
+                    if (lessonSkill == skillTag)
+                    {
+                        return lesson.LessonId;
+                    }
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private class SkillAccumulator
+        {
+            public int Attempts;
+            public int CorrectAttempts;
+            public int HintsUsed;
+            public float TotalTimeSeconds;
         }
 
         /// <summary>
@@ -600,6 +979,13 @@ namespace Core.Data.LocalStorage
         public float AverageTimePerAttempt;
         public float BestTime;
         public float WorstTime;
+        public int TotalLearningRounds;
+        public int TechnicalIssueCount;
+        public string MostCommonErrorType;
+        public int MostCommonErrorCount;
+        public string WeakestSkillTag;
+        public string RecommendedLessonId;
+        public string RecommendationReason;
     }
 
     /// <summary>
@@ -610,6 +996,7 @@ namespace Core.Data.LocalStorage
     public class SessionData
     {
         public string SessionId;
+        public string LearnerId;
         public string ActivityId;
         public string StartTimeString;  // ISO 8601 string
         public string EndTimeString;    // ISO 8601 string
@@ -657,6 +1044,13 @@ namespace Core.Data.LocalStorage
         public float AverageTimePerAttempt;
         public float BestTime;
         public float WorstTime;
+        public int TotalLearningRounds;
+        public int TechnicalIssueCount;
+        public string MostCommonErrorType;
+        public int MostCommonErrorCount;
+        public string WeakestSkillTag;
+        public string RecommendedLessonId;
+        public string RecommendationReason;
     }
 
     /// <summary>
@@ -667,11 +1061,201 @@ namespace Core.Data.LocalStorage
     public class OverallStatistics
     {
         public int TotalActivitiesCompleted;
+        public int TotalActivityTypesWithProgress;
         public int TotalSessions;
         public int TotalResults;
+        public int TotalLearningRoundsCompleted;
+        public int TotalTechnicalIssues;
+        public string WeakestSkillTag;
+        public float WeakestSkillScore;
+        public string RecommendedLessonId;
+        public List<SkillMastery> SkillMasteries = new List<SkillMastery>();
 
         // Runtime access to activity stats
         [NonSerialized]
         public Dictionary<string, ActivityStatistics> ActivityStatistics = new Dictionary<string, ActivityStatistics>();
+    }
+
+    [Serializable]
+    public class LearnerProfile
+    {
+        public string LearnerId;
+        public string DisplayName;
+        public int AgeYears;
+        public string Grade;
+        public string CreatedAtString;
+        public string UpdatedAtString;
+        public float PreferredVolume = 1f;
+        public float FontScale = 1f;
+        public bool AudioEnabled = true;
+        public bool AnimationsEnabled = true;
+        public bool SimplifiedMode;
+    }
+
+    [Serializable]
+    public class LearnerProfileList
+    {
+        public List<LearnerProfile> Profiles = new List<LearnerProfile>();
+    }
+
+    [Serializable]
+    public class AdaptiveLearningRecommendation
+    {
+        public string LearnerId;
+        public string SuggestedLessonId;
+        public string WeakestSkillTag;
+        public string DifficultyAdjustment;
+        public bool GuidedModeRecommended;
+        public string Reason;
+    }
+
+    [Serializable]
+    public class ParentTeacherSummary
+    {
+        public LearnerProfile Learner;
+        public OverallStatistics Overall;
+        public AdaptiveLearningRecommendation Recommendation;
+        public string ExportedAtString;
+    }
+
+    public static class LearnerProfileStore
+    {
+        private const string ActiveLearnerIdKey = "UserPrefs.ActiveLearnerId";
+        private const string ProfilesFileName = "learner_profiles.json";
+        private const string DefaultLearnerId = "default";
+
+        public static LearnerProfile GetActiveOrCreateDefault()
+        {
+            List<LearnerProfile> profiles = LoadProfiles();
+            if (profiles.Count == 0)
+            {
+                LearnerProfile profile = CreateDefaultProfile();
+                SaveProfiles(new List<LearnerProfile> { profile });
+                SetActiveLearnerId(profile.LearnerId);
+                return profile;
+            }
+
+            string activeId = PlayerPrefs.GetString(ActiveLearnerIdKey, profiles[0].LearnerId);
+            LearnerProfile active = FindProfile(profiles, activeId) ?? profiles[0];
+            SetActiveLearnerId(active.LearnerId);
+            return active;
+        }
+
+        public static LearnerProfile CreateOrUpdate(string displayName, int ageYears = 0, string grade = null)
+        {
+            List<LearnerProfile> profiles = LoadProfiles();
+            string normalizedName = string.IsNullOrWhiteSpace(displayName) ? "Learner" : displayName.Trim();
+            LearnerProfile profile = null;
+
+            foreach (LearnerProfile existing in profiles)
+            {
+                if (existing.DisplayName == normalizedName)
+                {
+                    profile = existing;
+                    break;
+                }
+            }
+
+            if (profile == null)
+            {
+                profile = new LearnerProfile
+                {
+                    LearnerId = Guid.NewGuid().ToString("N"),
+                    DisplayName = normalizedName,
+                    CreatedAtString = DateTime.UtcNow.ToString("o")
+                };
+                profiles.Add(profile);
+            }
+
+            profile.AgeYears = ageYears;
+            profile.Grade = grade;
+            profile.UpdatedAtString = DateTime.UtcNow.ToString("o");
+            SaveProfiles(profiles);
+            SetActiveLearnerId(profile.LearnerId);
+            return profile;
+        }
+
+        public static LearnerProfile GetProfile(string learnerId)
+        {
+            return FindProfile(LoadProfiles(), learnerId);
+        }
+
+        public static List<LearnerProfile> LoadProfiles()
+        {
+            try
+            {
+                string path = GetProfilesPath();
+                if (!File.Exists(path))
+                {
+                    return new List<LearnerProfile>();
+                }
+
+                LearnerProfileList list = JsonUtility.FromJson<LearnerProfileList>(File.ReadAllText(path));
+                return list?.Profiles ?? new List<LearnerProfile>();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[LearnerProfileStore] Failed to load profiles: {e.Message}");
+                return new List<LearnerProfile>();
+            }
+        }
+
+        public static void SetActiveLearnerId(string learnerId)
+        {
+            PlayerPrefs.SetString(ActiveLearnerIdKey, SanitizeLearnerId(learnerId));
+            PlayerPrefs.Save();
+        }
+
+        public static string SanitizeLearnerId(string learnerId)
+        {
+            if (string.IsNullOrWhiteSpace(learnerId))
+            {
+                return DefaultLearnerId;
+            }
+
+            foreach (char invalid in Path.GetInvalidFileNameChars())
+            {
+                learnerId = learnerId.Replace(invalid, '_');
+            }
+
+            return learnerId;
+        }
+
+        private static LearnerProfile CreateDefaultProfile()
+        {
+            string now = DateTime.UtcNow.ToString("o");
+            return new LearnerProfile
+            {
+                LearnerId = DefaultLearnerId,
+                DisplayName = "Default Learner",
+                CreatedAtString = now,
+                UpdatedAtString = now
+            };
+        }
+
+        private static LearnerProfile FindProfile(List<LearnerProfile> profiles, string learnerId)
+        {
+            string safeLearnerId = SanitizeLearnerId(learnerId);
+            foreach (LearnerProfile profile in profiles)
+            {
+                if (profile.LearnerId == safeLearnerId)
+                {
+                    return profile;
+                }
+            }
+
+            return null;
+        }
+
+        private static void SaveProfiles(List<LearnerProfile> profiles)
+        {
+            LearnerProfileList list = new LearnerProfileList { Profiles = profiles };
+            File.WriteAllText(GetProfilesPath(), JsonUtility.ToJson(list, true));
+        }
+
+        private static string GetProfilesPath()
+        {
+            return Path.Combine(Application.persistentDataPath, ProfilesFileName);
+        }
     }
 }

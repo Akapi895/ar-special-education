@@ -7,8 +7,7 @@ using UnityEngine;
 namespace Project.App
 {
     /// <summary>
-    /// Loads the appropriate activity based on SelectedActivityData.
-    /// Place this in the SC_ARGameplay scene.
+    /// Legacy serialized loader for handcrafted scenes. Production gameplay is routed by GameplayActivityRouter.
     /// </summary>
     public class ActivityLoader : MonoBehaviour
     {
@@ -50,8 +49,22 @@ namespace Project.App
         private Core.AR.ARServiceBootstrap arBootstrap;
         private const float PlacementRetrySeconds = 0.5f;
 
+        private void Awake()
+        {
+            if (FindAnyObjectByType<GameplayActivityRouter>() != null)
+            {
+                Debug.Log("[ActivityLoader] GameplayActivityRouter is present; disabling legacy ActivityLoader.");
+                enabled = false;
+            }
+        }
+
         private void Start()
         {
+            if (!enabled)
+            {
+                return;
+            }
+
             arBootstrap = Core.AR.ARServiceBootstrap.Instance;
             if (arBootstrap == null)
             {
@@ -74,9 +87,9 @@ namespace Project.App
                 return;
             }
 
-            if (!arBootstrap.Placement.IsPlacementAvailable)
+            if (!arBootstrap.Placement.IsPlacementAvailable || !arBootstrap.Placement.HasLearningArea)
             {
-                Debug.Log("[ActivityLoader] Waiting for AR plane placement before starting activity.");
+                Debug.Log("[ActivityLoader] Waiting for learning area placement before starting activity.");
                 Invoke(nameof(LoadSelectedActivity), PlacementRetrySeconds);
                 return;
             }

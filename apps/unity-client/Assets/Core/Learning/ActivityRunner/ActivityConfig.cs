@@ -62,6 +62,28 @@ namespace Core.Learning.ActivityRunner
         public int NumberOfRounds => numberOfRounds;
         public List<ActivityHint> DefaultHints => defaultHints;
 
+        protected void ConfigureBase(
+            string activityId,
+            string displayName,
+            string description,
+            int numberOfRounds,
+            int maxAttemptsPerQuestion = 3,
+            int maxHintsPerQuestion = 3,
+            DifficultyLevel difficultyLevel = DifficultyLevel.Easy,
+            float timeLimitSeconds = 0f,
+            List<ActivityHint> defaultHints = null)
+        {
+            this.activityId = activityId;
+            this.displayName = displayName;
+            this.description = description;
+            this.numberOfRounds = numberOfRounds;
+            this.maxAttemptsPerQuestion = maxAttemptsPerQuestion;
+            this.maxHintsPerQuestion = maxHintsPerQuestion;
+            this.difficultyLevel = difficultyLevel;
+            this.timeLimitSeconds = timeLimitSeconds;
+            this.defaultHints = defaultHints ?? new List<ActivityHint>();
+        }
+
         /// <summary>
         /// Validate the configuration.
         /// Override in derived classes for activity-specific validation.

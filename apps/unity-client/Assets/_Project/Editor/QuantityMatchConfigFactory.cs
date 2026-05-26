@@ -34,7 +34,7 @@ namespace Project.Editor
       so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
       so.FindProperty("maxHintsPerQuestion").intValue = 3;
       so.FindProperty("defaultObjectSpacing").floatValue = 0.68f;
-      so.FindProperty("defaultGroupSpacing").floatValue = 2.1f;
+      so.FindProperty("defaultGroupSpacing").floatValue = 1.6f;
       so.FindProperty("groupArrangement").enumValueIndex = (int)GroupArrangementPattern.Horizontal;
 
       var questionsProp = so.FindProperty("questions");

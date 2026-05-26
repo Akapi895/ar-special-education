@@ -1,5 +1,7 @@
 using Core.Data.LocalStorage;
+using Core.Support.AudioManager;
 using Core.Support.FeedbackSystem;
+using Core.Support.Performance;
 using Project.App;
 using UnityEngine;
 
@@ -13,6 +15,8 @@ namespace Project.Runtime
     {
         private void Awake()
         {
+            RuntimePerformanceSettings.Apply();
+
             if (FindAnyObjectByType<ProgressStorageProxy>() == null)
             {
                 var progressGo = new GameObject("ProgressStorageProxy");
@@ -24,6 +28,8 @@ namespace Project.Runtime
                 var feedbackGo = new GameObject("FeedbackServiceProxy");
                 feedbackGo.AddComponent<FeedbackServiceProxy>();
             }
+
+            SimpleAudioManager.EnsureExists();
 
             if (FindAnyObjectByType<GameplayActivityRouter>() == null)
             {

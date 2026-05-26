@@ -97,6 +97,7 @@ namespace Project.Editor
         {
             string[] orderedScenes =
             {
+                BootScenePath,
                 MainMenuScenePath,
                 ActivitySelectScenePath,
                 GameplayScenePath,

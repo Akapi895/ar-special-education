@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Collections.Generic;
 using Core.Learning.Models;
 using Features.Activities;
@@ -18,14 +17,10 @@ namespace Project.App
         private const string DefaultActivityId = "QuantityMatch";
         private const string QuantityMatchRootName = "QuantityMatchActivity";
 
-        private const string NumberLineJumpConfigPath =
-            "Assets/Features/Activities/NumberLineJump/ScriptableObjects/SO_NumberLineJumpConfig_Easy.asset";
-        private const string CompareQuantityConfigPath =
-            "Assets/Features/Activities/CompareQuantity/ScriptableObjects/SO_CompareQuantityConfig_Easy.asset";
         private const string NumberLineJumpResourcePath = "ActivityConfigs/SO_NumberLineJumpConfig_Easy";
         private const string CompareQuantityResourcePath = "ActivityConfigs/SO_CompareQuantityConfig_Easy";
 
-        private void Awake()
+        private void Start()
         {
             RouteSelectedActivity();
         }
@@ -38,6 +33,7 @@ namespace Project.App
 
             if (activityId == DefaultActivityId)
             {
+                StartExistingQuantityMatchActivity();
                 SelectedActivityData.Clear();
                 return;
             }
@@ -64,6 +60,7 @@ namespace Project.App
                     {
                         quantityRoot.SetActive(true);
                     }
+                    StartExistingQuantityMatchActivity();
                     break;
             }
 
@@ -72,12 +69,15 @@ namespace Project.App
 
         private static void CreateNumberLineJumpActivity()
         {
-            if (FindAnyObjectByType<NumberLineJumpActivityBootstrap>() != null)
+            NumberLineJumpActivityBootstrap existingBootstrap = FindAnyObjectByType<NumberLineJumpActivityBootstrap>();
+            if (existingBootstrap != null)
             {
+                existingBootstrap.SetAutoStartWhenReady(false);
+                existingBootstrap.TryStartActivity();
                 return;
             }
 
-            NumberLineJumpConfig config = LoadAsset<NumberLineJumpConfig>(NumberLineJumpResourcePath, NumberLineJumpConfigPath)
+            NumberLineJumpConfig config = LoadAsset<NumberLineJumpConfig>(NumberLineJumpResourcePath)
                 ?? CreateRuntimeNumberLineJumpConfig();
             if (config == null)
             {
@@ -94,21 +94,23 @@ namespace Project.App
             root.AddComponent<NumberLineJumpRuntimeUI>();
             var bootstrap = root.AddComponent<NumberLineJumpActivityBootstrap>();
 
-            SetInstanceField(bootstrap, "presenter", presenter);
-            SetInstanceField(bootstrap, "view", view);
-            SetInstanceField(bootstrap, "config", config);
+            bootstrap.Configure(presenter, view, config);
 
             root.SetActive(true);
+            bootstrap.TryStartActivity();
         }
 
         private static void CreateCompareQuantityActivity()
         {
-            if (FindAnyObjectByType<CompareQuantityActivityBootstrap>() != null)
+            CompareQuantityActivityBootstrap existingBootstrap = FindAnyObjectByType<CompareQuantityActivityBootstrap>();
+            if (existingBootstrap != null)
             {
+                existingBootstrap.SetAutoStartWhenReady(false);
+                existingBootstrap.TryStartActivity();
                 return;
             }
 
-            CompareQuantityConfig config = LoadAsset<CompareQuantityConfig>(CompareQuantityResourcePath, CompareQuantityConfigPath)
+            CompareQuantityConfig config = LoadAsset<CompareQuantityConfig>(CompareQuantityResourcePath)
                 ?? CreateRuntimeCompareQuantityConfig();
             if (config == null)
             {
@@ -125,42 +127,26 @@ namespace Project.App
             root.AddComponent<CompareQuantityRuntimeUI>();
             var bootstrap = root.AddComponent<CompareQuantityActivityBootstrap>();
 
-            SetInstanceField(bootstrap, "presenter", presenter);
-            SetInstanceField(bootstrap, "view", view);
-            SetInstanceField(bootstrap, "config", config);
+            bootstrap.Configure(presenter, view, config);
 
             root.SetActive(true);
+            bootstrap.TryStartActivity();
         }
 
-        private static void SetInstanceField(object target, string fieldName, object value)
+        private static void StartExistingQuantityMatchActivity()
         {
-            FieldInfo field = FindInstanceField(target.GetType(), fieldName);
-            if (field == null)
+            QuantityMatchActivityBootstrap bootstrap = FindAnyObjectByType<QuantityMatchActivityBootstrap>();
+            if (bootstrap == null)
             {
-                Debug.LogError($"[GameplayActivityRouter] Could not find field '{fieldName}' on {target.GetType().Name}.");
+                Debug.LogWarning("[GameplayActivityRouter] Quantity Match bootstrap not found in scene.");
                 return;
             }
 
-            field.SetValue(target, value);
+            bootstrap.SetAutoStartWhenReady(false);
+            bootstrap.TryStartActivity();
         }
 
-        private static FieldInfo FindInstanceField(System.Type type, string fieldName)
-        {
-            while (type != null)
-            {
-                FieldInfo field = type.GetField(fieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (field != null)
-                {
-                    return field;
-                }
-
-                type = type.BaseType;
-            }
-
-            return null;
-        }
-
-        private static T LoadAsset<T>(string resourcePath, string assetPath) where T : ScriptableObject
+        private static T LoadAsset<T>(string resourcePath) where T : ScriptableObject
         {
             T resourceAsset = Resources.Load<T>(resourcePath);
             if (resourceAsset != null)
@@ -168,12 +154,8 @@ namespace Project.App
                 return resourceAsset;
             }
 
-#if UNITY_EDITOR
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<T>(assetPath);
-#else
-            Debug.LogWarning($"[GameplayActivityRouter] Direct asset loading is only available in the Unity Editor: {assetPath}");
+            Debug.LogWarning($"[GameplayActivityRouter] Resource config not found at Resources/{resourcePath}; using runtime fallback.");
             return null;
-#endif
         }
 
         private static NumberLineJumpConfig CreateRuntimeNumberLineJumpConfig()
@@ -193,35 +175,24 @@ namespace Project.App
                 CreateNumberLineQuestion(0, 7, JumpDirection.RightOnly)
             };
 
-            SetInstanceField(config, "activityId", "NumberLineJump");
-            SetInstanceField(config, "displayName", "Number Line Jump (Easy)");
-            SetInstanceField(config, "description", "Jump along the number line to reach the target number.");
-            SetInstanceField(config, "numberOfRounds", questions.Count);
-            SetInstanceField(config, "maxAttemptsPerQuestion", 3);
-            SetInstanceField(config, "maxHintsPerQuestion", 3);
-            SetInstanceField(config, "questions", questions);
-            SetInstanceField(config, "hintLevel1", new ActivityHint("nlj_hint1", "Move the character and count your steps.", 1));
-            SetInstanceField(config, "hintLevel2", new ActivityHint("nlj_hint2", "You started at X. You need to reach Y. How many steps is that?", 2));
-            SetInstanceField(config, "hintLevel3", new ActivityHint("nlj_hint3", "Try jumping [direction] [N] times from where you are.", 3));
-            SetInstanceField(config, "tileSpacing", 0.32f);
-            SetInstanceField(config, "numberLineHeight", 0.1f);
-            SetInstanceField(config, "jumpAnimationDuration", 0.5f);
+            config.ConfigureRuntime(
+                "NumberLineJump",
+                "Number Line Jump (Easy)",
+                "Jump along the number line to reach the target number.",
+                questions,
+                new ActivityHint("nlj_hint1", "Move the character and count your steps.", 1),
+                new ActivityHint("nlj_hint2", "You started at X. You need to reach Y. How many steps is that?", 2),
+                new ActivityHint("nlj_hint3", "Try jumping [direction] [N] times from where you are.", 3),
+                0.32f,
+                0.1f,
+                0.5f);
             return config;
         }
 
         private static NumberLineJumpQuestion CreateNumberLineQuestion(int start, int target, JumpDirection direction)
         {
             var question = new NumberLineJumpQuestion();
-            SetInstanceField(question, "numberLineMin", 0);
-            SetInstanceField(question, "numberLineMax", 10);
-            SetInstanceField(question, "startNumber", start);
-            SetInstanceField(question, "targetNumber", target);
-            SetInstanceField(question, "jumpDirection", direction);
-            SetInstanceField(question, "maxJumpsAllowed", 10);
-            SetInstanceField(question, "showEquationDuringJumps", true);
-            SetInstanceField(question, "customHints", new List<ActivityHint>());
-            SetInstanceField(question, "characterPrefabName", string.Empty);
-            SetInstanceField(question, "tilePrefabName", string.Empty);
+            question.Configure(0, 10, start, target, direction);
             return question;
         }
 
@@ -242,23 +213,21 @@ namespace Project.App
                 CreateCompareQuestion(10, 6)
             };
 
-            SetInstanceField(config, "activityId", "CompareQuantity");
-            SetInstanceField(config, "displayName", "Compare Quantity (Easy)");
-            SetInstanceField(config, "description", "Compare two groups of objects to find which has more, fewer, or if they are equal.");
-            SetInstanceField(config, "numberOfRounds", questions.Count);
-            SetInstanceField(config, "maxAttemptsPerQuestion", 3);
-            SetInstanceField(config, "maxHintsPerQuestion", 3);
-            SetInstanceField(config, "questions", questions);
-            SetInstanceField(config, "moreButtonLabel", "More");
-            SetInstanceField(config, "fewerButtonLabel", "Fewer");
-            SetInstanceField(config, "equalButtonLabel", "Equal");
-            SetInstanceField(config, "hintLevel1", new ActivityHint("cq_hint1", "Count each group carefully.", 1));
-            SetInstanceField(config, "hintLevel2", new ActivityHint("cq_hint2", "The left group has X. Now count the right group.", 2));
-            SetInstanceField(config, "hintLevel3", new ActivityHint("cq_hint3", "Compare X and Y - which is bigger?", 3));
-            SetInstanceField(config, "equalityHintLevel1", new ActivityHint("cq_eq_hint1", "Count both groups - are they the same?", 1));
-            SetInstanceField(config, "equalityHintLevel2", new ActivityHint("cq_eq_hint2", "The left group has X. The right group also has X.", 2));
-            SetInstanceField(config, "equalityHintLevel3", new ActivityHint("cq_eq_hint3", "X and X are the same number - they're EQUAL!", 3));
-            SetInstanceField(config, "groupSpacing", 1.5f);
+            config.ConfigureRuntime(
+                "CompareQuantity",
+                "Compare Quantity (Easy)",
+                "Compare two groups of objects to find which has more, fewer, or if they are equal.",
+                questions,
+                "B\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n",
+                "B\u00ean tr\u00e1i \u00edt h\u01a1n",
+                "B\u1eb1ng nhau",
+                new ActivityHint("cq_hint1", "Count each group carefully.", 1),
+                new ActivityHint("cq_hint2", "The left group has X. Now count the right group.", 2),
+                new ActivityHint("cq_hint3", "Compare X and Y - which is bigger?", 3),
+                new ActivityHint("cq_eq_hint1", "Count both groups - are they the same?", 1),
+                new ActivityHint("cq_eq_hint2", "The left group has X. The right group also has X.", 2),
+                new ActivityHint("cq_eq_hint3", "X and X are the same number - they're EQUAL!", 3),
+                3.0f);
             return config;
         }
 

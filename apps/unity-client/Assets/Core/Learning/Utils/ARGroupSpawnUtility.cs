@@ -1,4 +1,5 @@
 using Core.Learning.ActivityRunner;
+using Core.Support.Performance;
 using UnityEngine;
 
 namespace Core.Learning.Utils
@@ -6,8 +7,7 @@ namespace Core.Learning.Utils
     /// <summary>
     /// Shared utility for spawning object groups in AR activities.
     /// Extracted from QuantityMatchPresenter to be reused across activities.
-    ///
-    /// TODO: Review with team - this utility depends on IARPlacementService implementation.
+    /// Depends only on the learning-facing placement interface.
     /// </summary>
     public static class ARGroupSpawnUtility
     {
@@ -33,6 +33,13 @@ namespace Core.Learning.Utils
                 return CreatePlaceholderGroup(position, objectCount, groupName);
             }
 
+            int requestedCount = objectCount;
+            objectCount = RuntimePerformanceSettings.ClampGroupObjectCount(objectCount);
+            if (objectCount != requestedCount)
+            {
+                Debug.LogWarning($"[ARGroupSpawnUtility] Clamped group '{groupName}' from {requestedCount} to {objectCount} objects for device budget.");
+            }
+
             if (prefab == null)
             {
                 Debug.LogWarning($"[ARGroupSpawnUtility] Prefab is null for group '{groupName}'. Creating placeholder.");
@@ -49,9 +56,7 @@ namespace Core.Learning.Utils
                     break;
 
                 case ObjectArrangementPattern.Grid:
-                    // For grid, we spawn a simple arrangement
-                    // TODO: Add SpawnGrid method to IARPlacementService if needed
-                    objects = placementService.SpawnCircle(prefab, position, objectCount, CalculateCircleRadius(objectCount));
+                    objects = placementService.SpawnGrid(prefab, position, objectCount, DefaultObjectSpacing);
                     break;
 
                 default:
@@ -62,6 +67,10 @@ namespace Core.Learning.Utils
             // Create parent object for the group
             GameObject group = new GameObject($"{groupName}_Count{objectCount}");
             group.transform.position = position;
+            if (placementService.HasLearningArea && placementService.LearningAreaContentRoot != null)
+            {
+                group.transform.SetParent(placementService.LearningAreaContentRoot, true);
+            }
 
             if (objects != null)
             {
@@ -227,8 +236,7 @@ namespace Core.Learning.Utils
     /// <summary>
     /// How groups are arranged relative to each other.
     /// Reuse the enum from QuantityMatchConfig for consistency.
-    /// This is duplicated here to avoid circular dependencies.
-    /// TODO: Consider moving to a common location.
+    /// This remains local to avoid activity package dependencies in Core.
     /// </summary>
     public enum GroupArrangementPattern
     {

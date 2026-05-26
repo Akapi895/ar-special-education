@@ -35,6 +35,7 @@ namespace Features.Activities
         [SerializeField] private bool preferAnimalPrefabs = true;
         [SerializeField] private float learningObjectTargetHeight = 0.48f;
         [SerializeField] private string resourcesAnimalFolder = "ARAnimals";
+        [SerializeField] private bool preferGroundedLearningAnimals = true;
         [SerializeField] private bool faceLearningObjectsToCamera = true;
         [SerializeField] private float animalFacingYawOffset;
         [SerializeField] private float randomFacingYaw = 12f;
@@ -47,6 +48,12 @@ namespace Features.Activities
 
         private bool usingGeneratedAnimalPrefabs;
         private readonly Dictionary<Material, Material> convertedMaterialCache = new Dictionary<Material, Material>();
+        private static readonly string[] NonGroundAnimalKeywords =
+        {
+            "bird", "sparrow", "eagle", "owl", "parrot",
+            "fish", "herring", "shark", "ray", "whale", "dolphin",
+            "squid", "octopus"
+        };
 
         private void Awake()
         {
@@ -89,11 +96,12 @@ namespace Features.Activities
         public GameObject GetAnimalPrefab(int index)
         {
             LoadAnimalPrefabsIfNeeded();
-            if (!HasAnimalPrefabs())
+            List<GameObject> prefabs = GetPreferredAnimalPrefabs();
+            if (prefabs.Count == 0)
             {
                 return null;
             }
-            return animalPrefabs[index % animalPrefabs.Length];
+            return prefabs[Mathf.Abs(index) % prefabs.Count];
         }
 
         public GameObject GetRandomAnimalPrefab()
@@ -105,18 +113,19 @@ namespace Features.Activities
 
             LoadAnimalPrefabsIfNeeded();
 
-            if (!HasAnimalPrefabs())
+            List<GameObject> prefabs = GetPreferredAnimalPrefabs();
+            if (prefabs.Count == 0)
             {
                 return null;
             }
 
-            int startIndex = Random.Range(0, animalPrefabs.Length);
-            for (int i = 0; i < animalPrefabs.Length; i++)
+            int startIndex = Random.Range(0, prefabs.Count);
+            for (int i = 0; i < prefabs.Count; i++)
             {
-                int index = (startIndex + i) % animalPrefabs.Length;
-                if (animalPrefabs[index] != null)
+                int index = (startIndex + i) % prefabs.Count;
+                if (prefabs[index] != null)
                 {
-                    return animalPrefabs[index];
+                    return prefabs[index];
                 }
             }
 
@@ -131,6 +140,8 @@ namespace Features.Activities
             }
 
             NormalizeObjectHeight(obj, learningObjectTargetHeight);
+            SnapObjectBottomToGroundPlane(obj);
+            StabilizeSkinnedMeshRendering(obj);
             RepairLearningObjectMaterials(obj);
             FaceLearningObjectTowardCamera(obj.transform);
 
@@ -268,6 +279,61 @@ namespace Features.Activities
             }
 
             return false;
+        }
+
+        private List<GameObject> GetPreferredAnimalPrefabs()
+        {
+            var results = new List<GameObject>();
+            if (!HasAnimalPrefabs())
+            {
+                return results;
+            }
+
+            if (preferGroundedLearningAnimals)
+            {
+                for (int i = 0; i < animalPrefabs.Length; i++)
+                {
+                    GameObject prefab = animalPrefabs[i];
+                    if (prefab != null && IsGroundFriendlyAnimalPrefab(prefab))
+                    {
+                        results.Add(prefab);
+                    }
+                }
+            }
+
+            if (results.Count > 0)
+            {
+                return results;
+            }
+
+            for (int i = 0; i < animalPrefabs.Length; i++)
+            {
+                if (animalPrefabs[i] != null)
+                {
+                    results.Add(animalPrefabs[i]);
+                }
+            }
+
+            return results;
+        }
+
+        private static bool IsGroundFriendlyAnimalPrefab(GameObject prefab)
+        {
+            if (prefab == null)
+            {
+                return false;
+            }
+
+            string name = prefab.name.ToLowerInvariant();
+            for (int i = 0; i < NonGroundAnimalKeywords.Length; i++)
+            {
+                if (name.Contains(NonGroundAnimalKeywords[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private GameObject CreateApplePrefab()
@@ -430,6 +496,56 @@ namespace Features.Activities
 
             float scaleFactor = targetHeight / bounds.size.y;
             obj.transform.localScale *= scaleFactor;
+        }
+
+        private static void SnapObjectBottomToGroundPlane(GameObject obj)
+        {
+            if (obj == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = obj.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                return;
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            float groundY = obj.transform.position.y;
+            float deltaY = groundY - bounds.min.y;
+            if (Mathf.Abs(deltaY) > 0.0005f)
+            {
+                obj.transform.position += Vector3.up * deltaY;
+            }
+        }
+
+        private static void StabilizeSkinnedMeshRendering(GameObject obj)
+        {
+            if (obj == null)
+            {
+                return;
+            }
+
+            SkinnedMeshRenderer[] skinnedRenderers = obj.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            for (int i = 0; i < skinnedRenderers.Length; i++)
+            {
+                SkinnedMeshRenderer skinnedRenderer = skinnedRenderers[i];
+                if (skinnedRenderer == null)
+                {
+                    continue;
+                }
+
+                skinnedRenderer.updateWhenOffscreen = true;
+                Bounds localBounds = skinnedRenderer.localBounds;
+                localBounds.Expand(0.12f);
+                skinnedRenderer.localBounds = localBounds;
+            }
         }
 
         private void FaceLearningObjectTowardCamera(Transform target)
