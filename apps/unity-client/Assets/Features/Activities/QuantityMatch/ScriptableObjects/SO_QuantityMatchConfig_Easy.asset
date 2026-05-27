@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: SO_QuantityMatchConfig_Easy
   m_EditorClassIdentifier: 
   activityId: QuantityMatch
-  displayName: Quantity Match (Easy)
-  description: Match the number to the correct group of objects.
+  displayName: Ghép số với số lượng (Dễ)
+  description: Con chọn nhóm con vật có đúng số lượng được yêu cầu.
   difficultyLevel: 1
   maxHintsPerQuestion: 3
   maxAttemptsPerQuestion: 3
@@ -82,22 +82,22 @@ MonoBehaviour:
     CorrectGroupIndex: 0
     ObjectPrefabName: 
     CustomHints: []
-  correctFeedback: Great job! You found the right group!
-  incorrectFeedback: Not quite. Let's try again!
-  failedFeedback: Good effort! Let's try another one.
+  correctFeedback: Giỏi lắm! Con đã chọn đúng nhóm!
+  incorrectFeedback: Chưa đúng rồi. Con hãy thử đếm lại nhé!
+  failedFeedback: Con đã cố gắng rất tốt. Mình thử câu khác nhé.
   hintLevel1:
     HintId: qm_hint1
-    HintText: Look carefully at the groups.
+    HintText: Con nhìn kỹ từng nhóm con vật nhé.
     Level: 1
     ARHint: 
   hintLevel2:
     HintId: qm_hint2
-    HintText: The number shown is X, count each group.
+    HintText: Số cần tìm là X. Con hãy đếm từng nhóm.
     Level: 2
     ARHint: 
   hintLevel3:
     HintId: qm_hint3
-    HintText: One group has exactly X objects.
+    HintText: Có một nhóm có đúng X con vật.
     Level: 3
     ARHint: 
   defaultObjectSpacing: 0.68

@@ -34,35 +34,35 @@ namespace Features.Activities.CompareQuantity
         [Header("Feedback Strings - Outcome Specific")]
         [Tooltip("Feedback when user answers 'More' correctly")]
         [SerializeField]
-        private string correctMoreFeedback = "Yes! The left group has MORE!";
+        private string correctMoreFeedback = "\u0110\u00fang r\u1ed3i! Nh\u00f3m b\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n!";
 
         [Tooltip("Feedback when user answers 'Fewer' correctly")]
         [SerializeField]
-        private string correctFewerFeedback = "Yes! The left group has FEWER!";
+        private string correctFewerFeedback = "\u0110\u00fang r\u1ed3i! Nh\u00f3m b\u00ean tr\u00e1i \u00edt h\u01a1n!";
 
         [Tooltip("Feedback when user answers 'Equal' correctly")]
         [SerializeField]
-        private string correctEqualFeedback = "Yes! Both groups are EQUAL!";
+        private string correctEqualFeedback = "\u0110\u00fang r\u1ed3i! Hai nh\u00f3m b\u1eb1ng nhau!";
 
         [Tooltip("Feedback when user answers 'More' incorrectly")]
         [SerializeField]
-        private string incorrectMoreFeedback = "Not more. Look again!";
+        private string incorrectMoreFeedback = "Ch\u01b0a ph\u1ea3i nhi\u1ec1u h\u01a1n. Con h\u00e3y \u0111\u1ebfm l\u1ea1i nh\u00e9!";
 
         [Tooltip("Feedback when user answers 'Fewer' incorrectly")]
         [SerializeField]
-        private string incorrectFewerFeedback = "Not fewer. Try counting again!";
+        private string incorrectFewerFeedback = "Ch\u01b0a ph\u1ea3i \u00edt h\u01a1n. Con h\u00e3y \u0111\u1ebfm l\u1ea1i nh\u00e9!";
 
         [Tooltip("Feedback when user answers 'Equal' incorrectly")]
         [SerializeField]
-        private string incorrectEqualFeedback = "Not equal. Count each group carefully!";
+        private string incorrectEqualFeedback = "Ch\u01b0a b\u1eb1ng nhau. Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m nh\u00e9!";
 
         [Tooltip("Generic incorrect feedback when specific outcome feedback isn't available")]
         [SerializeField]
-        private string genericIncorrectFeedback = "Not quite. Let's try again!";
+        private string genericIncorrectFeedback = "Ch\u01b0a \u0111\u00fang r\u1ed3i. Con th\u1eed l\u1ea1i nh\u00e9!";
 
         [Tooltip("Feedback when max attempts are reached")]
         [SerializeField]
-        private string failedFeedback = "Good effort! Let's try another one.";
+        private string failedFeedback = "Con \u0111\u00e3 c\u1ed1 g\u1eafng r\u1ea5t t\u1ed1t. M\u00ecnh th\u1eed c\u00e2u kh\u00e1c nh\u00e9.";
 
         [Header("Hints - Standard (3-level progression)")]
         [Tooltip("Level 1 hint: Count each group")]
@@ -187,18 +187,18 @@ namespace Features.Activities.CompareQuantity
             {
                 return new List<ActivityHint>
                 {
-                    equalityHintLevel1 ?? new ActivityHint("eq_hint1", "Count both groups — are they the same?", 1),
-                    equalityHintLevel2 ?? new ActivityHint("eq_hint2", "The left group has X. The right group also has X.", 2),
-                    equalityHintLevel3 ?? new ActivityHint("eq_hint3", "X and X are the same number — they're EQUAL!", 3)
+                    equalityHintLevel1 ?? new ActivityHint("eq_hint1", "Con \u0111\u1ebfm c\u1ea3 hai nh\u00f3m: hai nh\u00f3m c\u00f3 b\u1eb1ng nhau kh\u00f4ng?", 1),
+                    equalityHintLevel2 ?? new ActivityHint("eq_hint2", "Nh\u00f3m b\u00ean tr\u00e1i c\u00f3 X con. Nh\u00f3m b\u00ean ph\u1ea3i c\u0169ng c\u00f3 X con.", 2),
+                    equalityHintLevel3 ?? new ActivityHint("eq_hint3", "X v\u00e0 X l\u00e0 c\u00f9ng m\u1ed9t s\u1ed1, n\u00ean hai nh\u00f3m b\u1eb1ng nhau.", 3)
                 };
             }
             else
             {
                 return new List<ActivityHint>
                 {
-                    hintLevel1 ?? new ActivityHint("hint1", "Count each group carefully.", 1),
-                    hintLevel2 ?? new ActivityHint("hint2", "The left group has X objects. Now count the right group.", 2),
-                    hintLevel3 ?? new ActivityHint("hint3", "Compare X and Y — which is bigger?", 3)
+                    hintLevel1 ?? new ActivityHint("hint1", "Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m th\u1eadt ch\u1eadm nh\u00e9.", 1),
+                    hintLevel2 ?? new ActivityHint("hint2", "Nh\u00f3m b\u00ean tr\u00e1i c\u00f3 X con. B\u00e2y gi\u1edd con \u0111\u1ebfm nh\u00f3m b\u00ean ph\u1ea3i.", 2),
+                    hintLevel3 ?? new ActivityHint("hint3", "So s\u00e1nh X v\u00e0 Y: s\u1ed1 n\u00e0o l\u1edbn h\u01a1n?", 3)
                 };
             }
         }
@@ -228,7 +228,7 @@ namespace Features.Activities.CompareQuantity
                     ComparisonAnswer.More => correctMoreFeedback,
                     ComparisonAnswer.Fewer => correctFewerFeedback,
                     ComparisonAnswer.Equal => correctEqualFeedback,
-                    _ => "Great job!"
+                    _ => "\u0110\u00fang r\u1ed3i! Con l\u00e0m t\u1ed1t l\u1eafm!"
                 };
             }
             else
@@ -250,7 +250,7 @@ namespace Features.Activities.CompareQuantity
         {
             if (hint == null)
             {
-                return "Try counting each group carefully.";
+                return "Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m th\u1eadt ch\u1eadm nh\u00e9.";
             }
 
             string text = hint.HintText;
@@ -266,7 +266,7 @@ namespace Features.Activities.CompareQuantity
         {
             if (hint == null)
             {
-                return "Count both groups — are they the same?";
+                return "Con \u0111\u1ebfm c\u1ea3 hai nh\u00f3m: hai nh\u00f3m c\u00f3 b\u1eb1ng nhau kh\u00f4ng?";
             }
 
             return hint.HintText.Replace("X", count.ToString());

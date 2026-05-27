@@ -178,11 +178,11 @@ namespace Project.App
             config.ConfigureRuntime(
                 "NumberLineJump",
                 "Number Line Jump (Easy)",
-                "Jump along the number line to reach the target number.",
+                "Con nh\u1ea3y tr\u00ean tr\u1ee5c s\u1ed1 \u0111\u1ec3 \u0111\u1ebfn \u0111\u00fang s\u1ed1 c\u1ea7n t\u00ecm.",
                 questions,
-                new ActivityHint("nlj_hint1", "Move the character and count your steps.", 1),
-                new ActivityHint("nlj_hint2", "You started at X. You need to reach Y. How many steps is that?", 2),
-                new ActivityHint("nlj_hint3", "Try jumping [direction] [N] times from where you are.", 3),
+                new ActivityHint("nlj_hint1", "Con h\u00e3y di chuy\u1ec3n nh\u00e2n v\u1eadt v\u00e0 \u0111\u1ebfm t\u1eebng b\u01b0\u1edbc nh\u1ea3y.", 1),
+                new ActivityHint("nlj_hint2", "Con b\u1eaft \u0111\u1ea7u \u1edf X v\u00e0 c\u1ea7n \u0111\u1ebfn Y. V\u1eady c\u1ea7n nh\u1ea3y m\u1ea5y b\u01b0\u1edbc?", 2),
+                new ActivityHint("nlj_hint3", "H\u00e3y nh\u1ea3y [direction] [N] b\u01b0\u1edbc t\u1eeb v\u1ecb tr\u00ed hi\u1ec7n t\u1ea1i.", 3),
                 0.32f,
                 0.1f,
                 0.5f);
@@ -216,17 +216,17 @@ namespace Project.App
             config.ConfigureRuntime(
                 "CompareQuantity",
                 "Compare Quantity (Easy)",
-                "Compare two groups of objects to find which has more, fewer, or if they are equal.",
+                "Con so s\u00e1nh hai nh\u00f3m con v\u1eadt xem b\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n, \u00edt h\u01a1n hay b\u1eb1ng b\u00ean ph\u1ea3i.",
                 questions,
                 "B\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n",
                 "B\u00ean tr\u00e1i \u00edt h\u01a1n",
                 "B\u1eb1ng nhau",
-                new ActivityHint("cq_hint1", "Count each group carefully.", 1),
-                new ActivityHint("cq_hint2", "The left group has X. Now count the right group.", 2),
-                new ActivityHint("cq_hint3", "Compare X and Y - which is bigger?", 3),
-                new ActivityHint("cq_eq_hint1", "Count both groups - are they the same?", 1),
-                new ActivityHint("cq_eq_hint2", "The left group has X. The right group also has X.", 2),
-                new ActivityHint("cq_eq_hint3", "X and X are the same number - they're EQUAL!", 3),
+                new ActivityHint("cq_hint1", "Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m th\u1eadt ch\u1eadm nh\u00e9.", 1),
+                new ActivityHint("cq_hint2", "Nh\u00f3m b\u00ean tr\u00e1i c\u00f3 X con. B\u00e2y gi\u1edd con \u0111\u1ebfm nh\u00f3m b\u00ean ph\u1ea3i.", 2),
+                new ActivityHint("cq_hint3", "So s\u00e1nh X v\u00e0 Y: s\u1ed1 n\u00e0o l\u1edbn h\u01a1n?", 3),
+                new ActivityHint("cq_eq_hint1", "Con \u0111\u1ebfm c\u1ea3 hai nh\u00f3m: hai nh\u00f3m c\u00f3 b\u1eb1ng nhau kh\u00f4ng?", 1),
+                new ActivityHint("cq_eq_hint2", "Nh\u00f3m b\u00ean tr\u00e1i c\u00f3 X con. Nh\u00f3m b\u00ean ph\u1ea3i c\u0169ng c\u00f3 X con.", 2),
+                new ActivityHint("cq_eq_hint3", "X v\u00e0 X l\u00e0 c\u00f9ng m\u1ed9t s\u1ed1, n\u00ean hai nh\u00f3m b\u1eb1ng nhau.", 3),
                 3.0f);
             return config;
         }

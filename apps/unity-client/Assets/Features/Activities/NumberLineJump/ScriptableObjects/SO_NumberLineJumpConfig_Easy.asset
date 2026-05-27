@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: SO_NumberLineJumpConfig_Easy
   m_EditorClassIdentifier: 
   activityId: NumberLineJump
-  displayName: Number Line Jump (Easy)
-  description: Jump along the number line to reach the target number.
+  displayName: Nhảy trên trục số (Dễ)
+  description: Con nhảy trên trục số để đến đúng số cần tìm.
   difficultyLevel: 1
   maxHintsPerQuestion: 3
   maxAttemptsPerQuestion: 3
@@ -122,29 +122,29 @@ MonoBehaviour:
     customHints: []
     characterPrefabName: 
     tilePrefabName: 
-  correctFeedback: Excellent! You reached the target!
-  perfectFeedback: Perfect! You took exactly the right number of jumps!
-  incorrectFeedback: Not quite. Let's try counting the jumps again!
-  overshootFeedback: You went too far! Try starting over.
-  boundaryFeedback: You reached the edge! Can't go further.
-  maxJumpsFeedback: That's a lot of jumps! Let's try again more carefully.
-  failedFeedback: Good effort! Let's try another one.
+  correctFeedback: Chính xác! Con đã đến đúng số rồi!
+  perfectFeedback: Tuyệt vời! Con nhảy đúng số bước cần thiết!
+  incorrectFeedback: Chưa đúng rồi. Con hãy đếm lại số bước nhảy nhé!
+  overshootFeedback: Con đi quá xa rồi. Mình bắt đầu lại nhé!
+  boundaryFeedback: Con đã tới mép rồi, không đi xa hơn được nữa.
+  maxJumpsFeedback: Con nhảy hơi nhiều rồi. Mình thử lại chậm hơn nhé!
+  failedFeedback: Con đã cố gắng rất tốt. Mình thử câu khác nhé.
   hintLevel1:
     HintId: nlj_hint1
-    HintText: Move the character and count your steps.
+    HintText: Con hãy di chuyển nhân vật và đếm từng bước nhảy.
     Level: 1
     ARHint: 
   hintLevel2:
     HintId: nlj_hint2
-    HintText: You started at X. You need to reach Y. How many steps is that?
+    HintText: Con bắt đầu ở X và cần đến Y. Vậy cần nhảy mấy bước?
     Level: 2
     ARHint: 
   hintLevel3:
     HintId: nlj_hint3
-    HintText: Try jumping [direction] [N] times from where you are.
+    HintText: Hãy nhảy [direction] [N] bước từ vị trí hiện tại.
     Level: 3
     ARHint: 
-  maxJumpsWarning: You've used most of your jumps. Think carefully!
+  maxJumpsWarning: Con sắp hết lượt nhảy rồi. Hãy nghĩ thật kỹ nhé!
   maxJumpsWarningThreshold: 3
   tileSpacing: 0.32
   numberLineHeight: 0.1

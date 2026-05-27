@@ -27,6 +27,9 @@ namespace Core.UI.Components
         [SerializeField] private float autoHideDelay = 1.8f;
         [SerializeField] private float shakeDuration = 0.5f;
         [SerializeField] private float shakeAmount = 25f;
+        [SerializeField] private Vector2 childFriendlyPanelSize = new Vector2(820f, 150f);
+        [SerializeField] private Vector2 childFriendlyPanelPosition = new Vector2(0f, -260f);
+        [SerializeField] private int childFriendlyMessageFontSize = 36;
 
         private Vector2 originalContentPosition;
         private Coroutine activeOverlayCoroutine;
@@ -135,6 +138,12 @@ namespace Core.UI.Components
             if (messageText != null)
             {
                 messageText.text = message;
+                messageText.fontSize = childFriendlyMessageFontSize;
+                messageText.resizeTextForBestFit = true;
+                messageText.resizeTextMinSize = 22;
+                messageText.resizeTextMaxSize = childFriendlyMessageFontSize;
+                messageText.alignment = TextAnchor.MiddleCenter;
+                messageText.color = Color.white;
             }
 
             if (overlayContainer != null)
@@ -149,6 +158,11 @@ namespace Core.UI.Components
 
             if (contentPanel != null)
             {
+                contentPanel.anchorMin = new Vector2(0.5f, 0.5f);
+                contentPanel.anchorMax = new Vector2(0.5f, 0.5f);
+                contentPanel.pivot = new Vector2(0.5f, 0.5f);
+                contentPanel.sizeDelta = childFriendlyPanelSize;
+                originalContentPosition = childFriendlyPanelPosition;
                 contentPanel.anchoredPosition = originalContentPosition;
             }
         }

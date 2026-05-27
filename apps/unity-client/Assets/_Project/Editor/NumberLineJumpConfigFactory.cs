@@ -27,17 +27,25 @@ namespace Project.Editor
             var so = new SerializedObject(config);
 
             so.FindProperty("activityId").stringValue = "NumberLineJump";
-            so.FindProperty("displayName").stringValue = "Number Line Jump (Easy)";
-            so.FindProperty("description").stringValue = "Jump along the number line to reach the target number.";
+            so.FindProperty("displayName").stringValue = "Nh\u1ea3y tr\u00ean tr\u1ee5c s\u1ed1 (D\u1ec5)";
+            so.FindProperty("description").stringValue = "Con nh\u1ea3y tr\u00ean tr\u1ee5c s\u1ed1 \u0111\u1ec3 \u0111\u1ebfn \u0111\u00fang s\u1ed1 c\u1ea7n t\u00ecm.";
             so.FindProperty("numberOfRounds").intValue = 10;
             so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
             so.FindProperty("maxHintsPerQuestion").intValue = 3;
             so.FindProperty("tileSpacing").floatValue = 0.32f;
+            so.FindProperty("correctFeedback").stringValue = "Ch\u00ednh x\u00e1c! Con \u0111\u00e3 \u0111\u1ebfn \u0111\u00fang s\u1ed1 r\u1ed3i!";
+            so.FindProperty("perfectFeedback").stringValue = "Tuy\u1ec7t v\u1eddi! Con nh\u1ea3y \u0111\u00fang s\u1ed1 b\u01b0\u1edbc c\u1ea7n thi\u1ebft!";
+            so.FindProperty("incorrectFeedback").stringValue = "Ch\u01b0a \u0111\u00fang r\u1ed3i. Con h\u00e3y \u0111\u1ebfm l\u1ea1i s\u1ed1 b\u01b0\u1edbc nh\u1ea3y nh\u00e9!";
+            so.FindProperty("overshootFeedback").stringValue = "Con \u0111i qu\u00e1 xa r\u1ed3i. M\u00ecnh b\u1eaft \u0111\u1ea7u l\u1ea1i nh\u00e9!";
+            so.FindProperty("boundaryFeedback").stringValue = "Con \u0111\u00e3 t\u1edbi m\u00e9p r\u1ed3i, kh\u00f4ng \u0111i xa h\u01a1n \u0111\u01b0\u1ee3c n\u1eefa.";
+            so.FindProperty("maxJumpsFeedback").stringValue = "Con nh\u1ea3y h\u01a1i nhi\u1ec1u r\u1ed3i. M\u00ecnh th\u1eed l\u1ea1i ch\u1eadm h\u01a1n nh\u00e9!";
+            so.FindProperty("failedFeedback").stringValue = "Con \u0111\u00e3 c\u1ed1 g\u1eafng r\u1ea5t t\u1ed1t. M\u00ecnh th\u1eed c\u00e2u kh\u00e1c nh\u00e9.";
+            so.FindProperty("maxJumpsWarning").stringValue = "Con s\u1eafp h\u1ebft l\u01b0\u1ee3t nh\u1ea3y r\u1ed3i. H\u00e3y ngh\u0129 th\u1eadt k\u1ef9 nh\u00e9!";
 
             // Set up default hints
-            SetHint(so.FindProperty("hintLevel1"), "nlj_hint1", "Move the character and count your steps.", 1);
-            SetHint(so.FindProperty("hintLevel2"), "nlj_hint2", "You started at X. You need to reach Y. How many steps is that?", 2);
-            SetHint(so.FindProperty("hintLevel3"), "nlj_hint3", "Try jumping [direction] [N] times from where you are.", 3);
+            SetHint(so.FindProperty("hintLevel1"), "nlj_hint1", "Con h\u00e3y di chuy\u1ec3n nh\u00e2n v\u1eadt v\u00e0 \u0111\u1ebfm t\u1eebng b\u01b0\u1edbc nh\u1ea3y.", 1);
+            SetHint(so.FindProperty("hintLevel2"), "nlj_hint2", "Con b\u1eaft \u0111\u1ea7u \u1edf X v\u00e0 c\u1ea7n \u0111\u1ebfn Y. V\u1eady c\u1ea7n nh\u1ea3y m\u1ea5y b\u01b0\u1edbc?", 2);
+            SetHint(so.FindProperty("hintLevel3"), "nlj_hint3", "H\u00e3y nh\u1ea3y [direction] [N] b\u01b0\u1edbc t\u1eeb v\u1ecb tr\u00ed hi\u1ec7n t\u1ea1i.", 3);
 
             var questionsProp = so.FindProperty("questions");
             questionsProp.arraySize = 10;

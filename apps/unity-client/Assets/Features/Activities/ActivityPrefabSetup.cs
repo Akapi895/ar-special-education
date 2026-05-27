@@ -41,6 +41,9 @@ namespace Features.Activities
         [SerializeField] private float randomFacingYaw = 12f;
         [SerializeField] private bool repairLearningObjectMaterials = true;
         [SerializeField] private string learningObjectShaderName = "Universal Render Pipeline/Unlit";
+        [SerializeField] private bool boostLearningObjectContrast = true;
+        [SerializeField] private float minimumLearningObjectBrightness = 0.58f;
+        [SerializeField] private float learningObjectColorLift = 0.32f;
 
         [Header("Auto-Create Placeholders")]
         [SerializeField] private bool autoCreatePlaceholders = true;
@@ -609,7 +612,9 @@ namespace Features.Activities
 
         private Material GetRenderableMaterial(Material source)
         {
-            if (!NeedsMaterialRepair(source))
+            bool needsRepair = NeedsMaterialRepair(source) || NeedsReadableShader(source);
+            bool needsContrastBoost = boostLearningObjectContrast && NeedsContrastBoost(source);
+            if (!needsRepair && !needsContrastBoost)
             {
                 return source;
             }
@@ -619,20 +624,31 @@ namespace Features.Activities
                 return cachedMaterial;
             }
 
-            Shader shader = Shader.Find(learningObjectShaderName)
-                ?? Shader.Find("Universal Render Pipeline/Lit")
-                ?? Shader.Find("Unlit/Texture")
-                ?? Shader.Find("Standard");
-
-            if (shader == null)
+            Material material;
+            if (needsRepair || source == null)
             {
-                return source;
+                Shader shader = Shader.Find(learningObjectShaderName)
+                    ?? Shader.Find("Universal Render Pipeline/Lit")
+                    ?? Shader.Find("Unlit/Texture")
+                    ?? Shader.Find("Standard");
+
+                if (shader == null)
+                {
+                    return source;
+                }
+
+                material = new Material(shader)
+                {
+                    name = source != null ? $"{source.name}_Readable_Runtime" : "LearningObject_Readable_Runtime"
+                };
             }
-
-            var material = new Material(shader)
+            else
             {
-                name = source != null ? $"{source.name}_URP_Runtime" : "LearningObject_URP_Runtime"
-            };
+                material = new Material(source)
+                {
+                    name = $"{source.name}_Readable_Runtime"
+                };
+            }
 
             Texture mainTexture = GetMainTexture(source);
             if (mainTexture != null)
@@ -641,17 +657,72 @@ namespace Features.Activities
                 SetTextureIfPresent(material, "_MainTex", mainTexture);
             }
 
-            Color baseColor = GetMaterialColor(source);
+            Color baseColor = boostLearningObjectContrast
+                ? EnhanceLearningObjectColor(GetMaterialColor(source))
+                : GetMaterialColor(source);
             SetColorIfPresent(material, "_BaseColor", baseColor);
             SetColorIfPresent(material, "_Color", baseColor);
+            SetEmissionIfPresent(material, baseColor * 0.12f);
 
             if (source != null)
             {
                 convertedMaterialCache[source] = material;
-                Debug.Log($"[ActivityPrefabSetup] Repaired animal material '{source.name}' from shader '{source.shader?.name}' to '{shader.name}'.");
+                Debug.Log($"[ActivityPrefabSetup] Prepared readable animal material '{source.name}' from shader '{source.shader?.name}'.");
             }
 
             return material;
+        }
+
+        private bool NeedsContrastBoost(Material material)
+        {
+            if (!boostLearningObjectContrast)
+            {
+                return false;
+            }
+
+            Color color = GetMaterialColor(material);
+            float brightness = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+            return brightness < minimumLearningObjectBrightness;
+        }
+
+        private bool NeedsReadableShader(Material material)
+        {
+            if (!boostLearningObjectContrast || material == null || material.shader == null)
+            {
+                return false;
+            }
+
+            string shaderName = material.shader.name;
+            return !shaderName.Contains("Unlit");
+        }
+
+        private Color EnhanceLearningObjectColor(Color color)
+        {
+            if (color.a <= 0.001f)
+            {
+                color = Color.white;
+            }
+
+            color.r = Mathf.Clamp01(color.r);
+            color.g = Mathf.Clamp01(color.g);
+            color.b = Mathf.Clamp01(color.b);
+
+            float brightness = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+            if (brightness < minimumLearningObjectBrightness)
+            {
+                color = Color.Lerp(color, Color.white, learningObjectColorLift);
+                brightness = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+                if (brightness < minimumLearningObjectBrightness)
+                {
+                    float scale = minimumLearningObjectBrightness / Mathf.Max(0.001f, brightness);
+                    color.r = Mathf.Clamp01(color.r * scale);
+                    color.g = Mathf.Clamp01(color.g * scale);
+                    color.b = Mathf.Clamp01(color.b * scale);
+                }
+            }
+
+            color.a = Mathf.Max(color.a, 1f);
+            return color;
         }
 
         private static bool NeedsMaterialRepair(Material material)
@@ -720,6 +791,17 @@ namespace Features.Activities
             {
                 material.SetColor(propertyName, color);
             }
+        }
+
+        private static void SetEmissionIfPresent(Material material, Color color)
+        {
+            if (material == null || !material.HasProperty("_EmissionColor"))
+            {
+                return;
+            }
+
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", color);
         }
 
 #if UNITY_EDITOR

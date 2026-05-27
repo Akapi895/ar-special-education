@@ -188,12 +188,12 @@ namespace Features.Activities.NumberLineJump
             if (targetNumber > startNumber)
             {
                 int steps = targetNumber - startNumber;
-                return $"right {steps} times";
+                return $"sang ph\u1ea3i {steps} b\u01b0\u1edbc";
             }
             else
             {
                 int steps = startNumber - targetNumber;
-                return $"left {steps} times";
+                return $"sang tr\u00e1i {steps} b\u01b0\u1edbc";
             }
         }
     }

@@ -81,7 +81,7 @@ namespace Features.Activities.QuantityMatch
 
         [Header("Navigation")]
         [SerializeField]
-        private string activitySelectSceneName = "SC_ActivitySelect";
+        private string homeSceneName = "SC_MainMenu";
 
         [Header("Group Selection UI")]
         [SerializeField]
@@ -120,6 +120,9 @@ namespace Features.Activities.QuantityMatch
         private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
         private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(108f, 70f);
         private static readonly Vector2 RuntimeNumberInputPanelSize = new Vector2(900f, 330f);
+        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(124f, 56f);
+        private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
+        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-160f, -24f);
         private const float RuntimeButtonGap = 28f;
         private const float RuntimeDigitButtonGap = 12f;
         private const float RuntimeActionButtonBottomY = 112f;
@@ -128,16 +131,22 @@ namespace Features.Activities.QuantityMatch
         private const float RuntimeFeedbackPanelBottomY = 450f;
         private const float RuntimeNumberInputPanelBottomY = 190f;
         private const int MaxNumberInputLength = 2;
+        private const int NumberChoiceMin = 1;
+        private const int NumberChoiceMax = 10;
         private const string NumberQuestionTitle = "Con \u0111\u1ebfm \u0111\u01b0\u1ee3c bao nhi\u00eau con?";
         private const string NumberInputPrompt = "Ch\u1ecdn s\u1ed1 con v\u1eadt con \u0111\u1ebfm \u0111\u01b0\u1ee3c";
         private const string NumberInputEmptyValue = "?";
         private const string NumberInputClearLabel = "X\u00f3a";
         private const string NumberInputSubmitLabel = "Tr\u1ea3 l\u1eddi";
+        private const string RuntimeHomeButtonLabel = "Trang ch\u1ee7";
+        private const int RuntimeTopNavButtonFontSize = 20;
 
         public bool HasUiReferences => targetNumberText != null;
 
         private void Awake()
         {
+            CacheRuntimeUiRoot();
+
             // Hide feedback panels initially
             if (feedbackPanel != null)
             {
@@ -190,6 +199,7 @@ namespace Features.Activities.QuantityMatch
                 progressButton.onClick.AddListener(OnProgressClicked);
             }
 
+            NormalizeTopNavigationButtons();
             RegisterNumberInputButtons();
         }
 
@@ -209,8 +219,8 @@ namespace Features.Activities.QuantityMatch
                 mainCam.backgroundColor = new Color(0.65f, 0.88f, 0.98f, 1f); // bright sky-blue
             }
 
-            CreateTopHeaderPanel(panel, "QuestionHeaderPanel", 24f, new Vector2(940f, 88f));
-            targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("quantity_choose_group", "?"), 40, 30f, new Vector2(900f, 78f));
+            CreateTopHeaderPanel(panel, "QuestionHeaderPanel", 24f, new Vector2(700f, 88f));
+            targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("quantity_choose_group", "?"), 34, 30f, new Vector2(660f, 78f));
             progressText = CreateTopLeftText(panel, "Progress", "", 24, new Vector2(40f, -40f), new Vector2(300f, 60f));
 
             feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0, RuntimeFeedbackPanelBottomY), true);
@@ -225,8 +235,8 @@ namespace Features.Activities.QuantityMatch
             hintButton = CreateSizedBottomButton(panel, "HintButton", "💡", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(140f, 140f), () => OnHintRequested?.Invoke(), 72);
             
             // Small top-right Cancel button (100x100px, soft-red, icon cross) - enlarged for kids
-            cancelButton = CreateSizedTopRightButton(panel, "CancelButton", "✕", new Vector2(-40f, -40f), new Vector2(100f, 100f), OnCancelClicked, 48);
-            listenButton = CreateSizedTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), new Vector2(-172f, -40f), new Vector2(144f, 80f), OnListenClicked, 22);
+            cancelButton = CreateSizedTopRightButton(panel, "CancelButton", RuntimeHomeButtonLabel, RuntimeHomeButtonTopRight, RuntimeTopNavButtonSize, OnCancelClicked, RuntimeTopNavButtonFontSize);
+            listenButton = CreateSizedTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), RuntimeListenButtonTopRight, RuntimeTopNavButtonSize, OnListenClicked, RuntimeTopNavButtonFontSize);
 
             // Centered bottom buttons for transitioning (hidden by default)
             nextRoundButton = CreateSizedBottomButton(panel, "NextButton", "▶ Tiếp tục", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(240f, 100f), OnNextRoundClicked, 28);
@@ -236,6 +246,7 @@ namespace Features.Activities.QuantityMatch
 
             CreateNumberInputUi(panel);
             RegisterNumberInputButtons();
+            NormalizeTopNavigationButtons();
             SetNumberInputPanelActive(false);
         }
 
@@ -696,7 +707,7 @@ namespace Features.Activities.QuantityMatch
         private void OnCancelClicked()
         {
             OnCancelRequested?.Invoke();
-            LoadSceneIfAvailable(activitySelectSceneName);
+            LoadSceneIfAvailable(homeSceneName);
         }
 
         private void OnListenClicked()
@@ -723,6 +734,38 @@ namespace Features.Activities.QuantityMatch
             {
                 NotifyGroupSelected(groupIndex, 0);  // Count will be filled by presenter
             }
+        }
+
+        private void CacheRuntimeUiRoot()
+        {
+            if (runtimeUiRoot != null)
+            {
+                return;
+            }
+
+            if (targetNumberText != null && targetNumberText.transform.parent != null)
+            {
+                runtimeUiRoot = targetNumberText.transform.parent;
+                return;
+            }
+
+            if (numberInputPanel != null && numberInputPanel.transform.parent != null)
+            {
+                runtimeUiRoot = numberInputPanel.transform.parent;
+                return;
+            }
+
+            Canvas canvas = GetComponentInChildren<Canvas>(true);
+            if (canvas != null)
+            {
+                runtimeUiRoot = canvas.transform;
+            }
+        }
+
+        private Transform ResolveRuntimeUiRoot()
+        {
+            CacheRuntimeUiRoot();
+            return runtimeUiRoot;
         }
 
         private void EnsureRuntimeGroupButtons(int numberOfGroups)
@@ -832,9 +875,15 @@ namespace Features.Activities.QuantityMatch
                 hintButton.gameObject.SetActive(active);
             }
 
+            if (listenButton != null)
+            {
+                listenButton.gameObject.SetActive(active);
+            }
+
             if (cancelButton != null)
             {
-                cancelButton.gameObject.SetActive(active);
+                cancelButton.gameObject.SetActive(true);
+                cancelButton.interactable = true;
             }
         }
 
@@ -851,7 +900,12 @@ namespace Features.Activities.QuantityMatch
             {
                 for (int i = 0; i < digitButtons.Length; i++)
                 {
-                    int answer = i + 1;
+                    int answer = NumberChoiceMin + i;
+                    if (answer > NumberChoiceMax)
+                    {
+                        continue;
+                    }
+
                     if (digitButtons[i] != null)
                     {
                         digitButtons[i].onClick.RemoveAllListeners();
@@ -923,7 +977,7 @@ namespace Features.Activities.QuantityMatch
                 return;
             }
 
-            currentNumberInput = Mathf.Clamp(answer, 0, 99).ToString();
+            currentNumberInput = Mathf.Clamp(answer, NumberChoiceMin, NumberChoiceMax).ToString();
             UpdateNumberInputText();
             SubmitNumberInput();
         }
@@ -941,7 +995,7 @@ namespace Features.Activities.QuantityMatch
                 int.TryParse(currentNumberInput, out value);
             }
 
-            value = Mathf.Clamp(value + delta, 0, 99);
+            value = Mathf.Clamp(value + delta, NumberChoiceMin, NumberChoiceMax);
             currentNumberInput = value.ToString();
             UpdateNumberInputText();
         }
@@ -977,12 +1031,33 @@ namespace Features.Activities.QuantityMatch
 
         private void SetNumberInputPanelActive(bool active)
         {
+            if (active && currentUsesNumberInputMode)
+            {
+                EnsureFriendlyNumberInputUi();
+            }
+
+            if (numberInputOverlayCanvas != null)
+            {
+                bool panelUsesOverlay = numberInputPanel != null
+                    && numberInputPanel.transform.IsChildOf(numberInputOverlayCanvas.transform);
+                numberInputOverlayCanvas.gameObject.SetActive(active && panelUsesOverlay);
+            }
+
             if (numberInputPanel != null)
             {
                 numberInputPanel.SetActive(active);
+                if (active)
+                {
+                    numberInputPanel.transform.SetAsLastSibling();
+                }
             }
 
             SetNumberInputInteractable(active);
+
+            if (active)
+            {
+                Canvas.ForceUpdateCanvases();
+            }
         }
 
         private void SetNumberInputInteractable(bool interactable)
@@ -995,18 +1070,29 @@ namespace Features.Activities.QuantityMatch
                 {
                     if (button != null)
                     {
+                        button.gameObject.SetActive(currentUsesNumberInputMode || interactable);
+                        button.enabled = true;
                         button.interactable = interactable;
+                        Image image = button.GetComponent<Image>();
+                        if (image != null)
+                        {
+                            image.raycastTarget = true;
+                        }
                     }
                 }
             }
 
             if (decrementNumberButton != null)
             {
+                decrementNumberButton.gameObject.SetActive(false);
+                decrementNumberButton.enabled = true;
                 decrementNumberButton.interactable = interactable;
             }
 
             if (incrementNumberButton != null)
             {
+                incrementNumberButton.gameObject.SetActive(false);
+                incrementNumberButton.enabled = true;
                 incrementNumberButton.interactable = interactable;
             }
 
@@ -1019,11 +1105,13 @@ namespace Features.Activities.QuantityMatch
 
             if (clearNumberButton != null)
             {
+                clearNumberButton.gameObject.SetActive(false);
                 clearNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
 
             if (submitNumberButton != null)
             {
+                submitNumberButton.gameObject.SetActive(false);
                 submitNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
         }
@@ -1050,8 +1138,8 @@ namespace Features.Activities.QuantityMatch
                 float y = row == 0 ? 10f : -80f;
                 digitButtons[i] = CreateSizedButton(
                     numberInputPanel.transform,
-                    $"DigitButton_{i}",
-                    (i + 1).ToString(),
+                    $"DigitButton_{NumberChoiceMin + i}",
+                    (NumberChoiceMin + i).ToString(),
                     new Vector2(x, y),
                     RuntimeDigitButtonSize,
                     null,
@@ -1079,6 +1167,7 @@ namespace Features.Activities.QuantityMatch
                     : CreateSubPanel(parent, "RuntimeNumberKeypadPanel", new Vector2(0f, RuntimeNumberInputPanelBottomY), true);
             }
 
+            numberInputPanel.SetActive(true);
             ConfigureFriendlyNumberInputPanel();
             CreateFriendlyNumberInputControls();
             RegisterNumberInputButtons();
@@ -1088,6 +1177,17 @@ namespace Features.Activities.QuantityMatch
 
         private Transform ResolveNumberInputOverlayParent()
         {
+            Transform root = ResolveRuntimeUiRoot();
+            if (root != null)
+            {
+                if (numberInputOverlayCanvas != null)
+                {
+                    numberInputOverlayCanvas.gameObject.SetActive(false);
+                }
+
+                return root;
+            }
+
             if (numberInputOverlayCanvas == null)
             {
                 Transform existingCanvas = transform.Find("QuantityMatchNumberInputCanvas");
@@ -1101,13 +1201,18 @@ namespace Features.Activities.QuantityMatch
                 numberInputOverlayCanvas = CreateStandaloneRuntimeCanvas(transform, "QuantityMatchNumberInputCanvas", 1000);
             }
 
+            numberInputOverlayCanvas.gameObject.SetActive(true);
+
             Transform existingPanel = numberInputOverlayCanvas.transform.Find("NumberInputOverlayRoot");
             if (existingPanel != null)
             {
+                existingPanel.gameObject.SetActive(true);
                 return existingPanel;
             }
 
-            return CreateUiPanel(numberInputOverlayCanvas.transform, "NumberInputOverlayRoot");
+            RectTransform overlayRoot = CreateUiPanel(numberInputOverlayCanvas.transform, "NumberInputOverlayRoot");
+            overlayRoot.gameObject.SetActive(true);
+            return overlayRoot;
         }
 
         private void ConfigureFriendlyNumberInputPanel()
@@ -1143,11 +1248,14 @@ namespace Features.Activities.QuantityMatch
             }
 
             Transform panel = numberInputPanel.transform;
-            numberInputPromptText = EnsurePanelChildText(panel, numberInputPromptText, "NumberInputPrompt", NumberInputPrompt, 28, new Vector2(0f, 122f), new Vector2(760f, 44f), Color.white);
+            numberInputPromptText = EnsurePanelChildText(panel, numberInputPromptText, "NumberInputPrompt", NumberInputPrompt, 30, new Vector2(0f, 112f), new Vector2(800f, 48f), Color.white);
             numberInputText = EnsureNumberInputDisplay(panel, numberInputText, "AnswerText", NumberInputEmptyValue, 52, new Vector2(0f, 66f), new Vector2(210f, 70f));
+            numberInputText.gameObject.SetActive(false);
 
             decrementNumberButton = EnsureNumberInputButton(panel, decrementNumberButton, "DecreaseNumberButton", "-", new Vector2(-180f, 66f), new Vector2(82f, 70f), 40, new Color(0.2f, 0.5f, 0.9f, 1f), Color.white);
             incrementNumberButton = EnsureNumberInputButton(panel, incrementNumberButton, "IncreaseNumberButton", "+", new Vector2(180f, 66f), new Vector2(82f, 70f), 40, new Color(0.2f, 0.5f, 0.9f, 1f), Color.white);
+            decrementNumberButton.gameObject.SetActive(false);
+            incrementNumberButton.gameObject.SetActive(false);
 
             if (digitButtons == null || digitButtons.Length != 10)
             {
@@ -1158,15 +1266,16 @@ namespace Features.Activities.QuantityMatch
             float startX = -rowWidth * 0.5f + RuntimeDigitButtonSize.x * 0.5f;
             for (int i = 0; i < digitButtons.Length; i++)
             {
+                int answer = NumberChoiceMin + i;
                 int row = i < 5 ? 0 : 1;
                 int col = i % 5;
                 float x = startX + col * (RuntimeDigitButtonSize.x + RuntimeDigitButtonGap);
-                float y = row == 0 ? -18f : -96f;
+                float y = row == 0 ? 36f : -54f;
                 digitButtons[i] = EnsureNumberInputButton(
                     panel,
                     digitButtons[i],
-                    $"DigitButton_{i}",
-                    i.ToString(),
+                    $"DigitButton_{answer}",
+                    answer.ToString(),
                     new Vector2(x, y),
                     RuntimeDigitButtonSize,
                     34,
@@ -1176,6 +1285,8 @@ namespace Features.Activities.QuantityMatch
 
             clearNumberButton = EnsureNumberInputButton(panel, clearNumberButton, "ClearNumberButton", NumberInputClearLabel, new Vector2(-155f, -154f), new Vector2(210f, 66f), 26, new Color(0.45f, 0.5f, 0.56f, 1f), Color.white);
             submitNumberButton = EnsureNumberInputButton(panel, submitNumberButton, "SubmitNumberButton", NumberInputSubmitLabel, new Vector2(155f, -154f), new Vector2(260f, 70f), 28, new Color(0.16f, 0.65f, 0.34f, 1f), Color.white);
+            clearNumberButton.gameObject.SetActive(false);
+            submitNumberButton.gameObject.SetActive(false);
         }
 
         private static Text EnsurePanelChildText(Transform parent, Text current, string name, string content, int fontSize, Vector2 anchoredPosition, Vector2 size, Color color)
@@ -1193,6 +1304,9 @@ namespace Features.Activities.QuantityMatch
                 text = go.GetComponent<Text>();
             }
 
+            text.gameObject.name = name;
+            text.gameObject.SetActive(true);
+            text.enabled = true;
             ConfigureCenteredRect(text.GetComponent<RectTransform>(), parent, anchoredPosition, size);
             text.text = content;
             text.fontSize = fontSize;
@@ -1223,6 +1337,9 @@ namespace Features.Activities.QuantityMatch
                 text = go.GetComponent<Text>();
             }
 
+            text.gameObject.name = name;
+            text.gameObject.SetActive(true);
+            text.enabled = true;
             ConfigureCenteredRect(text.GetComponent<RectTransform>(), parent, anchoredPosition, size);
             Image image = text.GetComponent<Image>();
             if (image == null)
@@ -1260,6 +1377,9 @@ namespace Features.Activities.QuantityMatch
                 button = go.GetComponent<Button>();
             }
 
+            button.gameObject.name = name;
+            button.gameObject.SetActive(true);
+            button.enabled = true;
             ConfigureCenteredRect(button.GetComponent<RectTransform>(), parent, anchoredPosition, size);
 
             Image image = button.GetComponent<Image>();
@@ -1269,7 +1389,9 @@ namespace Features.Activities.QuantityMatch
             }
 
             image.color = backgroundColor;
+            image.raycastTarget = true;
             button.targetGraphic = image;
+            button.interactable = true;
 
             Text labelText = button.GetComponentInChildren<Text>();
             if (labelText == null)
@@ -1277,12 +1399,28 @@ namespace Features.Activities.QuantityMatch
                 labelText = CreateButtonLabel(button.transform, label);
             }
 
+            labelText.gameObject.SetActive(true);
+            labelText.enabled = true;
+            labelText.gameObject.name = "Label";
+            RectTransform labelRect = labelText.GetComponent<RectTransform>();
+            if (labelRect != null)
+            {
+                labelRect.SetParent(button.transform, false);
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = new Vector2(8f, 4f);
+                labelRect.offsetMax = new Vector2(-8f, -4f);
+            }
+
             labelText.text = label;
             labelText.fontSize = fontSize;
+            labelText.resizeTextForBestFit = true;
             labelText.resizeTextMinSize = 16;
             labelText.resizeTextMaxSize = fontSize;
             labelText.color = textColor;
             labelText.alignment = TextAnchor.MiddleCenter;
+            labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            labelText.raycastTarget = false;
             return button;
         }
 
@@ -1605,6 +1743,58 @@ namespace Features.Activities.QuantityMatch
             }
             texture.Apply();
             return Sprite.Create(texture, new Rect(0, 0, 2, 128), new Vector2(0.5f, 0.5f));
+        }
+
+        private void NormalizeTopNavigationButtons()
+        {
+            ConfigureTopRightNavigationButton(
+                cancelButton,
+                RuntimeHomeButtonLabel,
+                RuntimeHomeButtonTopRight,
+                RuntimeTopNavButtonSize,
+                new Color(0.85f, 0.35f, 0.35f, 0.9f));
+
+            ConfigureTopRightNavigationButton(
+                listenButton,
+                SimpleLocalization.Get("btn_listen"),
+                RuntimeListenButtonTopRight,
+                RuntimeTopNavButtonSize,
+                new Color(0.2f, 0.5f, 0.9f, 0.9f));
+        }
+
+        private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            RectTransform rect = button.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(1f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(1f, 1f);
+                rect.sizeDelta = size;
+                rect.anchoredPosition = anchoredPosition;
+            }
+
+            Image image = button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = color;
+            }
+
+            Text text = button.GetComponentInChildren<Text>();
+            if (text != null)
+            {
+                text.text = label;
+                text.fontSize = RuntimeTopNavButtonFontSize;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 12;
+                text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
+                text.alignment = TextAnchor.MiddleCenter;
+            }
         }
 
         private static Button CreateSizedTopRightButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick, int fontSize)

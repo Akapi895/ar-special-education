@@ -49,6 +49,9 @@ namespace Core.AR.Placement
         [SerializeField]
         private bool autoCreateLearningAreaFromPlacement = true;
 
+        [SerializeField]
+        private bool hidePlaneVisualizationAfterPlacement = true;
+
         private readonly List<GameObject> spawnedObjects = new List<GameObject>();
         private readonly List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
 
@@ -355,6 +358,7 @@ namespace Core.AR.Placement
             learningAreaAnchor.SetAreaSize(defaultLearningAreaSizeMeters);
             currentPlacementPosition = anchor.Pose.position;
             currentPlacementRotation = anchor.Pose.rotation;
+            HidePlaneVisualizationAfterPlacement();
 
             if (!placementAvailable)
             {
@@ -383,6 +387,50 @@ namespace Core.AR.Placement
             learningAreaAnchor.SetPose(pose.position, pose.rotation);
             learningAreaAnchor.SetAreaSize(defaultLearningAreaSizeMeters);
             learningAreaAnchor.Initialize(attachedPlane);
+            HidePlaneVisualizationAfterPlacement();
+        }
+
+        private void HidePlaneVisualizationAfterPlacement()
+        {
+            if (!hidePlaneVisualizationAfterPlacement)
+            {
+                return;
+            }
+
+            ARPlaneDetectionController planeDetectionController = FindAnyObjectByType<ARPlaneDetectionController>();
+            if (planeDetectionController != null)
+            {
+                planeDetectionController.SetPlaneVisualization(false);
+                return;
+            }
+
+            if (planeManager == null)
+            {
+                return;
+            }
+
+            foreach (ARPlane plane in planeManager.trackables)
+            {
+                if (plane == null)
+                {
+                    continue;
+                }
+
+                if (plane.TryGetComponent<ARPlaneMeshVisualizer>(out var meshVisualizer))
+                {
+                    meshVisualizer.enabled = false;
+                }
+
+                if (plane.TryGetComponent<MeshRenderer>(out var meshRenderer))
+                {
+                    meshRenderer.enabled = false;
+                }
+
+                if (plane.TryGetComponent<LineRenderer>(out var lineRenderer))
+                {
+                    lineRenderer.enabled = false;
+                }
+            }
         }
 
         private bool TryUseBestDetectedPlane()
