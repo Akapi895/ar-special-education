@@ -39,6 +39,10 @@ namespace Features.Activities.QuantityMatch
         public void SetAutoStartWhenReady(bool value)
         {
             autoStartWhenReady = value;
+            if (!value)
+            {
+                CancelInvoke(nameof(TryStartActivity));
+            }
         }
 
         private void Awake()
@@ -66,7 +70,7 @@ namespace Features.Activities.QuantityMatch
 
         private void Start()
         {
-            if (autoStartWhenReady)
+            if (autoStartWhenReady && Project.App.GameplayActivityRouter.Instance == null)
             {
                 Invoke(nameof(TryStartActivity), startDelaySeconds);
             }

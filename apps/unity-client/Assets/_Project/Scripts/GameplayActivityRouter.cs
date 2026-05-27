@@ -20,6 +20,28 @@ namespace Project.App
         private const string NumberLineJumpResourcePath = "ActivityConfigs/SO_NumberLineJumpConfig_Easy";
         private const string CompareQuantityResourcePath = "ActivityConfigs/SO_CompareQuantityConfig_Easy";
 
+        public static GameplayActivityRouter Instance { get; private set; }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(this);
+                return;
+            }
+
+            Instance = this;
+            DisableActivityAutoStart();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         private void Start()
         {
             RouteSelectedActivity();
@@ -30,6 +52,7 @@ namespace Project.App
             string activityId = string.IsNullOrEmpty(SelectedActivityData.ActivityId)
                 ? DefaultActivityId
                 : SelectedActivityData.ActivityId;
+            string configPath = SelectedActivityData.ConfigPath;
 
             if (activityId == DefaultActivityId)
             {
@@ -47,11 +70,11 @@ namespace Project.App
             switch (activityId)
             {
                 case "NumberLineJump":
-                    CreateNumberLineJumpActivity();
+                    CreateNumberLineJumpActivity(configPath);
                     break;
 
                 case "CompareQuantity":
-                    CreateCompareQuantityActivity();
+                    CreateCompareQuantityActivity(configPath);
                     break;
 
                 default:
@@ -67,7 +90,28 @@ namespace Project.App
             SelectedActivityData.Clear();
         }
 
-        private static void CreateNumberLineJumpActivity()
+        private static void DisableActivityAutoStart()
+        {
+            QuantityMatchActivityBootstrap quantityBootstrap = FindAnyObjectByType<QuantityMatchActivityBootstrap>();
+            if (quantityBootstrap != null)
+            {
+                quantityBootstrap.SetAutoStartWhenReady(false);
+            }
+
+            NumberLineJumpActivityBootstrap numberLineBootstrap = FindAnyObjectByType<NumberLineJumpActivityBootstrap>();
+            if (numberLineBootstrap != null)
+            {
+                numberLineBootstrap.SetAutoStartWhenReady(false);
+            }
+
+            CompareQuantityActivityBootstrap compareBootstrap = FindAnyObjectByType<CompareQuantityActivityBootstrap>();
+            if (compareBootstrap != null)
+            {
+                compareBootstrap.SetAutoStartWhenReady(false);
+            }
+        }
+
+        private static void CreateNumberLineJumpActivity(string configPath)
         {
             NumberLineJumpActivityBootstrap existingBootstrap = FindAnyObjectByType<NumberLineJumpActivityBootstrap>();
             if (existingBootstrap != null)
@@ -77,7 +121,7 @@ namespace Project.App
                 return;
             }
 
-            NumberLineJumpConfig config = LoadAsset<NumberLineJumpConfig>(NumberLineJumpResourcePath)
+            NumberLineJumpConfig config = LoadActivityConfig<NumberLineJumpConfig>(configPath, NumberLineJumpResourcePath)
                 ?? CreateRuntimeNumberLineJumpConfig();
             if (config == null)
             {
@@ -100,7 +144,7 @@ namespace Project.App
             bootstrap.TryStartActivity();
         }
 
-        private static void CreateCompareQuantityActivity()
+        private static void CreateCompareQuantityActivity(string configPath)
         {
             CompareQuantityActivityBootstrap existingBootstrap = FindAnyObjectByType<CompareQuantityActivityBootstrap>();
             if (existingBootstrap != null)
@@ -110,7 +154,7 @@ namespace Project.App
                 return;
             }
 
-            CompareQuantityConfig config = LoadAsset<CompareQuantityConfig>(CompareQuantityResourcePath)
+            CompareQuantityConfig config = LoadActivityConfig<CompareQuantityConfig>(configPath, CompareQuantityResourcePath)
                 ?? CreateRuntimeCompareQuantityConfig();
             if (config == null)
             {
@@ -146,6 +190,23 @@ namespace Project.App
             bootstrap.TryStartActivity();
         }
 
+        private static T LoadActivityConfig<T>(string selectedResourcePath, string defaultResourcePath)
+            where T : ScriptableObject
+        {
+            if (!string.IsNullOrWhiteSpace(selectedResourcePath))
+            {
+                T selectedConfig = LoadAsset<T>(NormalizeResourcesPath(selectedResourcePath));
+                if (selectedConfig != null)
+                {
+                    return selectedConfig;
+                }
+
+                Debug.LogWarning($"[GameplayActivityRouter] Selected config '{selectedResourcePath}' was not found or has the wrong type.");
+            }
+
+            return LoadAsset<T>(defaultResourcePath);
+        }
+
         private static T LoadAsset<T>(string resourcePath) where T : ScriptableObject
         {
             T resourceAsset = Resources.Load<T>(resourcePath);
@@ -156,6 +217,24 @@ namespace Project.App
 
             Debug.LogWarning($"[GameplayActivityRouter] Resource config not found at Resources/{resourcePath}; using runtime fallback.");
             return null;
+        }
+
+        private static string NormalizeResourcesPath(string resourcePath)
+        {
+            const string resourcesSegment = "/Resources/";
+            string normalizedPath = resourcePath.Replace('\\', '/');
+            int resourcesIndex = normalizedPath.IndexOf(resourcesSegment, System.StringComparison.OrdinalIgnoreCase);
+            if (resourcesIndex >= 0)
+            {
+                normalizedPath = normalizedPath.Substring(resourcesIndex + resourcesSegment.Length);
+            }
+
+            if (normalizedPath.EndsWith(".asset", System.StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedPath = normalizedPath.Substring(0, normalizedPath.Length - ".asset".Length);
+            }
+
+            return normalizedPath;
         }
 
         private static NumberLineJumpConfig CreateRuntimeNumberLineJumpConfig()
