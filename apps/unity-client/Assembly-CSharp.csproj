@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
   <!-- Generated file, do not modify, your changes will be overwritten (use AssetPostprocessor.OnGeneratedCSProject) -->
   <PropertyGroup>
     <BaseIntermediateOutputPath>Temp\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
@@ -9,20 +9,6 @@
   </PropertyGroup>
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
   <ItemGroup>
-    <Compile Include="Assets\Core\UI\Localization\SimpleLocalization.cs" />
-    <Compile Include="Assets\Core\UI\Localization\SO_Strings_VI.cs" />
-    <Compile Include="Assets\Core\Data\UserPreferences.cs" />
-    <Compile Include="Assets\Core\Support\SessionManager\SessionTimeManager.cs" />
-    <Compile Include="Assets\Core\Support\AudioManager\AudioClipLibrary.cs" />
-    <Compile Include="Assets\Core\Support\AudioManager\SimpleAudioManager.cs" />
-    <Compile Include="Assets\Core\UI\Components\UIHintBubble.cs" />
-    <Compile Include="Assets\Core\UI\DesignSystem\UIDesignTokens.cs" />
-    <Compile Include="Assets\Core\UI\Components\UIButtonKids.cs" />
-    <Compile Include="Assets\Core\UI\Components\UICardPanel.cs" />
-    <Compile Include="Assets\Core\UI\Components\UIProgressBar.cs" />
-    <Compile Include="Assets\Core\UI\Components\UIFeedbackOverlay.cs" />
-    <Compile Include="Assets\Core\UI\Navigation\UIScreen.cs" />
-    <Compile Include="Assets\Core\UI\Navigation\UIScreenManager.cs" />
     <ProjectCapability Include="Unity" />
     <ProjectCapability Include="EnableOnDemandExcludedFolderLoading" />
   </ItemGroup>
@@ -57,6 +43,7 @@
     <UnityVersion>6000.0.71f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Analyzer Include="C:\Users\Admin\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.2.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.71f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.71f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.71f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -65,16 +52,19 @@
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\NumberLineJumpView.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\JumpDirection.cs" />
     <Compile Include="Assets\_Project\Scripts\ActivityFlowNavigator.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIHintBubble.cs" />
+    <Compile Include="Assets\Core\Support\AudioManager\AudioClipLibrary.cs" />
     <Compile Include="Assets\Core\Learning\Models\ActivityAnswer.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\UI\Scripts\CutoutMaskUI.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\NumberLineJumpActivityBootstrap.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIProgressBar.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchPresenter.cs" />
-    <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\GroupAreaIndicator.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\ARTemplateMenuManager.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\IQuantityMatchView.cs" />
     <Compile Include="Assets\Core\Learning\Models\ActivityResult.cs" />
     <Compile Include="Assets\Core\AR\ARSession\ARSessionFallback.cs" />
     <Compile Include="Assets\Core\Learning\Models\ActivityState.cs" />
+    <Compile Include="Assets\Core\UI\Localization\SimpleLocalization.cs" />
     <Compile Include="Assets\_Project\Scripts\BootLoader.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\NumberLineJumpPresenter.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\NumberLineJumpRuntimeUI.cs" />
@@ -87,20 +77,26 @@
     <Compile Include="Assets\Quirky Series Ultimate\_Scripts\RotateOnScroll.cs" />
     <Compile Include="Assets\Core\AR\ARSession\ARSessionService.cs" />
     <Compile Include="Assets\Core\AR\Placement\ARPlacementController.cs" />
+    <Compile Include="Assets\Core\Support\AudioManager\SimpleAudioManager.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\GoalManager.cs" />
     <Compile Include="Assets\Core\Support\HintSystem\HintSystem.cs" />
     <Compile Include="Assets\Core\Learning\ActivityRunner\IARSessionService.cs" />
     <Compile Include="Assets\Core\AR\Placement\LearningAreaAnchor.cs" />
     <Compile Include="Assets\Features\Activities\ActivityPrefabSetup.cs" />
+    <Compile Include="Assets\Core\UI\Navigation\UIScreen.cs" />
+    <Compile Include="Assets\Core\UI\DesignSystem\UIDesignTokens.cs" />
     <Compile Include="Assets\Core\Learning\ActivityRunner\IActivityRunner.cs" />
     <Compile Include="Assets\Core\AR\Interaction\ARInteractionService.cs" />
     <Compile Include="Assets\Core\Learning\ActivityRunner\ActivityPresenter.cs" />
     <Compile Include="Assets\Core\AR\Interaction\ARSelectableObject.cs" />
     <Compile Include="Assets\Quirky Series Ultimate\_Scripts\QuirkySeriesDemo.cs" />
+    <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\GroupAreaIndicator.cs" />
+    <Compile Include="Assets\Core\UI\Components\UICardPanel.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchActivityBootstrap.cs" />
     <Compile Include="Assets\Features\Activities\CompareQuantity\Scripts\CompareQuantityPresenter.cs" />
     <Compile Include="Assets\Core\Support\FeedbackSystem\FeedbackData.cs" />
     <Compile Include="Assets\Core\AR\Sandbox\ARSandboxController.cs" />
+    <Compile Include="Assets\Core\Support\SessionManager\SessionTimeManager.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchAnswer.cs" />
     <Compile Include="Assets\Settings\Project Configuration\SceneTemplate_RotateCube.cs" />
     <Compile Include="Assets\Core\Data\LocalStorage\ProgressStorageProxy.cs" />
@@ -108,17 +104,21 @@
     <Compile Include="Assets\Core\AR\ARSession\ARSessionBootstrap.cs" />
     <Compile Include="Assets\Features\Activities\CompareQuantity\Scripts\CompareQuantityConfig.cs" />
     <Compile Include="Assets\Core\AR\Interaction\ARTapInteractor.cs" />
+    <Compile Include="Assets\Core\UI\Localization\SO_Strings_VI.cs" />
     <Compile Include="Assets\_Project\Scripts\ActivityLoader.cs" />
     <Compile Include="Assets\Core\Learning\ActivityRunner\IARPlacementService.cs" />
     <Compile Include="Assets\Core\Data\LocalStorage\LocalProgressStorage.cs" />
     <Compile Include="Assets\Features\Activities\CompareQuantity\Scripts\ICompareQuantityView.cs" />
     <Compile Include="Assets\Features\Activities\CompareQuantity\Scripts\CompareQuantityView.cs" />
+    <Compile Include="Assets\Core\UI\Navigation\UIScreenManager.cs" />
     <Compile Include="Assets\Core\Support\HintSystem\HintServiceProxy.cs" />
     <Compile Include="Assets\_Project\Scripts\GameplayActivityRouter.cs" />
     <Compile Include="Assets\Core\Support\FeedbackSystem\FeedbackSystem.cs" />
     <Compile Include="Assets\Core\Support\FeedbackSystem\FeedbackServiceProxy.cs" />
     <Compile Include="Assets\Core\Learning\ActivityRunner\ActivityConfig.cs" />
+    <Compile Include="Assets\Core\Data\UserPreferences.cs" />
     <Compile Include="Assets\Features\Activities\CompareQuantity\Scripts\CompareQuantityAnswer.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIButtonKids.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchQuestion.cs" />
     <Compile Include="Assets\_Project\Scripts\ProgressDashboardView.cs" />
     <Compile Include="Assets\Core\AR\PlaneDetection\ARPlaneDetectionController.cs" />
@@ -137,6 +137,7 @@
     <Compile Include="Assets\_Project\Scripts\MainMenuController.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\ARPlaneMeshVisualizerFader.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchView.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIFeedbackOverlay.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\NumberLineJumpAnswer.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\INumberLineJumpView.cs" />
   </ItemGroup>
@@ -146,6 +147,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile-2-Pass.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
     <None Include="Assets\Quirky Series Ultimate\_Shader\SoftSurface.shader" />
+    <None Include="Assets\Shared\Art\Animals\Kenney_CubePets_License.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
     <None Include="Assets\MobileARTemplateAssets\Shaders\ShadowReceiver\ShadowReceiverShaderFunctions.hlsl" />
@@ -157,6 +159,7 @@
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile SSD.shader" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Leading Characters.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Properties.cginc" />
+    <None Include="Assets\Core\AR\Camera\NativeCameraBackground.shader" />
     <None Include="Assets\MobileARTemplateAssets\UI\Fonts\OFL.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Surface.cginc" />
     <None Include="Assets\TextMesh Pro\Resources\LineBreaking Following Characters.txt" />

@@ -35,7 +35,7 @@ namespace Features.Activities
         [SerializeField] private bool preferAnimalPrefabs = true;
         [SerializeField] private float learningObjectTargetHeight = 0.48f;
         [SerializeField] private string resourcesAnimalFolder = "ARAnimals";
-        [SerializeField] private bool preferGroundedLearningAnimals = true;
+        [SerializeField] private bool preferGroundedLearningAnimals;
         [SerializeField] private bool faceLearningObjectsToCamera = true;
         [SerializeField] private float animalFacingYawOffset;
         [SerializeField] private float randomFacingYaw = 12f;
@@ -53,7 +53,7 @@ namespace Features.Activities
         private readonly Dictionary<Material, Material> convertedMaterialCache = new Dictionary<Material, Material>();
         private static readonly string[] NonGroundAnimalKeywords =
         {
-            "bird", "sparrow", "eagle", "owl", "parrot",
+            "bee", "bird", "sparrow", "eagle", "owl", "parrot",
             "fish", "herring", "shark", "ray", "whale", "dolphin",
             "squid", "octopus"
         };
@@ -263,6 +263,7 @@ namespace Features.Activities
                 results.Add(candidate);
             }
 
+            results.Sort((left, right) => string.Compare(left.name, right.name, System.StringComparison.OrdinalIgnoreCase));
             return results;
         }
 
@@ -865,7 +866,10 @@ namespace Features.Activities
         private static bool LooksLikeAnimalAsset(string path)
         {
             string lower = path.Replace('\\', '/').ToLowerInvariant();
-            if (lower.Contains("quirky")
+            if (lower.Contains("kenney")
+                || lower.Contains("cube-pets")
+                || lower.Contains("cube pets")
+                || lower.Contains("quirky")
                 || lower.Contains("omabu")
                 || lower.Contains("/animal")
                 || lower.Contains("/animals/")
@@ -877,9 +881,10 @@ namespace Features.Activities
             string fileName = System.IO.Path.GetFileNameWithoutExtension(lower);
             string[] animalKeywords =
             {
-                "bear", "bird", "bunny", "cat", "cow", "croc", "dog", "duck",
-                "elephant", "fish", "fox", "frog", "giraffe", "lion", "monkey",
-                "panda", "penguin", "pig", "rabbit", "snake", "tiger", "turtle", "zebra",
+                "bear", "beaver", "bee", "bird", "bunny", "cat", "caterpillar",
+                "chick", "cow", "crab", "croc", "deer", "dog", "duck",
+                "elephant", "fish", "fox", "frog", "giraffe", "hog", "koala", "lion", "monkey",
+                "panda", "parrot", "penguin", "pig", "polar", "rabbit", "snake", "tiger", "turtle", "zebra",
                 "jellyfish", "octopus", "prawn", "salmon", "sardine", "seagull", "tuna", "whale"
             };
 
