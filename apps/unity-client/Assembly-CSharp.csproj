@@ -57,6 +57,7 @@
     <Compile Include="Assets\Core\Learning\Models\ActivityAnswer.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\UI\Scripts\CutoutMaskUI.cs" />
     <Compile Include="Assets\Features\Activities\NumberLineJump\Scripts\NumberLineJumpActivityBootstrap.cs" />
+    <Compile Include="Assets\Core\UI\Components\RoundedDashedBorderGraphic.cs" />
     <Compile Include="Assets\Core\UI\Components\UIProgressBar.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchPresenter.cs" />
     <Compile Include="Assets\MobileARTemplateAssets\Scripts\ARTemplateMenuManager.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Assets\Core\AR\Interaction\ARSelectableObject.cs" />
     <Compile Include="Assets\Quirky Series Ultimate\_Scripts\QuirkySeriesDemo.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\GroupAreaIndicator.cs" />
+    <Compile Include="Assets\Core\UI\Components\RoundedRectGraphic.cs" />
     <Compile Include="Assets\Core\UI\Components\UICardPanel.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchActivityBootstrap.cs" />
     <Compile Include="Assets\Features\Activities\CompareQuantity\Scripts\CompareQuantityPresenter.cs" />
@@ -99,6 +101,7 @@
     <Compile Include="Assets\Core\Support\SessionManager\SessionTimeManager.cs" />
     <Compile Include="Assets\Features\Activities\QuantityMatch\Scripts\QuantityMatchAnswer.cs" />
     <Compile Include="Assets\Settings\Project Configuration\SceneTemplate_RotateCube.cs" />
+    <Compile Include="Assets\Core\UI\Components\UIKidFriendlyStyle.cs" />
     <Compile Include="Assets\Core\Data\LocalStorage\ProgressStorageProxy.cs" />
     <Compile Include="Assets\Features\Activities\CompareQuantity\Scripts\CompareQuantityRuntimeUI.cs" />
     <Compile Include="Assets\Core\AR\ARSession\ARSessionBootstrap.cs" />

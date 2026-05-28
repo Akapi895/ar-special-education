@@ -11,7 +11,7 @@ namespace Core.UI.Localization
         private static readonly Dictionary<string, string> fallbackVietnamese = new Dictionary<string, string>
         {
             { "app_title", "H\u1ecdc To\u00e1n Vui" },
-            { "btn_start", "H\u1ecdc ti\u1ebfp" },
+            { "btn_start", "B\u1eaft \u0111\u1ea7u h\u1ecdc" },
             { "btn_progress", "Ti\u1ebfn \u0111\u1ed9" },
             { "btn_hint", "G\u1ee3i \u00fd" },
             { "btn_confirm", "X\u00e1c nh\u1eadn" },
@@ -39,6 +39,7 @@ namespace Core.UI.Localization
             { "numberline_question_equation", "{0} {1} {2} = ?" },
             { "numberline_overshoot", "Con \u0111i qu\u00e1 r\u1ed3i! \u0110ang \u1edf {0}, \u0111\u00edch l\u00e0 {1}." },
             { "instruction_quantity_match", "H\u00e3y ch\u1ecdn nh\u00f3m c\u00f3 \u0111\u00fang s\u1ed1 con v\u1eadt." },
+            { "instruction_quantity_count", "Con h\u00e3y \u0111\u1ebfm s\u1ed1 con v\u1eadt r\u1ed3i ch\u1ecdn \u0111\u00e1p \u00e1n." },
             { "instruction_compare_quantity", "H\u00e3y so s\u00e1nh hai nh\u00f3m v\u1eadt." },
             { "instruction_number_line", "H\u00e3y nh\u1ea3y tr\u00ean tr\u1ee5c s\u1ed1 \u0111\u1ebfn \u0111\u00e1p \u00e1n." }
         };

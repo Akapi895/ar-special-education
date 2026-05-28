@@ -431,7 +431,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: View Progress
+  m_Text: Xem tiến độ
 --- !u!222 &354070571
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -833,7 +833,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: AR Learning
+  m_Text: Học Toán Vui
 --- !u!222 &938260646
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1009,7 +1009,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Start Learning
+  m_Text: Bắt đầu học
 --- !u!222 &2077999905
 CanvasRenderer:
   m_ObjectHideFlags: 0

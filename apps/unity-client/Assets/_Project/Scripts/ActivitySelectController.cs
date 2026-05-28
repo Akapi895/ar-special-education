@@ -1,6 +1,8 @@
 using Core.Data;
 using Core.Data.LocalStorage;
 using Core.Learning.Models;
+using Core.UI.Components;
+using Core.UI.Localization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -48,12 +50,24 @@ namespace Project.App
 
         private void Start()
         {
+            LocalizeSceneLabels();
+
             // Setup activity button listeners
             foreach (var activity in activities)
             {
                 if (activity.button != null)
                 {
                     bool isUnlocked = IsActivityUnlocked(activity);
+                    string label = GetActivityDisplayName(activity.activityId);
+                    UIKidFriendlyStyle.Apply(
+                        activity.button,
+                        isUnlocked ? KidButtonPurpose.Primary : KidButtonPurpose.Neutral,
+                        label,
+                        30);
+                    UIKidFriendlyStyle.HideButtonBackground(activity.button);
+                    UIKidFriendlyStyle.SetButtonTextColorWithOutline(
+                        activity.button,
+                        GetActivityTextColor(activity.activityId));
                     activity.button.interactable = isUnlocked;
                     
                     if (activity.lockIcon != null)
@@ -71,10 +85,62 @@ namespace Project.App
             // Setup back button
             if (backButton != null)
             {
+                UIKidFriendlyStyle.Apply(
+                    backButton,
+                    KidButtonPurpose.Home,
+                    SimpleLocalization.Get("btn_home"),
+                    28);
+                UIKidFriendlyStyle.HideButtonBackground(backButton);
+                UIKidFriendlyStyle.SetButtonTextColorWithOutline(backButton, new Color(1f, 0.7f, 0.78f, 1f));
                 backButton.onClick.AddListener(OnBack);
             }
 
             Debug.Log("[ActivitySelectController] Activity select loaded.");
+        }
+
+        private static void LocalizeSceneLabels()
+        {
+            Text[] texts = UnityEngine.Object.FindObjectsByType<Text>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+            for (int i = 0; i < texts.Length; i++)
+            {
+                Text text = texts[i];
+                if (text == null)
+                {
+                    continue;
+                }
+
+                string content = text.text.Trim();
+                if (content == "Choose Activity")
+                {
+                    text.text = "Chọn bài học";
+                    UIKidFriendlyStyle.ApplyReadableText(text, 6, 34, new Color(1f, 0.86f, 0.36f, 1f));
+                }
+            }
+        }
+
+        private static string GetActivityDisplayName(string activityId)
+        {
+            return activityId switch
+            {
+                "QuantityMatch" => SimpleLocalization.Get("activity_quantity_match"),
+                "NumberLineJump" => SimpleLocalization.Get("activity_number_line"),
+                "CompareQuantity" => SimpleLocalization.Get("activity_compare_quantity"),
+                _ => activityId
+            };
+        }
+
+        private static Color GetActivityTextColor(string activityId)
+        {
+            return activityId switch
+            {
+                "QuantityMatch" => new Color(1f, 0.88f, 0.32f, 1f),
+                "NumberLineJump" => new Color(0.62f, 0.92f, 1f, 1f),
+                "CompareQuantity" => new Color(0.62f, 1f, 0.6f, 1f),
+                _ => new Color(1f, 0.94f, 0.48f, 1f)
+            };
         }
 
         private void UpdateActivityProgress(ActivityButton activity)

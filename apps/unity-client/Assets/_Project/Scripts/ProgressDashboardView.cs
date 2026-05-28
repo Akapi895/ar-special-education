@@ -1,5 +1,6 @@
 using Core.Data.LocalStorage;
 using Core.Learning.Models;
+using Core.UI.Components;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -54,10 +55,17 @@ namespace Project.App
         private void Start()
         {
             progressStorage = ProgressStorageProxy.Instance;
+            LocalizeSceneLabels();
+            UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
 
             // Setup back button
             if (backButton != null)
             {
+                UIKidFriendlyStyle.Apply(
+                    backButton,
+                    KidButtonPurpose.Home,
+                    "Trang chủ",
+                    28);
                 backButton.onClick.AddListener(OnBack);
             }
 
@@ -79,7 +87,7 @@ namespace Project.App
         {
             if (progressStorage == null)
             {
-                DisplayError("Progress storage not available.");
+                DisplayError("Không tải được dữ liệu tiến độ.");
                 return;
             }
 
@@ -98,30 +106,30 @@ namespace Project.App
             if (overallStatsText != null)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("Learning Progress");
+                sb.AppendLine("Tiến độ học tập");
                 sb.AppendLine("================");
                 LearnerProfile learner = progressStorage.GetActiveLearnerProfile();
                 if (learner != null)
                 {
-                    sb.AppendLine($"Learner: {learner.DisplayName}");
+                    sb.AppendLine($"Người học: {learner.DisplayName}");
                 }
-                sb.AppendLine($"Rounds Completed: {overall.TotalLearningRoundsCompleted}");
-                sb.AppendLine($"Activity Types Practiced: {overall.TotalActivityTypesWithProgress}");
-                sb.AppendLine($"Total Sessions: {overall.TotalSessions}");
-                sb.AppendLine($"Total Results: {overall.TotalResults}");
-                sb.AppendLine($"Technical Issues: {overall.TotalTechnicalIssues}");
+                sb.AppendLine($"Lượt hoàn thành: {overall.TotalLearningRoundsCompleted}");
+                sb.AppendLine($"Dạng bài đã luyện: {overall.TotalActivityTypesWithProgress}");
+                sb.AppendLine($"Số buổi học: {overall.TotalSessions}");
+                sb.AppendLine($"Số kết quả: {overall.TotalResults}");
+                sb.AppendLine($"Lỗi kỹ thuật: {overall.TotalTechnicalIssues}");
                 if (!string.IsNullOrEmpty(overall.WeakestSkillTag))
                 {
-                    sb.AppendLine($"Needs Practice: {overall.WeakestSkillTag} ({overall.WeakestSkillScore:P0})");
+                    sb.AppendLine($"Cần luyện thêm: {overall.WeakestSkillTag} ({overall.WeakestSkillScore:P0})");
                 }
                 if (!string.IsNullOrEmpty(overall.RecommendedLessonId))
                 {
-                    sb.AppendLine($"Next Lesson: {GetLessonDisplayName(overall.RecommendedLessonId)}");
+                    sb.AppendLine($"Bài tiếp theo: {GetLessonDisplayName(overall.RecommendedLessonId)}");
                 }
                 AdaptiveLearningRecommendation recommendation = progressStorage.GetAdaptiveRecommendation();
                 if (recommendation != null && recommendation.GuidedModeRecommended)
                 {
-                    sb.AppendLine($"Mode: Guided practice ({recommendation.DifficultyAdjustment})");
+                    sb.AppendLine($"Chế độ: luyện tập có hướng dẫn ({recommendation.DifficultyAdjustment})");
                 }
                 overallStatsText.text = sb.ToString();
             }
@@ -161,7 +169,7 @@ namespace Project.App
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Activity Statistics");
+            sb.AppendLine("Thống kê từng bài");
             sb.AppendLine("====================");
 
             foreach (string activityId in activityIds)
@@ -170,30 +178,30 @@ namespace Project.App
                 if (stats != null)
                 {
                     sb.AppendLine();
-                    sb.AppendLine($"{activityId}:");
-                    sb.AppendLine($"  Learning Rounds: {stats.TotalLearningRounds}");
-                    sb.AppendLine($"  Success Rate: {(stats.SuccessRate * 100):F1}%");
-                    sb.AppendLine($"  Avg Time: {stats.AverageTimePerAttempt:F1}s");
-                    sb.AppendLine($"  Best Time: {stats.BestTime:F1}s");
-                    sb.AppendLine($"  Hints Used: {stats.TotalHintsUsed}");
-                    sb.AppendLine($"  Technical Issues: {stats.TechnicalIssueCount}");
+                    sb.AppendLine($"{GetActivityVietnameseName(activityId)}:");
+                    sb.AppendLine($"  Vòng học: {stats.TotalLearningRounds}");
+                    sb.AppendLine($"  Tỉ lệ đúng: {(stats.SuccessRate * 100):F1}%");
+                    sb.AppendLine($"  Thời gian TB: {stats.AverageTimePerAttempt:F1}s");
+                    sb.AppendLine($"  Nhanh nhất: {stats.BestTime:F1}s");
+                    sb.AppendLine($"  Gợi ý đã dùng: {stats.TotalHintsUsed}");
+                    sb.AppendLine($"  Lỗi kỹ thuật: {stats.TechnicalIssueCount}");
                     if (!string.IsNullOrEmpty(stats.MostCommonErrorType))
                     {
-                        sb.AppendLine($"  Common Error: {stats.MostCommonErrorType} x{stats.MostCommonErrorCount}");
+                        sb.AppendLine($"  Lỗi thường gặp: {stats.MostCommonErrorType} x{stats.MostCommonErrorCount}");
                     }
                     if (!string.IsNullOrEmpty(stats.WeakestSkillTag))
                     {
-                        sb.AppendLine($"  Weak Skill: {stats.WeakestSkillTag}");
+                        sb.AppendLine($"  Kỹ năng cần luyện: {stats.WeakestSkillTag}");
                     }
                     if (!string.IsNullOrEmpty(stats.RecommendedLessonId))
                     {
-                        sb.AppendLine($"  Recommended: {GetLessonDisplayName(stats.RecommendedLessonId)}");
+                        sb.AppendLine($"  Đề xuất: {GetLessonDisplayName(stats.RecommendedLessonId)}");
                     }
                 }
                 else
                 {
                     sb.AppendLine();
-                    sb.AppendLine($"{activityId}: No data yet");
+                    sb.AppendLine($"{GetActivityVietnameseName(activityId)}: Chưa có dữ liệu");
                 }
             }
 
@@ -280,11 +288,11 @@ namespace Project.App
                 {
                     // Vietnamese localization
                     string activityName = GetActivityVietnameseName(lowestAccuracyActivity);
-                    recommendationText.text = $"Nen luyen tap them bai: {activityName}";
+                    recommendationText.text = $"Nên luyện tập thêm bài: {activityName}";
                 }
                 else
                 {
-                    recommendationText.text = "Con dang lam tot cac bai hien tai!";
+                    recommendationText.text = "Con đang làm tốt các bài hiện tại!";
                 }
             }
         }
@@ -293,9 +301,9 @@ namespace Project.App
         {
             switch (activityId)
             {
-                case "QuantityMatch": return "Ghep so voi luong";
-                case "CompareQuantity": return "So sanh so luong";
-                case "NumberLineJump": return "Nhay tren truc so";
+                case "QuantityMatch": return "Ghép số với lượng";
+                case "CompareQuantity": return "So sánh số lượng";
+                case "NumberLineJump": return "Nhảy trên trục số";
                 default: return activityId;
             }
         }
@@ -310,7 +318,7 @@ namespace Project.App
         {
             if (overallStatsText != null)
             {
-                overallStatsText.text = $"Error: {errorMessage}";
+                overallStatsText.text = $"Lỗi: {errorMessage}";
             }
 
             if (activityStatsText != null)
@@ -324,6 +332,36 @@ namespace Project.App
         private void OnBack()
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene(mainMenuSceneName);
+        }
+
+        private static void LocalizeSceneLabels()
+        {
+            Text[] texts = UnityEngine.Object.FindObjectsByType<Text>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+            for (int i = 0; i < texts.Length; i++)
+            {
+                Text text = texts[i];
+                if (text == null)
+                {
+                    continue;
+                }
+
+                string content = text.text.Trim();
+                if (content == "Overall Stats")
+                {
+                    text.text = "Thống kê tổng quan";
+                }
+                else if (content == "Activity Stats")
+                {
+                    text.text = "Thống kê bài học";
+                }
+                else if (content == "Progress")
+                {
+                    text.text = "Tiến độ";
+                }
+            }
         }
     }
 }

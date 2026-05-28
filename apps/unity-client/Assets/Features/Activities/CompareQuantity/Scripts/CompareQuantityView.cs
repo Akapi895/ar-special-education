@@ -1,6 +1,7 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
+using Core.UI.Components;
 using Core.UI.Localization;
 using Features.Activities.CompareQuantity;
 using Project.App;
@@ -99,10 +100,11 @@ namespace Features.Activities.CompareQuantity
         private ComparisonAnswer? currentSelectedAnswer;
         private bool activityFinished;
 
-        private static readonly Vector2 RuntimeButtonSize = new Vector2(156f, 96f);
-        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(124f, 56f);
+        private static readonly Vector2 RuntimeButtonSize = new Vector2(190f, 78f);
+        private static readonly Vector2 RuntimeComparisonButtonSize = new Vector2(136f, 136f);
+        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(146f, 64f);
         private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
-        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-160f, -24f);
+        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-188f, -24f);
         private static readonly Vector2 RuntimeFeedbackPanelSize = new Vector2(790f, 128f);
         private static readonly Vector2 RuntimeFeedbackPanelCenter = new Vector2(0f, -270f);
         private const float RuntimeButtonGap = 34f;
@@ -184,9 +186,11 @@ namespace Features.Activities.CompareQuantity
                 progressButton.onClick.AddListener(OnProgressClicked);
             }
 
+            UIKidFriendlyStyle.ApplyToTree(transform);
             NormalizeTopNavigationButtons();
             ConfigureFeedbackPanelForChildFocus();
             ApplyComparisonAnswerButtonVisuals();
+            UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
         /// <summary>
@@ -199,28 +203,28 @@ namespace Features.Activities.CompareQuantity
             CreateTopPanel(panel, "QuestionHeaderPanel", new Vector2(0f, -34f), new Vector2(720f, 84f), 0.56f);
             CreateTopPanel(panel, "GroupSideHeaderPanel", new Vector2(0f, -112f), new Vector2(640f, 46f), 0.42f);
 
-            progressText = CreateTopText(panel, "Progress", "", 22, 16f, new Vector2(260f, 40f));
+            progressText = CreateTopText(panel, "Progress", "", 24, 16f, new Vector2(260f, 42f));
             progressText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-500f, -16f);
-            questionText = CreateTopText(panel, "QuestionText", RuntimeCompareQuestion, 28, 28f, new Vector2(680f, 70f));
+            questionText = CreateTopText(panel, "QuestionText", RuntimeCompareQuestion, 32, 28f, new Vector2(700f, 74f));
 
-            leftGroupCountText = CreateTopText(panel, "LeftGroupCount", "B\u00ean tr\u00e1i", 24, 104f, new Vector2(300f, 42f));
+            leftGroupCountText = CreateTopText(panel, "LeftGroupCount", "B\u00ean tr\u00e1i", 28, 104f, new Vector2(320f, 46f));
             leftGroupCountText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-230f, -104f);
-            rightGroupCountText = CreateTopText(panel, "RightGroupCount", "B\u00ean ph\u1ea3i", 24, 104f, new Vector2(300f, 42f));
+            rightGroupCountText = CreateTopText(panel, "RightGroupCount", "B\u00ean ph\u1ea3i", 28, 104f, new Vector2(320f, 46f));
             rightGroupCountText.GetComponent<RectTransform>().anchoredPosition = new Vector2(230f, -104f);
 
             feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0f, RuntimeFeedbackPanelBottomY), new Vector2(760f, 68f));
-            feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 22);
+            feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 26);
             ConfigureFeedbackPanelForChildFocus();
             feedbackPanel.SetActive(false);
 
             hintPanel = CreateSubPanel(panel, "HintPanel", new Vector2(0f, RuntimeHintPanelBottomY), new Vector2(760f, 64f));
-            hintText = CreatePanelText(hintPanel.transform, "HintText", "", 20);
+            hintText = CreatePanelText(hintPanel.transform, "HintText", "", 24);
             hintPanel.SetActive(false);
 
-            float answerStartX = -(RuntimeButtonSize.x + RuntimeButtonGap);
+            float answerStartX = -(RuntimeComparisonButtonSize.x + RuntimeButtonGap);
             moreButton = CreateButton(panel, "MoreButton", SimpleLocalization.Get("compare_more"), new Vector2(answerStartX, RuntimeAnswerButtonBottomY), () => OnAnswerButtonClicked(ComparisonAnswer.More), out moreButtonText);
             fewerButton = CreateButton(panel, "FewerButton", SimpleLocalization.Get("compare_fewer"), new Vector2(0f, RuntimeAnswerButtonBottomY), () => OnAnswerButtonClicked(ComparisonAnswer.Fewer), out fewerButtonText);
-            equalButton = CreateButton(panel, "EqualButton", SimpleLocalization.Get("compare_equal"), new Vector2(RuntimeButtonSize.x + RuntimeButtonGap, RuntimeAnswerButtonBottomY), () => OnAnswerButtonClicked(ComparisonAnswer.Equal), out equalButtonText);
+            equalButton = CreateButton(panel, "EqualButton", SimpleLocalization.Get("compare_equal"), new Vector2(RuntimeComparisonButtonSize.x + RuntimeButtonGap, RuntimeAnswerButtonBottomY), () => OnAnswerButtonClicked(ComparisonAnswer.Equal), out equalButtonText);
 
             float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
             hintButton = CreateButton(panel, "HintButton", SimpleLocalization.Get("btn_hint"), new Vector2(0f, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke(), out _);
@@ -232,6 +236,7 @@ namespace Features.Activities.CompareQuantity
             progressButton.gameObject.SetActive(false);
             NormalizeTopNavigationButtons();
             ApplyComparisonAnswerButtonVisuals();
+            UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
         /// <summary>
@@ -329,7 +334,7 @@ namespace Features.Activities.CompareQuantity
         {
             if (progressText != null)
             {
-                progressText.text = $"Cau {current}/{total}";
+                progressText.text = $"Câu {current}/{total}";
             }
         }
 
@@ -361,6 +366,7 @@ namespace Features.Activities.CompareQuantity
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(true);
+                UIKidFriendlyStyle.PlayFeedback(nextRoundButton, true);
             }
         }
 
@@ -386,6 +392,7 @@ namespace Features.Activities.CompareQuantity
                 ShowFeedback(message, Color.red);
             }
             EnableAnswerButtons(true);  // Allow retry
+            UIKidFriendlyStyle.PlayFeedback(GetSelectedComparisonButton(), false);
         }
 
         /// <summary>
@@ -420,11 +427,11 @@ namespace Features.Activities.CompareQuantity
         /// </summary>
         public void ShowActivityComplete(ActivityResult result)
         {
-            string message = $"Activity Complete!\n" +
-                           $"Correct: {result.IsCorrect}\n" +
-                           $"Attempts: {result.TotalAttempts}\n" +
-                           $"Hints Used: {result.HintsUsedCount}\n" +
-                           $"Time: {result.TimeSpentSeconds:F1} seconds";
+            string message = $"Hoàn thành bài học!\n" +
+                           $"Đúng: {(result.IsCorrect ? "Có" : "Chưa")}\n" +
+                           $"Số lần thử: {result.TotalAttempts}\n" +
+                           $"Gợi ý đã dùng: {result.HintsUsedCount}\n" +
+                           $"Thời gian: {result.TimeSpentSeconds:F1} giây";
 
             activityFinished = true;
             DisableInput();
@@ -457,8 +464,8 @@ namespace Features.Activities.CompareQuantity
         public void ShowActivityFailed(string message, ActivityResult result)
         {
             string fullMessage = $"{message}\n" +
-                               $"Attempts: {result.TotalAttempts}\n" +
-                               $"Hints Used: {result.HintsUsedCount}";
+                               $"Số lần thử: {result.TotalAttempts}\n" +
+                               $"Gợi ý đã dùng: {result.HintsUsedCount}";
 
             activityFinished = true;
             DisableInput();
@@ -580,6 +587,7 @@ namespace Features.Activities.CompareQuantity
         private void OnAnswerButtonClicked(ComparisonAnswer answer)
         {
             currentSelectedAnswer = answer;
+            ApplyComparisonAnswerButtonVisuals();
             OnAnswerSelected?.Invoke(answer);
         }
 
@@ -696,22 +704,30 @@ namespace Features.Activities.CompareQuantity
                 moreButton,
                 moreButtonText,
                 MoreSymbol,
-                new Color(0.98f, 0.56f, 0.18f, 1f));
+                KidButtonPurpose.ComparisonMore,
+                currentSelectedAnswer == ComparisonAnswer.More);
 
             ConfigureComparisonAnswerButton(
                 fewerButton,
                 fewerButtonText,
                 FewerSymbol,
-                new Color(0.2f, 0.58f, 0.92f, 1f));
+                KidButtonPurpose.ComparisonFewer,
+                currentSelectedAnswer == ComparisonAnswer.Fewer);
 
             ConfigureComparisonAnswerButton(
                 equalButton,
                 equalButtonText,
                 EqualSymbol,
-                new Color(0.28f, 0.72f, 0.36f, 1f));
+                KidButtonPurpose.ComparisonEqual,
+                currentSelectedAnswer == ComparisonAnswer.Equal);
         }
 
-        private static void ConfigureComparisonAnswerButton(Button button, Text labelText, string symbol, Color backgroundColor)
+        private static void ConfigureComparisonAnswerButton(
+            Button button,
+            Text labelText,
+            string symbol,
+            KidButtonPurpose purpose,
+            bool selected)
         {
             if (button == null)
             {
@@ -721,14 +737,11 @@ namespace Features.Activities.CompareQuantity
             RectTransform rect = button.GetComponent<RectTransform>();
             if (rect != null)
             {
-                rect.sizeDelta = RuntimeButtonSize;
+                rect.sizeDelta = RuntimeComparisonButtonSize;
             }
 
-            Image image = button.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = backgroundColor;
-            }
+            UIKidFriendlyStyle.Apply(button, purpose, symbol, AnswerSymbolFontSize, true);
+            UIKidFriendlyStyle.SetSelected(button, selected, purpose);
 
             Text text = labelText != null ? labelText : button.GetComponentInChildren<Text>();
             if (text == null)
@@ -743,9 +756,20 @@ namespace Features.Activities.CompareQuantity
             text.resizeTextMaxSize = AnswerSymbolFontSize;
             text.fontStyle = FontStyle.Bold;
             text.alignment = TextAnchor.MiddleCenter;
-            text.color = Color.white;
+            text.color = new Color(0.16f, 0.12f, 0.08f, 1f);
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
+        }
+
+        private Button GetSelectedComparisonButton()
+        {
+            return currentSelectedAnswer switch
+            {
+                ComparisonAnswer.More => moreButton,
+                ComparisonAnswer.Fewer => fewerButton,
+                ComparisonAnswer.Equal => equalButton,
+                _ => null
+            };
         }
 
         private void ConfigureFeedbackPanelForChildFocus()
@@ -891,6 +915,7 @@ namespace Features.Activities.CompareQuantity
             button.onClick.AddListener(onClick);
 
             labelText = CreateButtonLabel(go.transform, label);
+            UIKidFriendlyStyle.Apply(button, name, label, 26);
             return button;
         }
 
@@ -901,17 +926,17 @@ namespace Features.Activities.CompareQuantity
                 RuntimeHomeButtonLabel,
                 RuntimeHomeButtonTopRight,
                 RuntimeTopNavButtonSize,
-                new Color(0.85f, 0.35f, 0.35f, 0.9f));
+                KidButtonPurpose.Home);
 
             ConfigureTopRightNavigationButton(
                 listenButton,
                 SimpleLocalization.Get("btn_listen"),
                 RuntimeListenButtonTopRight,
                 RuntimeTopNavButtonSize,
-                new Color(0.2f, 0.5f, 0.9f, 0.9f));
+                KidButtonPurpose.Listen);
         }
 
-        private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)
+        private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, KidButtonPurpose purpose)
         {
             if (button == null)
             {
@@ -928,12 +953,6 @@ namespace Features.Activities.CompareQuantity
                 rect.anchoredPosition = anchoredPosition;
             }
 
-            Image image = button.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = color;
-            }
-
             Text text = button.GetComponentInChildren<Text>();
             if (text != null)
             {
@@ -944,6 +963,8 @@ namespace Features.Activities.CompareQuantity
                 text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
                 text.alignment = TextAnchor.MiddleCenter;
             }
+
+            UIKidFriendlyStyle.Apply(button, purpose, label, RuntimeTopNavButtonFontSize);
         }
 
         private static Button CreateTopRightButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick, out Text labelText)
@@ -962,6 +983,7 @@ namespace Features.Activities.CompareQuantity
             button.onClick.AddListener(onClick);
 
             labelText = CreateButtonLabel(go.transform, label);
+            UIKidFriendlyStyle.Apply(button, name, label, RuntimeTopNavButtonFontSize);
             return button;
         }
 
