@@ -113,9 +113,6 @@ namespace Features.Activities.NumberLineJump
         private bool activityFinished;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(180f, 72f);
-        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(146f, 64f);
-        private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
-        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-188f, -24f);
         private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(142f, 218f);
         private const float RuntimeButtonGap = 16f;
         private const float RuntimeActionButtonBottomY = 52f;
@@ -243,9 +240,9 @@ namespace Features.Activities.NumberLineJump
             resetButton = CreateButton(panel, "ResetButton", SimpleLocalization.Get("btn_reset"), new Vector2(jumpActionOffset, RuntimeJumpButtonBottomY), () => OnResetRequested?.Invoke());
 
             float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
-            hintButton = CreateButton(panel, "HintButton", SimpleLocalization.Get("btn_hint"), new Vector2(0f, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke());
-            cancelButton = CreateTopRightButton(panel, "CancelButton", RuntimeHomeButtonLabel, RuntimeHomeButtonTopRight, RuntimeTopNavButtonSize, OnCancelClicked);
-            listenButton = CreateTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), RuntimeListenButtonTopRight, RuntimeTopNavButtonSize, OnListenClicked);
+            hintButton = UIActivityNavButtons.CreateHintButton(panel, () => OnHintRequested?.Invoke());
+            cancelButton = UIActivityNavButtons.CreateHomeButton(panel, OnCancelClicked);
+            listenButton = UIActivityNavButtons.CreateListenButton(panel, OnListenClicked);
             nextRoundButton = CreateButton(panel, "NextButton", SimpleLocalization.Get("btn_next"), new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), OnNextRoundClicked);
             progressButton = CreateButton(panel, "ProgressButton", SimpleLocalization.Get("btn_progress"), new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked);
             nextRoundButton.gameObject.SetActive(false);
@@ -1008,19 +1005,7 @@ namespace Features.Activities.NumberLineJump
 
         private void NormalizeTopNavigationButtons()
         {
-            ConfigureTopRightNavigationButton(
-                cancelButton,
-                RuntimeHomeButtonLabel,
-                RuntimeHomeButtonTopRight,
-                RuntimeTopNavButtonSize,
-                KidButtonPurpose.Home);
-
-            ConfigureTopRightNavigationButton(
-                listenButton,
-                SimpleLocalization.Get("btn_listen"),
-                RuntimeListenButtonTopRight,
-                RuntimeTopNavButtonSize,
-                KidButtonPurpose.Listen);
+            // Buttons are already configured correctly by UIActivityNavButtons
         }
 
         private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, KidButtonPurpose purpose)
@@ -1067,6 +1052,28 @@ namespace Features.Activities.NumberLineJump
             go.GetComponent<Image>().color = name.Contains("Listen")
                 ? new Color(0.2f, 0.5f, 0.9f, 0.9f)
                 : new Color(0.85f, 0.35f, 0.35f, 0.9f);
+
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(onClick);
+
+            Text text = CreateButtonLabel(go.transform, label);
+            text.fontSize = RuntimeTopNavButtonFontSize;
+            text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
+            UIKidFriendlyStyle.Apply(button, name, label, RuntimeTopNavButtonFontSize);
+            return button;
+        }
+
+        private static Button CreateTopLeftButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = new Color(0.2f, 0.5f, 0.9f, 0.92f);
 
             var button = go.GetComponent<Button>();
             button.onClick.AddListener(onClick);

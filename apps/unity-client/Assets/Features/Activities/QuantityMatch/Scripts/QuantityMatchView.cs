@@ -122,9 +122,6 @@ namespace Features.Activities.QuantityMatch
         private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
         private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(108f, 70f);
         private static readonly Vector2 RuntimeNumberInputPanelSize = new Vector2(900f, 330f);
-        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(146f, 64f);
-        private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
-        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-188f, -24f);
         private const float RuntimeButtonGap = 28f;
         private const float RuntimeDigitButtonGap = 12f;
         private const float RuntimeActionButtonBottomY = 112f;
@@ -359,12 +356,12 @@ namespace Features.Activities.QuantityMatch
             hintText = CreatePanelText(hintPanel.transform, "HintText", "", 22);
             hintPanel.SetActive(false);
 
-            // Large center bottom Hint button (140x140px, gold, icon bulb)
-            hintButton = CreateSizedBottomButton(panel, "HintButton", "💡", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(140f, 140f), () => OnHintRequested?.Invoke(), 72);
+            // Hint button at top-left
+            hintButton = UIActivityNavButtons.CreateHintButton(panel, () => OnHintRequested?.Invoke());
             
-            // Small top-right Cancel button (100x100px, soft-red, icon cross) - enlarged for kids
-            cancelButton = CreateSizedTopRightButton(panel, "CancelButton", RuntimeHomeButtonLabel, RuntimeHomeButtonTopRight, RuntimeTopNavButtonSize, OnCancelClicked, RuntimeTopNavButtonFontSize);
-            listenButton = CreateSizedTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), RuntimeListenButtonTopRight, RuntimeTopNavButtonSize, OnListenClicked, RuntimeTopNavButtonFontSize);
+            // Navigation buttons using shared utility
+            cancelButton = UIActivityNavButtons.CreateHomeButton(panel, OnCancelClicked);
+            listenButton = UIActivityNavButtons.CreateListenButton(panel, OnListenClicked);
 
             // Centered bottom buttons for transitioning (hidden by default)
             nextRoundButton = CreateSizedBottomButton(panel, "NextButton", "▶ Tiếp tục", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(240f, 100f), OnNextRoundClicked, 28);
@@ -1903,19 +1900,7 @@ namespace Features.Activities.QuantityMatch
 
         private void NormalizeTopNavigationButtons()
         {
-            ConfigureTopRightNavigationButton(
-                cancelButton,
-                RuntimeHomeButtonLabel,
-                RuntimeHomeButtonTopRight,
-                RuntimeTopNavButtonSize,
-                new Color(0.85f, 0.35f, 0.35f, 0.9f));
-
-            ConfigureTopRightNavigationButton(
-                listenButton,
-                SimpleLocalization.Get("btn_listen"),
-                RuntimeListenButtonTopRight,
-                RuntimeTopNavButtonSize,
-                new Color(0.2f, 0.5f, 0.9f, 0.9f));
+            // Buttons are already configured correctly by UIActivityNavButtons
         }
 
         private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)
@@ -1968,6 +1953,31 @@ namespace Features.Activities.QuantityMatch
             go.GetComponent<Image>().color = name.Contains("Listen")
                 ? new Color(0.2f, 0.5f, 0.9f, 0.9f)
                 : new Color(0.85f, 0.35f, 0.35f, 0.85f);
+
+            var button = go.GetComponent<Button>();
+            if (onClick != null)
+            {
+                button.onClick.AddListener(onClick);
+            }
+
+            Text text = CreateButtonLabel(go.transform, label);
+            text.fontSize = fontSize;
+            text.resizeTextMaxSize = fontSize;
+            UIKidFriendlyStyle.Apply(button, name, label, fontSize);
+            return button;
+        }
+
+        private static Button CreateSizedTopLeftButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick, int fontSize)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = new Color(0.98f, 0.8f, 0.2f, 1.0f); // Bright yellow
 
             var button = go.GetComponent<Button>();
             if (onClick != null)

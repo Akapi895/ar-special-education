@@ -170,34 +170,30 @@ Correct: Fewer (Left > Right → Left is more → chọn "<")
 
 ---
 
-## Phần B: Implementation Plan
+## Phần B: Implementation Status
 
 ### B.1. Hiện Trạng Code
 
-#### Đã có ✅
+> **Trạng thái cập nhật 29/05/2026:** Toàn bộ infrastructure đã có sẵn và hoàn chỉnh. Không cần implement thêm - chỉ cần test.
+
+#### Đã có ✅ (100% complete)
 | Script | Lines | Status |
 |--------|-------|--------|
-| `CompareQuantityPresenter.cs` | ~1025 | Core logic, cần kiểm chứng UI |
-| `CompareQuantityView.cs` | ~1025 | UI hoàn chỉnh, runtime generation |
-| `CompareQuantityConfig.cs` | (tồn tại) | ScriptableObject config |
-| `CompareQuantityQuestion.cs` | (tồn tại) | Data model |
-| `CompareQuantityAnswer.cs` | (tồn tại) | Answer model |
-| `CompareQuantityActivityBootstrap.cs` | (tồn tại) | Bootstrap |
+| `CompareQuantityPresenter.cs` | ~600 | ✅ Core logic, CheckAnswer, feedback, hints |
+| `CompareQuantityView.cs` | ~1000 | ✅ UI runtime generation, symbol buttons |
+| `CompareQuantityConfig.cs` | ~300 | ✅ ScriptableObject với 10 questions |
+| `CompareQuantityQuestion.cs` | ~125 | ✅ Data model + `ComparisonAnswer` enum |
+| `CompareQuantityAnswer.cs` | ~78 | ✅ Answer model + `IsCorrect()` |
+| `CompareQuantityActivityBootstrap.cs` | ~100 | ✅ Bootstrap hoạt động |
+| `CompareQuantityRuntimeUI.cs` | ~66 | ✅ Runtime UI builder |
+| `SO_CompareQuantityConfig_Easy.asset` | — | ✅ 10 rounds demo |
 
-#### Chưa có ⚠️
-| Component | Status | Ghi chú |
-|-----------|--------|---------|
-| `ComparisonAnswer` enum | Cần kiểm tra | Có thể đã có trong Question/Answer model |
-| `GroupArrangementPattern` enum | Cần kiểm tra | Có thể dùng chung với QuantityMatch |
-| `ICompareQuantityView` interface | Có trong proposal | Kiểm tra có trong codebase không |
-| Symbol buttons UI | Trong View | Cần verify 3 buttons `>`, `<`, `=` |
-| Two-group layout builder | Trong Presenter | Spawn 2 groups thay vì 3+ |
-
-#### Kiểm tra cần làm (trước khi implement)
-1. Đọc `CompareQuantityPresenter.cs` để xem logic `CheckAnswer` và `LoadRound`
-2. Đọc `CompareQuantityView.cs` để xem UI elements và event handlers
-3. Kiểm tra `CompareQuantityQuestion` có đủ fields cho các question types
-4. Kiểm tra `CompareQuantityConfig` có `allowEqualCase` và `hintMode` không
+#### Kiểm tra đã thực hiện ✅
+1. ✅ `ComparisonAnswer` enum: `More` (Left > Right), `Fewer` (Left < Right), `Equal` (Left = Right)
+2. ✅ `CheckAnswer()`: So sánh `SelectedComparison` với `CalculateExpectedAnswer()`
+3. ✅ `Feedback`: `ShowCorrectFeedback()` / `ShowIncorrectFeedback()` với outcome-specific messages
+4. ✅ `Hint system`: 3-level hints cho non-equality và equality questions
+5. ✅ `Router`: `"CompareQuantity"` branch → `CreateCompareQuantityActivity()`
 
 ### B.2. Module/Script có thể tái sử dụng
 
@@ -332,45 +328,38 @@ THỨ TỰ THỰC HIỆN (sau Quantity Match):
 
 ## Phần D: Architecture Notes
 
-### D.1. Ký hiệu So Sánh — Xác Định Convention
+### D.1. Ký hiệu So Sánh — Convention ĐÃ XÁC ĐỊNH ✅
 
+**Convention đã implement (xác nhận trong code):**
 ```
 Question: "3  ?  5"
-→ Hỏi: 3 với 5, cái nào lớn hơn?
-→ Đáp: 5 lớn hơn 3
-→ Đáp án: 3 < 5  (chọn nút "<")
+→ Left = 3, Right = 5
+→ Left < Right → ComparisonAnswer.Fewer
+→ User tap nút "<" (Bên trái ít hơn)
+
+Question: "5  ?  3"
+→ Left = 5, Right = 3
+→ Left > Right → ComparisonAnswer.More
+→ User tap nút ">" (Bên trái nhiều hơn)
+
+Question: "4  ?  4"
+→ Left = 4, Right = 4
+→ Left = Right → ComparisonAnswer.Equal
+→ User tap nút "=" (Bằng nhau)
 ```
 
-```
-Question: "5  ?  3"  
-→ Hỏi: 5 với 3, cái nào lớn hơn?
-→ Đáp: 5 lớn hơn 3
-→ Đáp án: 5 > 3  (chọn nút ">")
-```
-
-```
-Convention trong code (cần verify):
-→ correctAnswer được lưu là ComparisonAnswer.More khi nào?
-→ left > right → More?  HOẶC  left < right → Fewer?
-→ CẦN XÁC ĐỊNH TRƯỚC KHI IMPLEMENT
-```
+**Implement chi tiết** (`CompareQuantityAnswer.cs`):
+- `CalculateExpectedAnswer()` trả về `More` khi `Left > Right`
+- `CalculateExpectedAnswer()` trả về `Fewer` khi `Left < Right`
+- `CalculateExpectedAnswer()` trả về `Equal` khi `Left == Right`
+- `IsCorrect()` so sánh `SelectedComparison` với expected answer
 
 ### D.2. Two-Group Layout
 
-```csharp
-// Trong CompareQuantityPresenter
-private void SpawnTwoGroups(int leftCount, int rightCount) {
-    Vector3 center = GetLearningAreaCenter();
-    
-    // Left group position
-    Vector3 leftPos = center - Vector3.right * groupSpacing * 0.5f;
-    SpawnGroup(leftCount, leftPos, "LeftGroup");
-    
-    // Right group position  
-    Vector3 rightPos = center + Vector3.right * groupSpacing * 0.5f;
-    SpawnGroup(rightCount, rightPos, "RightGroup");
-}
-```
+Layout đã implement trong `CompareQuantityPresenter.SpawnGroups()`:
+- Left group spawn ở vị trí `center - Vector3.right * spacing * 0.5f`
+- Right group spawn ở vị trí `center + Vector3.right * spacing * 0.5f`
+- Default spacing = 3.0m (configurable)
 
 ### D.3. Bridge Sang Number Bonds (Optional Enhancement)
 
@@ -382,6 +371,40 @@ Round 10: "Nhóm bên trái nhiều hơn bên phải bao nhiêu?"
 → Đây là bridge tự nhiên từ so sánh sang tách-gộp
 → Không bắt buộc cho MVP nhưng là enhancement tốt
 ```
+
+---
+
+## Phần E: Implementation Status (29/05/2026)
+
+### E.1. Trạng thái hoàn thiện
+
+| Component | Status | Ghi chú |
+|-----------|--------|---------|
+| `CompareQuantityPresenter.cs` | ✅ Hoàn chỉnh | ~600+ lines, logic check answer, feedback, hints |
+| `CompareQuantityView.cs` | ✅ Hoàn chỉnh | ~1000+ lines, UI runtime generation, button handling |
+| `CompareQuantityConfig.cs` | ✅ Hoàn chỉnh | 10 questions, hints, feedback strings |
+| `CompareQuantityQuestion.cs` | ✅ Hoàn chỉnh | `ComparisonAnswer` enum, validation |
+| `CompareQuantityAnswer.cs` | ✅ Hoàn chỉnh | `IsCorrect()`, `CalculateExpectedAnswer()` |
+| `CompareQuantityActivityBootstrap.cs` | ✅ Hoàn chỉnh | Bootstrap hoạt động |
+| `CompareQuantityRuntimeUI.cs` | ✅ Hoàn chỉnh | Runtime UI generation |
+| `SO_CompareQuantityConfig_Easy.asset` | ✅ Tồn tại | 10 rounds với mix More/Fewer/Equal |
+| `GameplayActivityRouter` | ✅ Có branch | `"CompareQuantity"` → `CreateCompareQuantityActivity()` |
+
+### E.2. Chưa test/cần xác nhận
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 1 | Test trên Editor | Chưa test | Cần Unity Editor để verify |
+| 2 | Test trên iOS device | Chưa test | AR simulation cần device |
+| 3 | Symbol buttons (> < =) | Cần verify | UI có hiện đúng 3 buttons không |
+| 4 | Spawn groups | Cần verify | 2 groups spawn đúng vị trí không |
+
+### E.3. Known Issues
+
+| # | Issue | Workaround |
+|---|-------|-----------|
+| 1 | Config asset dùng int cho enum | `CorrectAnswer: 0` = More, `1` = Fewer, `2` = Equal |
+| 2 | Unity 6 + Input System | Có thể cần keyboard dev tool như Lesson 1 |
 
 ---
 
