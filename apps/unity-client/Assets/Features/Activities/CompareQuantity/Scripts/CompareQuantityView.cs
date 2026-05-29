@@ -2,6 +2,7 @@ using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
 using Core.UI.Components;
+using Core.UI.Layout;
 using Core.UI.Localization;
 using Features.Activities.CompareQuantity;
 using Project.App;
@@ -824,14 +825,7 @@ namespace Features.Activities.CompareQuantity
 
         private static RectTransform CreateUiPanel(Transform parent, string name)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            return rect;
+            return UIActivityLayoutHelpers.CreateUiPanel(parent, name);
         }
 
         private static GameObject CreateTopPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size, float alpha)
@@ -879,61 +873,18 @@ namespace Features.Activities.CompareQuantity
 
         private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = anchoredPosition;
-
-            var image = go.GetComponent<Image>();
-            image.color = new Color(0f, 0f, 0f, 0.55f);
-            image.raycastTarget = false;
-            return go;
+            return UIActivityLayoutHelpers.CreateSubPanel(parent, name, anchoredPosition, size);
         }
 
         private static Text CreatePanelText(Transform parent, string name, string content, int fontSize)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(16f, 6f);
-            rect.offsetMax = new Vector2(-16f, -6f);
-
-            var text = go.GetComponent<Text>();
-            text.text = content;
-            text.fontSize = fontSize;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 14;
-            text.resizeTextMaxSize = fontSize;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = Color.white;
-            text.raycastTarget = false;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            return text;
+            return UIActivityLayoutHelpers.CreatePanelText(parent, name, content, fontSize);
         }
 
         private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, UnityEngine.Events.UnityAction onClick, out Text labelText)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.sizeDelta = RuntimeButtonSize;
-            rect.anchoredPosition = anchoredPosition;
-            go.GetComponent<Image>().color = new Color(0.2f, 0.5f, 0.9f, 1f);
-
-            var button = go.GetComponent<Button>();
-            button.onClick.AddListener(onClick);
-
-            labelText = CreateButtonLabel(go.transform, label);
-            UIKidFriendlyStyle.Apply(button, name, label, 26);
+            Button button = UIActivityLayoutHelpers.CreateButton(parent, name, label, anchoredPosition, onClick, RuntimeButtonSize);
+            labelText = button.GetComponentInChildren<Text>();
             return button;
         }
 
@@ -1015,37 +966,12 @@ namespace Features.Activities.CompareQuantity
 
         private static Text CreateButtonLabel(Transform parent, string label)
         {
-            var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(8f, 4f);
-            rect.offsetMax = new Vector2(-8f, -4f);
-
-            var text = go.GetComponent<Text>();
-            text.text = label;
-            text.fontSize = 22;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 14;
-            text.resizeTextMaxSize = 22;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = Color.white;
-            text.raycastTarget = false;
-            return text;
+            return UIActivityLayoutHelpers.CreateButtonLabel(parent, label);
         }
 
         private static void LoadSceneIfAvailable(string sceneName)
         {
-            if (Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                SceneManager.LoadScene(sceneName);
-            }
-            else
-            {
-                Debug.LogWarning($"[CompareQuantityView] Scene '{sceneName}' is not available in Build Settings.");
-            }
+            UIActivityLayoutHelpers.LoadSceneIfAvailable(sceneName);
         }
     }
 }

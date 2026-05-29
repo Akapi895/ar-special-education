@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, BookOpen, Lightbulb } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
+import PageContainer from '../../components/layout/PageContainer';
 
 interface CPAStage {
   id: 'concrete' | 'pictorial' | 'abstract';
@@ -139,7 +140,8 @@ const MethodsPage = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-light-bg">
+      <PageContainer maxWidth="lg" padding="md" spacing="md" className="py-4 sm:py-6">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -151,7 +153,7 @@ const MethodsPage = () => {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-8 border border-gray-200">
+      <div className="bg-linear-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-8 border border-gray-200">
         <h2 className="text-lg font-bold text-gray-900 mb-3">
           💡 Tại sao CPA quan trọng với trẻ Dyscalculia?
         </h2>
@@ -229,7 +231,7 @@ const MethodsPage = () => {
                       <ul className="space-y-1">
                         {stage.whenToUse.map((item, i) => (
                           <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 flex-shrink-0"></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 shrink-0"></span>
                             {item}
                           </li>
                         ))}
@@ -245,7 +247,7 @@ const MethodsPage = () => {
                       <ul className="space-y-1">
                         {stage.activities.map((item, i) => (
                           <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-primary-400 rounded-full mt-1.5 flex-shrink-0"></span>
+                            <span className="w-1.5 h-1.5 bg-primary-400 rounded-full mt-1.5 shrink-0"></span>
                             {item}
                           </li>
                         ))}
@@ -259,7 +261,7 @@ const MethodsPage = () => {
                     <ul className="space-y-1">
                       {stage.tips.map((item, i) => (
                         <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                          <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full mt-1.5 flex-shrink-0"></span>
+                          <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full mt-1.5 shrink-0"></span>
                           {item}
                         </li>
                       ))}
@@ -288,7 +290,7 @@ const MethodsPage = () => {
       </div>
 
       {/* General Tips */}
-      <div className="mt-8 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
+      <div className="mt-8 bg-linear-to-r from-green-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
         <h2 className="text-lg font-bold text-gray-900 mb-4">
           🌟 6 Nguyên tắc vàng khi dạy trẻ Dyscalculia
         </h2>
@@ -302,7 +304,7 @@ const MethodsPage = () => {
             { num: '6', text: 'Quay lại bước trước nếu con gặp khó khăn' },
           ].map((tip) => (
             <div key={tip.num} className="flex items-start gap-3">
-              <span className="w-7 h-7 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+              <span className="w-7 h-7 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
                 {tip.num}
               </span>
               <p className="text-gray-700">{tip.text}</p>
@@ -310,6 +312,7 @@ const MethodsPage = () => {
           ))}
         </div>
       </div>
+      </PageContainer>
     </div>
   );
 };

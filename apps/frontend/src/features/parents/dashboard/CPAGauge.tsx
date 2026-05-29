@@ -3,6 +3,8 @@
  * Clean design with brand colors
  */
 
+import { memo } from 'react';
+
 interface CPAGaugeProps {
   concrete: number;
   pictorial: number;
@@ -150,4 +152,4 @@ const CPAGauge = ({ concrete, pictorial, abstract, compact = false }: CPAGaugePr
   );
 };
 
-export default CPAGauge;
+export default memo(CPAGauge);

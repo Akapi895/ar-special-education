@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Sparkles, LogIn, UserPlus, Lock } from 'lucide-react';
+import { z } from 'zod';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import PasswordInput from '../../components/ui/PasswordInput';
@@ -8,6 +9,24 @@ import { useAuth } from '../../providers/AuthProvider';
 import type { LoginCredentials, RegisterCredentials } from '../../types/auth.types';
 
 type AuthMode = 'login' | 'register';
+
+const emailSchema = z.string().trim().min(1, 'Vui lòng nhập email').email('Email không hợp lệ');
+const passwordSchema = z.string().min(1, 'Vui lòng nhập mật khẩu').min(6, 'Mật khẩu phải có ít nhất 6 ký tự');
+
+const loginSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+const registerSchema = z.object({
+  displayName: z.string().trim().min(1, 'Vui lòng nhập tên'),
+  email: emailSchema,
+  password: passwordSchema,
+  confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
+}).refine((data) => data.password === data.confirmPassword, {
+  path: ['confirmPassword'],
+  message: 'Mật khẩu không khớp',
+});
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -25,60 +44,24 @@ const AuthPage = () => {
   }, [location.pathname]);
 
   const [loginCredentials, setLoginCredentials] = useState<LoginCredentials>({ email: '', password: '' });
-  const [loginErrors, setLoginErrors] = useState<Partial<LoginCredentials>>({});
+  const [loginErrors, setLoginErrors] = useState<Partial<Record<keyof LoginCredentials, string | undefined>>>({});
   const [registerCredentials, setRegisterCredentials] = useState<RegisterCredentials>({ email: '', password: '', confirmPassword: '', displayName: '' });
-  const [registerErrors, setRegisterErrors] = useState<Partial<RegisterCredentials>>({});
+  const [registerErrors, setRegisterErrors] = useState<Partial<Record<keyof RegisterCredentials, string | undefined>>>({});
 
-  const validateLoginForm = (): boolean => {
-    const errors: Partial<LoginCredentials> = {};
-    
-    if (!loginCredentials.email.trim()) {
-      errors.email = 'Vui lòng nhập email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginCredentials.email)) {
-      errors.email = 'Email không hợp lệ';
+  const mapZodErrors = <T extends string>(issues: z.ZodIssue[]) => issues.reduce((acc, issue) => {
+    const key = issue.path[0] as T | undefined;
+    if (key && !acc[key]) {
+      acc[key] = issue.message;
     }
-    
-    if (!loginCredentials.password) {
-      errors.password = 'Vui lòng nhập mật khẩu';
-    } else if (loginCredentials.password.length < 6) {
-      errors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
-    
-    setLoginErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const validateRegisterForm = (): boolean => {
-    const errors: Partial<RegisterCredentials> = {};
-    
-    if (!registerCredentials.displayName.trim()) {
-      errors.displayName = 'Vui lòng nhập tên';
-    }
-    
-    if (!registerCredentials.email.trim()) {
-      errors.email = 'Vui lòng nhập email';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerCredentials.email)) {
-      errors.email = 'Email không hợp lệ';
-    }
-    
-    if (!registerCredentials.password) {
-      errors.password = 'Vui lòng nhập mật khẩu';
-    } else if (registerCredentials.password.length < 6) {
-      errors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
-    
-    if (registerCredentials.confirmPassword !== registerCredentials.password) {
-      errors.confirmPassword = 'Mật khẩu không khớp';
-    }
-    
-    setRegisterErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+    return acc;
+  }, {} as Partial<Record<T, string | undefined>>);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateLoginForm()) {
+
+    const parsed = loginSchema.safeParse(loginCredentials);
+    if (!parsed.success) {
+      setLoginErrors(mapZodErrors<keyof LoginCredentials>(parsed.error.issues));
       return;
     }
     
@@ -95,8 +78,10 @@ const AuthPage = () => {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateRegisterForm()) {
+
+    const parsed = registerSchema.safeParse(registerCredentials);
+    if (!parsed.success) {
+      setRegisterErrors(mapZodErrors<keyof RegisterCredentials>(parsed.error.issues));
       return;
     }
     

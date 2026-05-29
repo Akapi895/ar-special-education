@@ -14,7 +14,7 @@ interface RouteSuspenseProps {
 
 export const RouteSuspense = ({ children, fallback }: RouteSuspenseProps) => {
     const defaultFallback = (
-        <div className="min-h-screen flex items-center justify-center bg-light-bg">
+        <div className="min-h-screen flex items-center justify-center bg-(--app-bg) transition-colors duration-300">
             <Loading text="Đang tải trang..." size="lg" />
         </div>
     );

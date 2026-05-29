@@ -2,20 +2,20 @@ using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
 using Core.UI.Components;
+using Core.UI.Layout;
 using Core.UI.Localization;
-using Features.Activities.QuantityMatch;
 using Project.App;
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityInputSystem = UnityEngine.InputSystem;
+#endif
+
 namespace Features.Activities.QuantityMatch
 {
-    /// <summary>
-    /// MonoBehaviour implementation of Quantity Match view.
-    /// Handles UI display and user input for the Quantity Match activity.
-    /// </summary>
     public class QuantityMatchView : MonoBehaviour, IQuantityMatchView
     {
         [Header("UI References")]
@@ -53,9 +53,9 @@ namespace Features.Activities.QuantityMatch
         private Button progressButton;
 
         [SerializeField]
-        private Core.UI.Components.UIFeedbackOverlay feedbackOverlay;
+        private UIFeedbackOverlay feedbackOverlay;
 
-        [Header("Number Input UI")]
+        [Header("Number Input Mode")]
         [SerializeField]
         private GameObject numberInputPanel;
 
@@ -86,7 +86,7 @@ namespace Features.Activities.QuantityMatch
 
         [Header("Group Selection UI")]
         [SerializeField]
-        private GameObject[] groupSelectionButtons;  // Optional: buttons for each group
+        private GameObject[] groupSelectionButtons;
 
         // Events from IActivityView
         public event Action OnHintRequested;
@@ -118,6 +118,7 @@ namespace Features.Activities.QuantityMatch
         private bool numberInputButtonsRegistered;
         private bool numberInputControlsInteractable;
         private Button lastAnswerButton;
+        private Text devKeyboardHintText;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
         private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(108f, 70f);
@@ -139,6 +140,7 @@ namespace Features.Activities.QuantityMatch
         private const string NumberInputSubmitLabel = "Tr\u1ea3 l\u1eddi";
         private const string RuntimeHomeButtonLabel = "Trang ch\u1ee7";
         private const int RuntimeTopNavButtonFontSize = 20;
+        private const string DEV_KEYBOARD_HINT = "Nhấn phím số để nhập nhanh";
 
         public bool HasUiReferences => targetNumberText != null;
 
@@ -204,83 +206,6 @@ namespace Features.Activities.QuantityMatch
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private Text devKeyboardHintText;
-        private const string DEV_KEYBOARD_HINT = "[DEV] Number keys 0-9, Backspace=clear, Enter=submit";
-
-        private void Update()
-        {
-            // DEV: Keyboard input for number input mode testing
-            if (!currentUsesNumberInputMode || activityFinished)
-            {
-                HideDevKeyboardHint();
-                return;
-            }
-
-            ShowDevKeyboardHint();
-
-#if ENABLE_LEGACY_INPUT_MANAGER
-            // Legacy Input Manager - sử dụng UnityEngine.Input
-            for (int key = (int)KeyCode.Alpha0; key <= (int)KeyCode.Alpha9; key++)
-            {
-                if (UnityEngine.Input.GetKeyDown((KeyCode)key))
-                {
-                    int digit = key - (int)KeyCode.Alpha0;
-                    AppendNumberDigit(digit);
-                    break;
-                }
-            }
-            for (int key = (int)KeyCode.Keypad0; key <= (int)KeyCode.Keypad9; key++)
-            {
-                if (UnityEngine.Input.GetKeyDown((KeyCode)key))
-                {
-                    int digit = key - (int)KeyCode.Keypad0;
-                    AppendNumberDigit(digit);
-                    break;
-                }
-            }
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Backspace) && currentNumberInput.Length > 0)
-            {
-                currentNumberInput = currentNumberInput.Substring(0, currentNumberInput.Length - 1);
-                UpdateNumberInputText();
-            }
-            if (UnityEngine.Input.GetKeyDown(KeyCode.Return) || UnityEngine.Input.GetKeyDown(KeyCode.KeypadEnter))
-            {
-                SubmitNumberInput();
-            }
-#else
-            // Input System Package - sử dụng UnityEngine.InputSystem
-            var keyboard = UnityEngine.InputSystem.Keyboard.current;
-            if (keyboard != null)
-            {
-                // Number keys 0-9
-                if (keyboard.digit1Key.wasPressedThisFrame) AppendNumberDigit(1);
-                else if (keyboard.digit2Key.wasPressedThisFrame) AppendNumberDigit(2);
-                else if (keyboard.digit3Key.wasPressedThisFrame) AppendNumberDigit(3);
-                else if (keyboard.digit4Key.wasPressedThisFrame) AppendNumberDigit(4);
-                else if (keyboard.digit5Key.wasPressedThisFrame) AppendNumberDigit(5);
-                else if (keyboard.digit6Key.wasPressedThisFrame) AppendNumberDigit(6);
-                else if (keyboard.digit7Key.wasPressedThisFrame) AppendNumberDigit(7);
-                else if (keyboard.digit8Key.wasPressedThisFrame) AppendNumberDigit(8);
-                else if (keyboard.digit9Key.wasPressedThisFrame) AppendNumberDigit(9);
-                else if (keyboard.digit0Key.wasPressedThisFrame) AppendNumberDigit(0);
-
-                // Backspace
-                if (keyboard.backspaceKey.wasPressedThisFrame && currentNumberInput.Length > 0)
-                {
-                    currentNumberInput = currentNumberInput.Substring(0, currentNumberInput.Length - 1);
-                    UpdateNumberInputText();
-                }
-
-                // Enter
-                if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
-                {
-                    SubmitNumberInput();
-                }
-            }
-#endif
-        }
-
         private void ShowDevKeyboardHint()
         {
             if (devKeyboardHintText == null && runtimeUiRoot != null)
@@ -326,7 +251,6 @@ namespace Features.Activities.QuantityMatch
                 devKeyboardHintText.gameObject.SetActive(false);
             }
         }
-#endif
 
         /// <summary>
         /// Builds minimal UI at runtime when prefabs are not assigned.
@@ -358,7 +282,7 @@ namespace Features.Activities.QuantityMatch
 
             // Hint button at top-left
             hintButton = UIActivityNavButtons.CreateHintButton(panel, () => OnHintRequested?.Invoke());
-            
+
             // Navigation buttons using shared utility
             cancelButton = UIActivityNavButtons.CreateHomeButton(panel, OnCancelClicked);
             listenButton = UIActivityNavButtons.CreateListenButton(panel, OnListenClicked);
@@ -634,7 +558,7 @@ namespace Features.Activities.QuantityMatch
             SetRuntimeGroupButtonsActive(false);
             SetNumberInputPanelActive(false);
             SetRunningActionButtonsActive(false);
-            
+
             if (feedbackOverlay != null)
             {
                 feedbackOverlay.ShowSuccess("Hoàn thành! Con làm tốt lắm!");
@@ -673,7 +597,7 @@ namespace Features.Activities.QuantityMatch
             SetRuntimeGroupButtonsActive(false);
             SetNumberInputPanelActive(false);
             SetRunningActionButtonsActive(false);
-            
+
             if (feedbackOverlay != null)
             {
                 feedbackOverlay.ShowIncorrect("Cố lên nhé! Thử lại sau nhé!");
@@ -1797,39 +1721,12 @@ namespace Features.Activities.QuantityMatch
 
         private static Text CreateButtonLabel(Transform parent, string label)
         {
-            var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(8f, 4f);
-            rect.offsetMax = new Vector2(-8f, -4f);
-
-            var text = go.GetComponent<Text>();
-            text.text = label;
-            text.fontSize = 24;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 16;
-            text.resizeTextMaxSize = 24;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = Color.white;
-            text.raycastTarget = false;
-            return text;
+            return UIActivityLayoutHelpers.CreateButtonLabel(parent, label);
         }
 
         private static void SetButtonLabel(Button button, string label)
         {
-            if (button == null)
-            {
-                return;
-            }
-
-            Text text = button.GetComponentInChildren<Text>();
-            if (text != null)
-            {
-                text.text = label;
-            }
+            UIActivityLayoutHelpers.SetButtonLabel(button, label);
         }
 
         private string GetNextButtonLabel(string activityId)
@@ -1844,18 +1741,7 @@ namespace Features.Activities.QuantityMatch
 
         private static void LoadSceneIfAvailable(string sceneName)
         {
-            if (string.IsNullOrEmpty(sceneName))
-            {
-                return;
-            }
-
-            if (!Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                Debug.LogWarning($"[QuantityMatchView] Scene '{sceneName}' is not available in Build Settings.");
-                return;
-            }
-
-            SceneManager.LoadScene(sceneName);
+            UIActivityLayoutHelpers.LoadSceneIfAvailable(sceneName);
         }
 
         private Vector3 originalUiRootPos;

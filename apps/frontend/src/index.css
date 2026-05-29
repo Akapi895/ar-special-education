@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* ===== THEME CSS VARIABLES ===== */
+:root {
+  --primary: #06325a;
+  --accent: #3498db;
+  --light-bg: #f1f5f9;
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-light-bg: var(--light-bg);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 /* ===== SCROLLBAR UTILITIES ===== */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -10,7 +27,6 @@
   scrollbar-width: none;
 }
 
-/* Custom scrollbar styling */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -44,13 +60,6 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* ===== SMOOTH TRANSITIONS ===== */
-* {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
 }
 
 /* ===== FOCUS STYLES ===== */
@@ -192,7 +201,7 @@
   .mobile-hide {
     display: none;
   }
-  
+
   .mobile-full {
     width: 100%;
   }

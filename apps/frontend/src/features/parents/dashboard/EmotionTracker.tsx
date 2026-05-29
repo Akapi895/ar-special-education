@@ -3,6 +3,7 @@
  * Clean, minimal design with unified color palette
  */
 
+import { memo } from 'react';
 import { Heart } from 'lucide-react';
 
 interface EmotionEntry {
@@ -81,7 +82,7 @@ const EmotionTracker = ({ entries, onAddEntry, onViewAll }: EmotionTrackerProps)
       </div>
 
       {/* Week Calendar */}
-      <div className="grid grid-cols-7 gap-1.5 mb-4">
+      <div className="grid grid-cols-7 gap-1.5 mb-4 overflow-x-auto pb-1">
         {last7Days.map((day, idx) => {
           const emotion = day.entry?.emotion;
           const config = emotion ? EMOTION_CONFIG[emotion] : null;
@@ -149,4 +150,4 @@ const EmotionTracker = ({ entries, onAddEntry, onViewAll }: EmotionTrackerProps)
   );
 };
 
-export default EmotionTracker;
+export default memo(EmotionTracker);
