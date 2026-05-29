@@ -1,6 +1,7 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
+using Core.UI.Components;
 using Core.UI.Localization;
 using Features.Activities.NumberLineJump;
 using Project.App;
@@ -111,20 +112,22 @@ namespace Features.Activities.NumberLineJump
         private Transform runtimeUiRoot;
         private bool activityFinished;
 
-        private static readonly Vector2 RuntimeButtonSize = new Vector2(150f, 56f);
-        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(124f, 56f);
+        private static readonly Vector2 RuntimeButtonSize = new Vector2(180f, 72f);
+        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(146f, 64f);
         private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
-        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-160f, -24f);
-        private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(104f, 180f);
+        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-188f, -24f);
+        private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(142f, 218f);
         private const float RuntimeButtonGap = 16f;
         private const float RuntimeActionButtonBottomY = 52f;
         private const float RuntimeJumpButtonBottomY = 124f;
-        private const float RuntimeEdgeJumpButtonX = 18f;
-        private const float RuntimeEdgeJumpButtonY = -18f;
+        private const float RuntimeEdgeJumpButtonX = 26f;
+        private const float RuntimeEdgeJumpButtonY = -12f;
         private const float RuntimeHintPanelBottomY = 194f;
         private const float RuntimeEquationPanelBottomY = 262f;
         private const float RuntimeFeedbackPanelBottomY = 334f;
         private const string RuntimeHomeButtonLabel = "Trang ch\u1ee7";
+        private const string LeftJumpArrow = "←";
+        private const string RightJumpArrow = "→";
         private const int RuntimeTopNavButtonFontSize = 20;
 
         public bool HasUiReferences => startNumberText != null;
@@ -156,13 +159,13 @@ namespace Features.Activities.NumberLineJump
             if (leftJumpButton != null)
             {
                 leftJumpButton.onClick.AddListener(() => OnJumpRequested?.Invoke(JumpStepDirection.Left));
-                SetButtonLabel(leftJumpButton, "<");
+                SetButtonLabel(leftJumpButton, LeftJumpArrow);
             }
 
             if (rightJumpButton != null)
             {
                 rightJumpButton.onClick.AddListener(() => OnJumpRequested?.Invoke(JumpStepDirection.Right));
-                SetButtonLabel(rightJumpButton, ">");
+                SetButtonLabel(rightJumpButton, RightJumpArrow);
             }
 
             if (confirmButton != null)
@@ -200,7 +203,10 @@ namespace Features.Activities.NumberLineJump
                 progressButton.onClick.AddListener(OnProgressClicked);
             }
 
+            UIKidFriendlyStyle.ApplyToTree(transform);
             NormalizeTopNavigationButtons();
+            LayoutEdgeJumpButtons();
+            UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
         /// <summary>
@@ -211,26 +217,26 @@ namespace Features.Activities.NumberLineJump
             var panel = CreateUiPanel(canvas.transform, "NumberLineJumpPanel");
             runtimeUiRoot = panel;
 
-            progressText = CreateTopText(panel, "Progress", "", 24, 24f, new Vector2(620f, 40f));
-            targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("instruction_number_line"), 32, 68f, new Vector2(700f, 58f));
-            startNumberText = CreateTopText(panel, "StartNumber", "", 22, 124f, new Vector2(360f, 38f));
+            progressText = CreateTopText(panel, "Progress", "", 26, 24f, new Vector2(640f, 44f));
+            targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("instruction_number_line"), 36, 68f, new Vector2(730f, 64f));
+            startNumberText = CreateTopText(panel, "StartNumber", "", 26, 124f, new Vector2(380f, 44f));
             startNumberText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-205f, -124f);
-            currentPositionText = CreateTopText(panel, "CurrentPosition", "", 22, 124f, new Vector2(360f, 38f));
+            currentPositionText = CreateTopText(panel, "CurrentPosition", "", 26, 124f, new Vector2(380f, 44f));
             currentPositionText.GetComponent<RectTransform>().anchoredPosition = new Vector2(205f, -124f);
 
             feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0f, RuntimeFeedbackPanelBottomY), new Vector2(760f, 72f));
-            feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 22);
+            feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 26);
             feedbackPanel.SetActive(false);
 
             equationPanel = CreateSubPanel(panel, "EquationPanel", new Vector2(0f, RuntimeEquationPanelBottomY), new Vector2(560f, 54f));
-            equationText = CreatePanelText(equationPanel.transform, "EquationText", "", 24);
+            equationText = CreatePanelText(equationPanel.transform, "EquationText", "", 28);
 
             hintPanel = CreateSubPanel(panel, "HintPanel", new Vector2(0f, RuntimeHintPanelBottomY), new Vector2(760f, 64f));
-            hintText = CreatePanelText(hintPanel.transform, "HintText", "", 20);
+            hintText = CreatePanelText(hintPanel.transform, "HintText", "", 24);
             hintPanel.SetActive(false);
 
-            leftJumpButton = CreateEdgeJumpButton(panel, "LeftJumpButton", "<", true, () => OnJumpRequested?.Invoke(JumpStepDirection.Left));
-            rightJumpButton = CreateEdgeJumpButton(panel, "RightJumpButton", ">", false, () => OnJumpRequested?.Invoke(JumpStepDirection.Right));
+            leftJumpButton = CreateEdgeJumpButton(panel, "LeftJumpButton", LeftJumpArrow, true, () => OnJumpRequested?.Invoke(JumpStepDirection.Left));
+            rightJumpButton = CreateEdgeJumpButton(panel, "RightJumpButton", RightJumpArrow, false, () => OnJumpRequested?.Invoke(JumpStepDirection.Right));
 
             float jumpActionOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
             confirmButton = CreateButton(panel, "ConfirmButton", SimpleLocalization.Get("btn_confirm"), new Vector2(-jumpActionOffset, RuntimeJumpButtonBottomY), () => OnConfirmRequested?.Invoke());
@@ -245,6 +251,8 @@ namespace Features.Activities.NumberLineJump
             nextRoundButton.gameObject.SetActive(false);
             progressButton.gameObject.SetActive(false);
             NormalizeTopNavigationButtons();
+            LayoutEdgeJumpButtons();
+            UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
         /// <summary>
@@ -288,7 +296,7 @@ namespace Features.Activities.NumberLineJump
             // Update displays
             if (startNumberText != null)
             {
-                startNumberText.text = currentUsesEquationPromptMode ? $"Bat dau o {startNumber}" : $"Bat dau: {startNumber}";
+                startNumberText.text = currentUsesEquationPromptMode ? $"Bắt đầu ở {startNumber}" : $"Bắt đầu: {startNumber}";
             }
 
             if (targetNumberText != null)
@@ -366,7 +374,7 @@ namespace Features.Activities.NumberLineJump
 
             if (currentPositionText != null)
             {
-                currentPositionText.text = $"Dang o: {position}";
+                currentPositionText.text = $"Đang ở: {position}";
             }
 
             // Update button states based on new position
@@ -380,7 +388,7 @@ namespace Features.Activities.NumberLineJump
         {
             if (progressText != null)
             {
-                progressText.text = $"Cau {current}/{total}";
+                progressText.text = $"Câu {current}/{total}";
             }
         }
 
@@ -412,8 +420,11 @@ namespace Features.Activities.NumberLineJump
 
             if (nextRoundButton != null)
             {
-                SetButtonLabel(nextRoundButton, GetNextButtonLabel("NumberLineJump"));
+                string nextLabel = GetNextButtonLabel("NumberLineJump");
+                SetButtonLabel(nextRoundButton, nextLabel);
+                UIKidFriendlyStyle.Apply(nextRoundButton, KidButtonPurpose.Primary, nextLabel, 28);
                 nextRoundButton.gameObject.SetActive(true);
+                UIKidFriendlyStyle.PlayFeedback(nextRoundButton, true);
             }
         }
 
@@ -440,6 +451,7 @@ namespace Features.Activities.NumberLineJump
                 ShowFeedback(fullMessage, Color.red);
             }
             EnableInput();
+            UIKidFriendlyStyle.PlayFeedback(confirmButton, false);
         }
 
         /// <summary>
@@ -455,8 +467,17 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowBoundaryHit(int currentPosition)
         {
-            ShowFeedback($"Da den canh truc so tai {currentPosition}.", Color.yellow);
+            ShowFeedback($"Đã đến cạnh trục số tại {currentPosition}.", Color.yellow);
             Debug.Log("[NumberLineJumpView] Play bump animation at boundary");
+
+            if (currentPosition <= currentMinNumber)
+            {
+                UIKidFriendlyStyle.PlayFeedback(leftJumpButton, false);
+            }
+            else if (currentPosition >= currentMaxNumber)
+            {
+                UIKidFriendlyStyle.PlayFeedback(rightJumpButton, false);
+            }
         }
 
         /// <summary>
@@ -464,7 +485,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowMaxJumpsExceeded()
         {
-            ShowFeedback("Con da nhay qua nhieu buoc. Bam Lam lai de thu tiep.", Color.red);
+            ShowFeedback("Con đã nhảy quá nhiều bước. Bấm Làm lại để thử tiếp.", Color.red);
             DisableInput();
         }
 
@@ -485,10 +506,12 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowDirectionNotAllowed(JumpStepDirection direction)
         {
-            string directionText = direction == JumpStepDirection.Right ? "phai" : "trai";
+            string directionText = direction == JumpStepDirection.Right ? "phải" : "trái";
             Debug.Log($"[NumberLineJumpView] Cannot jump {directionText} - not allowed for this question");
 
-            // Could show a brief visual indicator
+            UIKidFriendlyStyle.PlayFeedback(
+                direction == JumpStepDirection.Right ? rightJumpButton : leftJumpButton,
+                false);
         }
 
         /// <summary>
@@ -523,11 +546,11 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowActivityComplete(ActivityResult result)
         {
-            string message = $"Activity Complete!\n" +
-                           $"Correct: {result.IsCorrect}\n" +
-                           $"Attempts: {result.TotalAttempts}\n" +
-                           $"Hints Used: {result.HintsUsedCount}\n" +
-                           $"Time: {result.TimeSpentSeconds:F1} seconds";
+            string message = $"Hoàn thành bài học!\n" +
+                           $"Đúng: {(result.IsCorrect ? "Có" : "Chưa")}\n" +
+                           $"Số lần thử: {result.TotalAttempts}\n" +
+                           $"Gợi ý đã dùng: {result.HintsUsedCount}\n" +
+                           $"Thời gian: {result.TimeSpentSeconds:F1} giây";
 
             activityFinished = true;
             DisableInput();
@@ -545,7 +568,9 @@ namespace Features.Activities.NumberLineJump
 
             if (nextRoundButton != null)
             {
-                SetButtonLabel(nextRoundButton, GetNextButtonLabel("NumberLineJump"));
+                string nextLabel = GetNextButtonLabel("NumberLineJump");
+                SetButtonLabel(nextRoundButton, nextLabel);
+                UIKidFriendlyStyle.Apply(nextRoundButton, KidButtonPurpose.Primary, nextLabel, 28);
                 nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("NumberLineJump", out _));
             }
 
@@ -561,8 +586,8 @@ namespace Features.Activities.NumberLineJump
         public void ShowActivityFailed(string message, ActivityResult result)
         {
             string fullMessage = $"{message}\n" +
-                               $"Attempts: {result.TotalAttempts}\n" +
-                               $"Hints Used: {result.HintsUsedCount}";
+                               $"Số lần thử: {result.TotalAttempts}\n" +
+                               $"Gợi ý đã dùng: {result.HintsUsedCount}";
 
             activityFinished = true;
             DisableInput();
@@ -580,7 +605,9 @@ namespace Features.Activities.NumberLineJump
 
             if (nextRoundButton != null)
             {
-                SetButtonLabel(nextRoundButton, GetNextButtonLabel("NumberLineJump"));
+                string nextLabel = GetNextButtonLabel("NumberLineJump");
+                SetButtonLabel(nextRoundButton, nextLabel);
+                UIKidFriendlyStyle.Apply(nextRoundButton, KidButtonPurpose.Primary, nextLabel, 28);
                 nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("NumberLineJump", out _));
             }
 
@@ -862,13 +889,23 @@ namespace Features.Activities.NumberLineJump
             rect.sizeDelta = RuntimeEdgeJumpButtonSize;
             rect.anchoredPosition = new Vector2(isLeft ? RuntimeEdgeJumpButtonX : -RuntimeEdgeJumpButtonX, RuntimeEdgeJumpButtonY);
 
-            SetButtonLabel(button, isLeft ? "<" : ">");
+            string arrow = isLeft ? LeftJumpArrow : RightJumpArrow;
+            SetButtonLabel(button, arrow);
             Text label = button.GetComponentInChildren<Text>();
             if (label != null)
             {
-                label.fontSize = 58;
-                label.resizeTextMaxSize = 58;
+                label.fontSize = 92;
+                label.resizeTextMinSize = 58;
+                label.resizeTextMaxSize = 92;
+                label.fontStyle = FontStyle.Bold;
             }
+
+            UIKidFriendlyStyle.Apply(
+                button,
+                isLeft ? KidButtonPurpose.ComparisonFewer : KidButtonPurpose.ComparisonMore,
+                arrow,
+                92);
+            EmphasizeEdgeArrow(button);
         }
 
         private static RectTransform CreateUiPanel(Transform parent, string name)
@@ -965,6 +1002,7 @@ namespace Features.Activities.NumberLineJump
             button.onClick.AddListener(onClick);
 
             CreateButtonLabel(go.transform, label);
+            UIKidFriendlyStyle.Apply(button, name, label, 26);
             return button;
         }
 
@@ -975,17 +1013,17 @@ namespace Features.Activities.NumberLineJump
                 RuntimeHomeButtonLabel,
                 RuntimeHomeButtonTopRight,
                 RuntimeTopNavButtonSize,
-                new Color(0.85f, 0.35f, 0.35f, 0.9f));
+                KidButtonPurpose.Home);
 
             ConfigureTopRightNavigationButton(
                 listenButton,
                 SimpleLocalization.Get("btn_listen"),
                 RuntimeListenButtonTopRight,
                 RuntimeTopNavButtonSize,
-                new Color(0.2f, 0.5f, 0.9f, 0.9f));
+                KidButtonPurpose.Listen);
         }
 
-        private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)
+        private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, KidButtonPurpose purpose)
         {
             if (button == null)
             {
@@ -1002,12 +1040,6 @@ namespace Features.Activities.NumberLineJump
                 rect.anchoredPosition = anchoredPosition;
             }
 
-            Image image = button.GetComponent<Image>();
-            if (image != null)
-            {
-                image.color = color;
-            }
-
             Text text = button.GetComponentInChildren<Text>();
             if (text != null)
             {
@@ -1018,6 +1050,8 @@ namespace Features.Activities.NumberLineJump
                 text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
                 text.alignment = TextAnchor.MiddleCenter;
             }
+
+            UIKidFriendlyStyle.Apply(button, purpose, label, RuntimeTopNavButtonFontSize);
         }
 
         private static Button CreateTopRightButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick)
@@ -1040,6 +1074,7 @@ namespace Features.Activities.NumberLineJump
             Text text = CreateButtonLabel(go.transform, label);
             text.fontSize = RuntimeTopNavButtonFontSize;
             text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
+            UIKidFriendlyStyle.Apply(button, name, label, RuntimeTopNavButtonFontSize);
             return button;
         }
 
@@ -1059,9 +1094,52 @@ namespace Features.Activities.NumberLineJump
             button.onClick.AddListener(onClick);
 
             Text text = CreateButtonLabel(go.transform, label);
-            text.fontSize = 58;
-            text.resizeTextMaxSize = 58;
+            text.fontSize = 92;
+            text.resizeTextMinSize = 58;
+            text.resizeTextMaxSize = 92;
+            text.fontStyle = FontStyle.Bold;
+            UIKidFriendlyStyle.Apply(
+                button,
+                isLeft ? KidButtonPurpose.ComparisonFewer : KidButtonPurpose.ComparisonMore,
+                label,
+                92);
+            EmphasizeEdgeArrow(button);
             return button;
+        }
+
+        private static void EmphasizeEdgeArrow(Button button)
+        {
+            Text text = button != null ? button.GetComponentInChildren<Text>(true) : null;
+            if (text == null)
+            {
+                return;
+            }
+
+            text.fontSize = 92;
+            text.resizeTextMinSize = 58;
+            text.resizeTextMaxSize = 92;
+            text.fontStyle = FontStyle.Bold;
+            text.color = new Color(0.12f, 0.08f, 0.04f, 1f);
+
+            Outline outline = text.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = text.gameObject.AddComponent<Outline>();
+            }
+
+            outline.effectColor = new Color(1f, 1f, 1f, 0.85f);
+            outline.effectDistance = new Vector2(3f, -3f);
+            outline.useGraphicAlpha = true;
+
+            Shadow shadow = text.GetComponent<Shadow>();
+            if (shadow == null)
+            {
+                shadow = text.gameObject.AddComponent<Shadow>();
+            }
+
+            shadow.effectColor = new Color(0.2f, 0.14f, 0.05f, 0.28f);
+            shadow.effectDistance = new Vector2(0f, -5f);
+            shadow.useGraphicAlpha = true;
         }
 
         private static Text CreateButtonLabel(Transform parent, string label)
@@ -1108,7 +1186,7 @@ namespace Features.Activities.NumberLineJump
                 return SimpleLocalization.Get("btn_next");
             }
 
-            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Bai tiep" : "Hoan thanh";
+            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Bài tiếp" : "Hoàn thành";
         }
 
         private static void LoadSceneIfAvailable(string sceneName)

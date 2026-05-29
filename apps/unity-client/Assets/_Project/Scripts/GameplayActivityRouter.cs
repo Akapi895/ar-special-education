@@ -256,7 +256,7 @@ namespace Project.App
 
             config.ConfigureRuntime(
                 "NumberLineJump",
-                "Number Line Jump (Easy)",
+                "Nhảy trên trục số (Dễ)",
                 "Con nh\u1ea3y tr\u00ean tr\u1ee5c s\u1ed1 \u0111\u1ec3 \u0111\u1ebfn \u0111\u00fang s\u1ed1 c\u1ea7n t\u00ecm.",
                 questions,
                 new ActivityHint("nlj_hint1", "Con h\u00e3y di chuy\u1ec3n nh\u00e2n v\u1eadt v\u00e0 \u0111\u1ebfm t\u1eebng b\u01b0\u1edbc nh\u1ea3y.", 1),
@@ -294,7 +294,7 @@ namespace Project.App
 
             config.ConfigureRuntime(
                 "CompareQuantity",
-                "Compare Quantity (Easy)",
+                "So sánh số lượng (Dễ)",
                 "Con so s\u00e1nh hai nh\u00f3m con v\u1eadt xem b\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n, \u00edt h\u01a1n hay b\u1eb1ng b\u00ean ph\u1ea3i.",
                 questions,
                 "B\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n",

@@ -1,6 +1,7 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
+using Core.UI.Components;
 using Core.UI.Localization;
 using Features.Activities.QuantityMatch;
 using Project.App;
@@ -116,13 +117,14 @@ namespace Features.Activities.QuantityMatch
         private bool activityFinished;
         private bool numberInputButtonsRegistered;
         private bool numberInputControlsInteractable;
+        private Button lastAnswerButton;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
         private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(108f, 70f);
         private static readonly Vector2 RuntimeNumberInputPanelSize = new Vector2(900f, 330f);
-        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(124f, 56f);
+        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(146f, 64f);
         private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
-        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-160f, -24f);
+        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-188f, -24f);
         private const float RuntimeButtonGap = 28f;
         private const float RuntimeDigitButtonGap = 12f;
         private const float RuntimeActionButtonBottomY = 112f;
@@ -199,8 +201,10 @@ namespace Features.Activities.QuantityMatch
                 progressButton.onClick.AddListener(OnProgressClicked);
             }
 
+            UIKidFriendlyStyle.ApplyToTree(transform);
             NormalizeTopNavigationButtons();
             RegisterNumberInputButtons();
+            UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
         /// <summary>
@@ -248,6 +252,7 @@ namespace Features.Activities.QuantityMatch
             RegisterNumberInputButtons();
             NormalizeTopNavigationButtons();
             SetNumberInputPanelActive(false);
+            UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
         /// <summary>
@@ -386,9 +391,11 @@ namespace Features.Activities.QuantityMatch
             if (nextRoundButton != null)
             {
                 ShowContinueButton();
+                UIKidFriendlyStyle.PlayFeedback(nextRoundButton, true);
             }
             else if (presenter != null && presenter.HasMoreRounds())
             {
+                UIKidFriendlyStyle.PlayFeedback(lastAnswerButton, true);
                 CancelInvoke(nameof(AutoContinueToNextRound));
                 Invoke(nameof(AutoContinueToNextRound), 2.0f);
             }
@@ -401,6 +408,7 @@ namespace Features.Activities.QuantityMatch
                     rect.anchoredPosition = new Vector2(0f, RuntimeActionButtonBottomY);
                     rect.sizeDelta = new Vector2(240f, 100f);
                     nextRoundButton.gameObject.SetActive(true);
+                    UIKidFriendlyStyle.PlayFeedback(nextRoundButton, true);
                 }
             }
         }
@@ -421,8 +429,8 @@ namespace Features.Activities.QuantityMatch
             }
 
             string label = presenter != null && presenter.HasMoreRounds()
-                ? "Tiep tuc"
-                : "Hoc tiep";
+                ? "Tiếp tục"
+                : "Học tiếp";
             SetButtonLabel(nextRoundButton, label);
             var rect = nextRoundButton.GetComponent<RectTransform>();
             rect.anchoredPosition = new Vector2(0f, RuntimeActionButtonBottomY);
@@ -455,6 +463,7 @@ namespace Features.Activities.QuantityMatch
             }
 
             StartCoroutine(ShakeUiCoroutine());
+            UIKidFriendlyStyle.PlayFeedback(lastAnswerButton, false);
 
             CancelInvoke(nameof(HideFeedbackAndRetry));
             Invoke(nameof(HideFeedbackAndRetry), 1.5f);
@@ -732,6 +741,9 @@ namespace Features.Activities.QuantityMatch
         {
             if (!currentUsesNumberInputMode && groupIndex >= 0 && groupIndex < currentNumberOfGroups)
             {
+                lastAnswerButton = runtimeGroupButtons != null && groupIndex < runtimeGroupButtons.Length
+                    ? runtimeGroupButtons[groupIndex]
+                    : null;
                 NotifyGroupSelected(groupIndex, 0);  // Count will be filled by presenter
             }
         }
@@ -977,6 +989,11 @@ namespace Features.Activities.QuantityMatch
                 return;
             }
 
+            int buttonIndex = answer - NumberChoiceMin;
+            lastAnswerButton = digitButtons != null && buttonIndex >= 0 && buttonIndex < digitButtons.Length
+                ? digitButtons[buttonIndex]
+                : null;
+
             currentNumberInput = Mathf.Clamp(answer, NumberChoiceMin, NumberChoiceMax).ToString();
             UpdateNumberInputText();
             SubmitNumberInput();
@@ -1121,6 +1138,7 @@ namespace Features.Activities.QuantityMatch
             numberInputPanel = CreateSubPanel(parent, "NumberInputPanel", new Vector2(0f, RuntimeNumberInputPanelBottomY), true);
             RectTransform panelRect = numberInputPanel.GetComponent<RectTransform>();
             panelRect.sizeDelta = RuntimeNumberInputPanelSize;
+            ConfigureFriendlyNumberInputPanel();
 
             numberInputText = CreateNumberInputText(numberInputPanel.transform, "AnswerText", "_", 36, new Vector2(0f, 95f), new Vector2(240f, 60f));
             clearNumberButton = CreateSizedButton(numberInputPanel.transform, "ClearNumberButton", "⌫", new Vector2(-220f, 95f), new Vector2(100f, 60f), null, 24);
@@ -1145,6 +1163,8 @@ namespace Features.Activities.QuantityMatch
                     null,
                     36);
             }
+
+            UIKidFriendlyStyle.ApplyDropZone(numberInputPanel);
         }
 
         private void EnsureFriendlyNumberInputUi()
@@ -1235,9 +1255,11 @@ namespace Features.Activities.QuantityMatch
             Image image = numberInputPanel.GetComponent<Image>();
             if (image != null)
             {
-                image.color = new Color(0.03f, 0.05f, 0.08f, 0.48f);
+                image.color = Color.clear;
                 image.raycastTarget = false;
             }
+
+            UIKidFriendlyStyle.ApplyDropZone(numberInputPanel);
         }
 
         private void CreateFriendlyNumberInputControls()
@@ -1248,7 +1270,7 @@ namespace Features.Activities.QuantityMatch
             }
 
             Transform panel = numberInputPanel.transform;
-            numberInputPromptText = EnsurePanelChildText(panel, numberInputPromptText, "NumberInputPrompt", NumberInputPrompt, 30, new Vector2(0f, 112f), new Vector2(800f, 48f), Color.white);
+            numberInputPromptText = EnsurePanelChildText(panel, numberInputPromptText, "NumberInputPrompt", NumberInputPrompt, 30, new Vector2(0f, 112f), new Vector2(800f, 48f), new Color(0.16f, 0.12f, 0.08f, 1f));
             numberInputText = EnsureNumberInputDisplay(panel, numberInputText, "AnswerText", NumberInputEmptyValue, 52, new Vector2(0f, 66f), new Vector2(210f, 70f));
             numberInputText.gameObject.SetActive(false);
 
@@ -1287,6 +1309,7 @@ namespace Features.Activities.QuantityMatch
             submitNumberButton = EnsureNumberInputButton(panel, submitNumberButton, "SubmitNumberButton", NumberInputSubmitLabel, new Vector2(155f, -154f), new Vector2(260f, 70f), 28, new Color(0.16f, 0.65f, 0.34f, 1f), Color.white);
             clearNumberButton.gameObject.SetActive(false);
             submitNumberButton.gameObject.SetActive(false);
+            UIKidFriendlyStyle.ApplyDropZone(numberInputPanel);
         }
 
         private static Text EnsurePanelChildText(Transform parent, Text current, string name, string content, int fontSize, Vector2 anchoredPosition, Vector2 size, Color color)
@@ -1421,6 +1444,7 @@ namespace Features.Activities.QuantityMatch
             labelText.alignment = TextAnchor.MiddleCenter;
             labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             labelText.raycastTarget = false;
+            UIKidFriendlyStyle.Apply(button, name, label, fontSize, name.Contains("Digit"));
             return button;
         }
 
@@ -1615,6 +1639,7 @@ namespace Features.Activities.QuantityMatch
             button.onClick.AddListener(onClick);
 
             CreateButtonLabel(go.transform, label);
+            UIKidFriendlyStyle.Apply(button, name, label, 24);
             return button;
         }
 
@@ -1639,6 +1664,7 @@ namespace Features.Activities.QuantityMatch
             Text text = CreateButtonLabel(go.transform, label);
             text.fontSize = fontSize;
             text.resizeTextMaxSize = fontSize;
+            UIKidFriendlyStyle.Apply(button, name, label, fontSize, size.x <= size.y + 8f);
             return button;
         }
 
@@ -1686,7 +1712,7 @@ namespace Features.Activities.QuantityMatch
                 return SimpleLocalization.Get("btn_next");
             }
 
-            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Bai tiep" : "Hoan thanh";
+            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Bài tiếp" : "Hoàn thành";
         }
 
         private static void LoadSceneIfAvailable(string sceneName)
@@ -1795,6 +1821,8 @@ namespace Features.Activities.QuantityMatch
                 text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
                 text.alignment = TextAnchor.MiddleCenter;
             }
+
+            UIKidFriendlyStyle.Apply(button, button.name, label, RuntimeTopNavButtonFontSize);
         }
 
         private static Button CreateSizedTopRightButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick, int fontSize)
@@ -1820,6 +1848,7 @@ namespace Features.Activities.QuantityMatch
             Text text = CreateButtonLabel(go.transform, label);
             text.fontSize = fontSize;
             text.resizeTextMaxSize = fontSize;
+            UIKidFriendlyStyle.Apply(button, name, label, fontSize);
             return button;
         }
 
@@ -1844,6 +1873,7 @@ namespace Features.Activities.QuantityMatch
             Text text = CreateButtonLabel(go.transform, label);
             text.fontSize = fontSize;
             text.resizeTextMaxSize = fontSize;
+            UIKidFriendlyStyle.Apply(button, name, label, fontSize, size.x <= size.y + 8f);
             return button;
         }
         private static Text CreateTopLeftText(Transform parent, string name, string content, int fontSize, Vector2 anchoredPosition, Vector2 size)
