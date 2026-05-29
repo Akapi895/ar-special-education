@@ -207,6 +207,130 @@ namespace Features.Activities.QuantityMatch
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private Text devKeyboardHintText;
+        private const string DEV_KEYBOARD_HINT = "[DEV] Number keys 0-9, Backspace=clear, Enter=submit";
+
+        private void Update()
+        {
+            // DEV: Keyboard input for number input mode testing
+            if (!currentUsesNumberInputMode || activityFinished)
+            {
+                HideDevKeyboardHint();
+                return;
+            }
+
+            ShowDevKeyboardHint();
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+            // Legacy Input Manager - sử dụng UnityEngine.Input
+            for (int key = (int)KeyCode.Alpha0; key <= (int)KeyCode.Alpha9; key++)
+            {
+                if (UnityEngine.Input.GetKeyDown((KeyCode)key))
+                {
+                    int digit = key - (int)KeyCode.Alpha0;
+                    AppendNumberDigit(digit);
+                    break;
+                }
+            }
+            for (int key = (int)KeyCode.Keypad0; key <= (int)KeyCode.Keypad9; key++)
+            {
+                if (UnityEngine.Input.GetKeyDown((KeyCode)key))
+                {
+                    int digit = key - (int)KeyCode.Keypad0;
+                    AppendNumberDigit(digit);
+                    break;
+                }
+            }
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Backspace) && currentNumberInput.Length > 0)
+            {
+                currentNumberInput = currentNumberInput.Substring(0, currentNumberInput.Length - 1);
+                UpdateNumberInputText();
+            }
+            if (UnityEngine.Input.GetKeyDown(KeyCode.Return) || UnityEngine.Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                SubmitNumberInput();
+            }
+#else
+            // Input System Package - sử dụng UnityEngine.InputSystem
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard != null)
+            {
+                // Number keys 0-9
+                if (keyboard.digit1Key.wasPressedThisFrame) AppendNumberDigit(1);
+                else if (keyboard.digit2Key.wasPressedThisFrame) AppendNumberDigit(2);
+                else if (keyboard.digit3Key.wasPressedThisFrame) AppendNumberDigit(3);
+                else if (keyboard.digit4Key.wasPressedThisFrame) AppendNumberDigit(4);
+                else if (keyboard.digit5Key.wasPressedThisFrame) AppendNumberDigit(5);
+                else if (keyboard.digit6Key.wasPressedThisFrame) AppendNumberDigit(6);
+                else if (keyboard.digit7Key.wasPressedThisFrame) AppendNumberDigit(7);
+                else if (keyboard.digit8Key.wasPressedThisFrame) AppendNumberDigit(8);
+                else if (keyboard.digit9Key.wasPressedThisFrame) AppendNumberDigit(9);
+                else if (keyboard.digit0Key.wasPressedThisFrame) AppendNumberDigit(0);
+
+                // Backspace
+                if (keyboard.backspaceKey.wasPressedThisFrame && currentNumberInput.Length > 0)
+                {
+                    currentNumberInput = currentNumberInput.Substring(0, currentNumberInput.Length - 1);
+                    UpdateNumberInputText();
+                }
+
+                // Enter
+                if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
+                {
+                    SubmitNumberInput();
+                }
+            }
+#endif
+        }
+
+        private void ShowDevKeyboardHint()
+        {
+            if (devKeyboardHintText == null && runtimeUiRoot != null)
+            {
+                Transform existing = runtimeUiRoot.Find("DevKeyboardHint");
+                if (existing != null)
+                {
+                    devKeyboardHintText = existing.GetComponent<Text>();
+                }
+                else
+                {
+                    var go = new GameObject("DevKeyboardHint", typeof(RectTransform), typeof(Text));
+                    go.transform.SetParent(runtimeUiRoot);
+                    devKeyboardHintText = go.GetComponent<Text>();
+                    devKeyboardHintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                    devKeyboardHintText.fontSize = 16;
+                    devKeyboardHintText.color = new Color(0.2f, 0.8f, 0.2f, 1f);
+                    devKeyboardHintText.alignment = TextAnchor.LowerRight;
+                    devKeyboardHintText.raycastTarget = false;
+                    devKeyboardHintText.resizeTextForBestFit = true;
+                    devKeyboardHintText.resizeTextMinSize = 12;
+                    devKeyboardHintText.resizeTextMaxSize = 18;
+                    var rect = go.GetComponent<RectTransform>();
+                    rect.anchorMin = new Vector2(0f, 0f);
+                    rect.anchorMax = new Vector2(1f, 0f);
+                    rect.pivot = new Vector2(0.5f, 0f);
+                    rect.sizeDelta = new Vector2(-40f, 30f);
+                    rect.anchoredPosition = new Vector2(0f, 10f);
+                }
+            }
+
+            if (devKeyboardHintText != null)
+            {
+                devKeyboardHintText.text = DEV_KEYBOARD_HINT;
+                devKeyboardHintText.gameObject.SetActive(true);
+            }
+        }
+
+        private void HideDevKeyboardHint()
+        {
+            if (devKeyboardHintText != null)
+            {
+                devKeyboardHintText.gameObject.SetActive(false);
+            }
+        }
+#endif
+
         /// <summary>
         /// Builds minimal UI at runtime when prefabs are not assigned.
         /// </summary>
@@ -1122,13 +1246,13 @@ namespace Features.Activities.QuantityMatch
 
             if (clearNumberButton != null)
             {
-                clearNumberButton.gameObject.SetActive(false);
+                clearNumberButton.gameObject.SetActive(hasValue);
                 clearNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
 
             if (submitNumberButton != null)
             {
-                submitNumberButton.gameObject.SetActive(false);
+                submitNumberButton.gameObject.SetActive(hasValue);
                 submitNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
         }
@@ -1608,19 +1732,25 @@ namespace Features.Activities.QuantityMatch
             rect.anchoredPosition = anchoredPosition;
 
             var image = go.GetComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.95f);
-            image.raycastTarget = false;
+            if (image != null)
+            {
+                image.color = new Color(1f, 1f, 1f, 0.95f);
+                image.raycastTarget = false;
+            }
 
             var text = go.GetComponent<Text>();
-            text.text = content;
-            text.fontSize = fontSize;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 20;
-            text.resizeTextMaxSize = fontSize;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = new Color(0.08f, 0.1f, 0.12f, 1f);
-            text.raycastTarget = false;
+            if (text != null)
+            {
+                text.text = content;
+                text.fontSize = fontSize;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 20;
+                text.resizeTextMaxSize = fontSize;
+                text.alignment = TextAnchor.MiddleCenter;
+                text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                text.color = new Color(0.08f, 0.1f, 0.12f, 1f);
+                text.raycastTarget = false;
+            }
             return text;
         }
 

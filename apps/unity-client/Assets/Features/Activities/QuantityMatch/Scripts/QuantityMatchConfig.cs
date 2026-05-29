@@ -57,6 +57,11 @@ namespace Features.Activities.QuantityMatch
         [SerializeField]
         private GroupArrangementPattern groupArrangement = GroupArrangementPattern.Horizontal;
 
+        [Header("Interaction Settings")]
+        [Tooltip("When to switch from tap-to-select to number input mode. Set to -1 to disable number input mode.")]
+        [SerializeField]
+        private int switchToNumberInputAtRound = 6;
+
         // Properties
         public List<QuantityMatchQuestion> Questions => questions;
         public string CorrectFeedback => correctFeedback;
@@ -65,6 +70,7 @@ namespace Features.Activities.QuantityMatch
         public float DefaultObjectSpacing => defaultObjectSpacing;
         public float DefaultGroupSpacing => defaultGroupSpacing;
         public GroupArrangementPattern GroupArrangement => groupArrangement;
+        public int SwitchToNumberInputAtRound => switchToNumberInputAtRound;
 
         /// <summary>
         /// Get a specific question by index.
