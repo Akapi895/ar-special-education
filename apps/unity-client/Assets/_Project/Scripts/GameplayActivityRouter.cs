@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Core.Learning.Models;
 using Features.Activities;
 using Features.Activities.CompareQuantity;
+using Features.Activities.NumberBonds;
 using Features.Activities.NumberLineJump;
 using Features.Activities.QuantityMatch;
 using UnityEngine;
@@ -19,6 +20,7 @@ namespace Project.App
 
         private const string NumberLineJumpResourcePath = "ActivityConfigs/SO_NumberLineJumpConfig_Easy";
         private const string CompareQuantityResourcePath = "ActivityConfigs/SO_CompareQuantityConfig_Easy";
+        private const string NumberBondsResourcePath = "ActivityConfigs/SO_NumberBondsConfig_Demo";
 
         public static GameplayActivityRouter Instance { get; private set; }
 
@@ -77,6 +79,10 @@ namespace Project.App
                     CreateCompareQuantityActivity(configPath);
                     break;
 
+                case "NumberBonds":
+                    CreateNumberBondsActivity(configPath);
+                    break;
+
                 default:
                     Debug.LogWarning($"[GameplayActivityRouter] Unknown activity '{activityId}', falling back to Quantity Match.");
                     if (quantityRoot != null)
@@ -108,6 +114,12 @@ namespace Project.App
             if (compareBootstrap != null)
             {
                 compareBootstrap.SetAutoStartWhenReady(false);
+            }
+
+            NumberBondsActivityBootstrap numberBondsBootstrap = FindAnyObjectByType<NumberBondsActivityBootstrap>();
+            if (numberBondsBootstrap != null)
+            {
+                numberBondsBootstrap.SetAutoStartWhenReady(false);
             }
         }
 
@@ -170,6 +182,39 @@ namespace Project.App
             root.AddComponent<ActivityPrefabSetup>();
             root.AddComponent<CompareQuantityRuntimeUI>();
             var bootstrap = root.AddComponent<CompareQuantityActivityBootstrap>();
+
+            bootstrap.Configure(presenter, view, config);
+
+            root.SetActive(true);
+            bootstrap.TryStartActivity();
+        }
+
+        private static void CreateNumberBondsActivity(string configPath)
+        {
+            NumberBondsActivityBootstrap existingBootstrap = FindAnyObjectByType<NumberBondsActivityBootstrap>();
+            if (existingBootstrap != null)
+            {
+                existingBootstrap.SetAutoStartWhenReady(false);
+                existingBootstrap.TryStartActivity();
+                return;
+            }
+
+            NumberBondsConfig config = LoadActivityConfig<NumberBondsConfig>(configPath, NumberBondsResourcePath)
+                ?? CreateRuntimeNumberBondsConfig();
+            if (config == null)
+            {
+                Debug.LogError("[GameplayActivityRouter] NumberBonds config asset could not be loaded.");
+                return;
+            }
+
+            GameObject root = new GameObject("NumberBondsActivity");
+            root.SetActive(false);
+
+            var presenter = root.AddComponent<NumberBondsPresenter>();
+            var view = root.AddComponent<NumberBondsView>();
+            root.AddComponent<ActivityPrefabSetup>();
+            root.AddComponent<NumberBondsRuntimeUI>();
+            var bootstrap = root.AddComponent<NumberBondsActivityBootstrap>();
 
             bootstrap.Configure(presenter, view, config);
 
@@ -323,6 +368,42 @@ namespace Project.App
                 ObjectPrefabName = string.Empty
             };
 
+            return question;
+        }
+
+        private static NumberBondsConfig CreateRuntimeNumberBondsConfig()
+        {
+            var config = ScriptableObject.CreateInstance<NumberBondsConfig>();
+            var questions = new List<NumberBondsQuestion>
+            {
+                CreateNumberBondsQuestion(NumberBondMode.FreeSplit, 5),
+                CreateNumberBondsQuestion(NumberBondMode.TargetSplit, 6, knownPartA: 2),
+                CreateNumberBondsQuestion(NumberBondMode.FreeSplit, 7)
+            };
+
+            config.ConfigureRuntime(
+                "NumberBonds",
+                "T\u00e1ch-g\u1ed9p s\u1ed1",
+                "Con k\u00e9o con v\u1eadt \u0111\u1ec3 t\u00e1ch m\u1ed9t t\u1ed5ng th\u00e0nh hai ph\u1ea7n.",
+                questions,
+                new ActivityHint("nb_hint1", "Con h\u00e3y k\u00e9o t\u1eebng con v\u1eadt t\u1eeb T\u1ed5ng xu\u1ed1ng hai Ph\u1ea7n.", 1),
+                new ActivityHint("nb_hint2", "Con c\u00f2n C con trong T\u1ed5ng. H\u00e3y chuy\u1ec3n h\u1ebft xu\u1ed1ng hai Ph\u1ea7n.", 2),
+                new ActivityHint("nb_hint3", "Khi T\u1ed5ng c\u00f2n 0, hai ph\u1ea7n c\u1ed9ng l\u1ea1i ph\u1ea3i b\u1eb1ng X.", 3),
+                8,
+                0.52f,
+                0.66f,
+                0.22f);
+            return config;
+        }
+
+        private static NumberBondsQuestion CreateNumberBondsQuestion(
+            NumberBondMode mode,
+            int wholeTarget,
+            int knownPartA = -1,
+            int knownPartB = -1)
+        {
+            var question = new NumberBondsQuestion();
+            question.Configure(mode, wholeTarget, knownPartA, knownPartB);
             return question;
         }
     }

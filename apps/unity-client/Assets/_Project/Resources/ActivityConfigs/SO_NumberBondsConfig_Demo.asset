@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9af1e35a74dd4a04b945ed41232f2b7a, type: 3}
+  m_Name: SO_NumberBondsConfig_Demo
+  m_EditorClassIdentifier: 
+  activityId: NumberBonds
+  displayName: Tach-gop so
+  description: Con keo con vat de tach mot tong thanh hai phan.
+  difficultyLevel: 1
+  maxHintsPerQuestion: 3
+  maxAttemptsPerQuestion: 3
+  timeLimitSeconds: 0
+  numberOfRounds: 3
+  defaultHints: []
+  questions:
+  - mode: 0
+    wholeTarget: 5
+    knownPartA: -1
+    knownPartB: -1
+    customHints: []
+    objectPrefabName: 
+  - mode: 1
+    wholeTarget: 6
+    knownPartA: 2
+    knownPartB: -1
+    customHints: []
+    objectPrefabName: 
+  - mode: 0
+    wholeTarget: 7
+    knownPartA: -1
+    knownPartB: -1
+    customHints: []
+    objectPrefabName: 
+  maxObjectsPerRound: 8
+  zoneRadiusMeters: 0.52
+  zoneHitRadiusMeters: 0.66
+  objectHeightMeters: 0.22
+  correctFeedback: Tuyet voi! Con da tach so rat dung.
+  notAllMovedFeedback: Con hay chuyen het con vat xuong hai nhom nhe.
+  wrongPartFeedback: Gan dung roi. Con thu dem lai tung phan nhe.
+  lockedZoneFeedback: Phan nay da cho san roi, minh giu nguyen nhe.
+  failedFeedback: Con da co gang rat tot. Minh thu cau khac nhe.
+  hintLevel1:
+    HintId: nb_hint1
+    HintText: Con hay keo tung con vat tu Tong xuong hai Phan.
+    Level: 1
+    ARHint: 
+  hintLevel2:
+    HintId: nb_hint2
+    HintText: Bieu thuc dang la X = A + B. Con con C con trong Tong.
+    Level: 2
+    ARHint: 
+  hintLevel3:
+    HintId: nb_hint3
+    HintText: Khi Tong con 0, hai phan cong lai phai bang X.
+    Level: 3
+    ARHint: 

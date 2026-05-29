@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f0191487998df4cbacb454cd48d516, type: 3}
+  m_Name: SO_QuantityMatchConfig_Demo
+  m_EditorClassIdentifier: 
+  activityId: QuantityMatch
+  displayName: Nhận biết số lượng (Demo)
+  description: Con chọn nhóm con vật có đúng số lượng được yêu cầu.
+  difficultyLevel: 1
+  maxHintsPerQuestion: 3
+  maxAttemptsPerQuestion: 3
+  timeLimitSeconds: 0
+  numberOfRounds: 10
+  defaultHints: []
+  questions:
+  - TargetNumber: 4
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 030000000400000002000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 3
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 050000000300000004000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 5
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 030000000500000002000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 2
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 020000000500000003000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 6
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 040000000600000008000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 5
+    NumberOfGroups: 5
+    ObjectCountsPerGroup: 0300000004000000060000000200000005000000
+    CorrectGroupIndex: 4
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 8
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 060000000800000005000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 3
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 030000000700000002000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 9
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 050000000900000006000000
+    CorrectGroupIndex: 1
+    ObjectPrefabName: 
+    CustomHints: []
+  - TargetNumber: 4
+    NumberOfGroups: 3
+    ObjectCountsPerGroup: 040000000800000003000000
+    CorrectGroupIndex: 0
+    ObjectPrefabName: 
+    CustomHints: []
+  correctFeedback: Giỏi lắm! Con đã chọn đúng nhóm!
+  incorrectFeedback: Chưa đúng rồi. Con hãy thử đếm lại nhé!
+  failedFeedback: Con đã cố gắng rất tốt. Mình thử câu khác nhé.
+  hintLevel1:
+    HintId: qm_hint1
+    HintText: Con nhìn kỹ từng nhóm con vật nhé.
+    Level: 1
+    ARHint: 
+  hintLevel2:
+    HintId: qm_hint2
+    HintText: Số cần tìm là X. Con hãy đếm từng nhóm.
+    Level: 2
+    ARHint: 
+  hintLevel3:
+    HintId: qm_hint3
+    HintText: Có một nhóm có đúng X con vật.
+    Level: 3
+    ARHint: 
+  defaultObjectSpacing: 0.68
+  defaultGroupSpacing: 1.6
+  groupArrangement: 0
+  switchToNumberInputAtRound: 6

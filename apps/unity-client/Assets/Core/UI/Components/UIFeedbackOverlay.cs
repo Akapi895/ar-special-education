@@ -28,7 +28,7 @@ namespace Core.UI.Components
         [SerializeField] private float shakeDuration = 0.5f;
         [SerializeField] private float shakeAmount = 25f;
         [SerializeField] private Vector2 childFriendlyPanelSize = new Vector2(820f, 150f);
-        [SerializeField] private Vector2 childFriendlyPanelPosition = new Vector2(0f, -260f);
+        [SerializeField] private Vector2 childFriendlyPanelPosition = new Vector2(0f, 0f);  // Centered
         [SerializeField] private int childFriendlyMessageFontSize = 36;
 
         private Vector2 originalContentPosition;

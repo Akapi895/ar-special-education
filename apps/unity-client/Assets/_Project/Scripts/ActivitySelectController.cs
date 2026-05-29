@@ -3,6 +3,7 @@ using Core.Data.LocalStorage;
 using Core.Learning.Models;
 using Core.UI.Components;
 using Core.UI.Localization;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -46,14 +47,25 @@ namespace Project.App
 
         [Header("Playable Activities")]
         [SerializeField]
-        private string[] playableActivityIds = new string[] { "QuantityMatch", "NumberLineJump", "CompareQuantity" };
+        private string[] playableActivityIds = new string[] { "QuantityMatch", "CompareQuantity", "NumberBonds", "NumberLineJump" };
+
+        private static readonly string[] RequiredPlayableActivityIds =
+        {
+            "QuantityMatch",
+            "CompareQuantity",
+            "NumberBonds",
+            "NumberLineJump"
+        };
+
+        private readonly List<ActivityButton> runtimeActivities = new List<ActivityButton>();
 
         private void Start()
         {
             LocalizeSceneLabels();
+            ActivityButton[] availableActivities = EnsureRuntimeActivityButtons();
 
             // Setup activity button listeners
-            foreach (var activity in activities)
+            foreach (var activity in availableActivities)
             {
                 if (activity.button != null)
                 {
@@ -128,6 +140,7 @@ namespace Project.App
                 "QuantityMatch" => SimpleLocalization.Get("activity_quantity_match"),
                 "NumberLineJump" => SimpleLocalization.Get("activity_number_line"),
                 "CompareQuantity" => SimpleLocalization.Get("activity_compare_quantity"),
+                "NumberBonds" => SimpleLocalization.Get("activity_number_bonds"),
                 _ => activityId
             };
         }
@@ -139,6 +152,7 @@ namespace Project.App
                 "QuantityMatch" => new Color(1f, 0.88f, 0.32f, 1f),
                 "NumberLineJump" => new Color(0.62f, 0.92f, 1f, 1f),
                 "CompareQuantity" => new Color(0.62f, 1f, 0.6f, 1f),
+                "NumberBonds" => new Color(1f, 0.72f, 0.92f, 1f),
                 _ => new Color(1f, 0.94f, 0.48f, 1f)
             };
         }
@@ -185,13 +199,8 @@ namespace Project.App
         private void OnDestroy()
         {
             // Clean up listeners
-            foreach (var activity in activities)
-            {
-                if (activity.button != null)
-                {
-                    activity.button.onClick.RemoveAllListeners();
-                }
-            }
+            RemoveActivityButtonListeners(activities);
+            RemoveActivityButtonListeners(runtimeActivities);
 
             if (backButton != null)
             {
@@ -207,17 +216,7 @@ namespace Project.App
                 return false;
             }
 
-            bool isPlayable = false;
-            foreach (string playableActivityId in playableActivityIds)
-            {
-                if (activityId == playableActivityId)
-                {
-                    isPlayable = true;
-                    break;
-                }
-            }
-
-            if (!isPlayable)
+            if (!IsPlayableActivity(activityId))
             {
                 return false;
             }
@@ -274,6 +273,188 @@ namespace Project.App
         private void OnBack()
         {
             SceneManager.LoadScene(mainMenuSceneName);
+        }
+
+        private ActivityButton[] EnsureRuntimeActivityButtons()
+        {
+            runtimeActivities.Clear();
+            var allActivities = new List<ActivityButton>();
+            var existingIds = new HashSet<string>();
+
+            if (activities != null)
+            {
+                foreach (ActivityButton activity in activities)
+                {
+                    if (activity == null || activity.button == null || string.IsNullOrEmpty(activity.activityId))
+                    {
+                        continue;
+                    }
+
+                    allActivities.Add(activity);
+                    existingIds.Add(activity.activityId);
+                }
+            }
+
+            Transform parent = ResolveRuntimeButtonParent();
+            int missingIndex = 0;
+            foreach (string activityId in RequiredPlayableActivityIds)
+            {
+                if (existingIds.Contains(activityId) || parent == null)
+                {
+                    continue;
+                }
+
+                ActivityButton runtimeActivity = CreateRuntimeActivityButton(parent, activityId, missingIndex);
+                runtimeActivities.Add(runtimeActivity);
+                allActivities.Add(runtimeActivity);
+                existingIds.Add(activityId);
+                missingIndex++;
+            }
+
+            ArrangeActivityButtons(allActivities);
+
+            return allActivities.ToArray();
+        }
+
+        private Transform ResolveRuntimeButtonParent()
+        {
+            if (backButton != null)
+            {
+                return backButton.transform.parent;
+            }
+
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            return canvas != null ? canvas.transform : null;
+        }
+
+        private ActivityButton CreateRuntimeActivityButton(Transform parent, string activityId, int missingIndex)
+        {
+            var go = new GameObject($"{activityId}Button", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(parent, false);
+
+            RectTransform rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(360f, 64f);
+            rect.anchoredPosition = new Vector2(0f, -130f - missingIndex * 78f);
+
+            Image image = go.GetComponent<Image>();
+            image.color = new Color(0.14f, 0.43f, 0.82f, 0.92f);
+
+            var labelObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            labelObj.transform.SetParent(go.transform, false);
+            RectTransform labelRect = labelObj.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            Text text = labelObj.GetComponent<Text>();
+            text.text = GetActivityDisplayName(activityId);
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.fontSize = 24;
+            text.color = Color.white;
+            text.raycastTarget = false;
+
+            return new ActivityButton
+            {
+                button = go.GetComponent<Button>(),
+                activityId = activityId,
+                sceneName = activityId
+            };
+        }
+
+        private void ArrangeActivityButtons(List<ActivityButton> allActivities)
+        {
+            int orderedIndex = 0;
+            foreach (string activityId in RequiredPlayableActivityIds)
+            {
+                ActivityButton activity = FindActivityButton(allActivities, activityId);
+                RectTransform rect = activity?.button != null
+                    ? activity.button.GetComponent<RectTransform>()
+                    : null;
+                if (rect == null)
+                {
+                    continue;
+                }
+
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(Mathf.Max(rect.sizeDelta.x, 360f), Mathf.Max(rect.sizeDelta.y, 64f));
+                rect.anchoredPosition = new Vector2(0f, 110f - orderedIndex * 80f);
+                orderedIndex++;
+            }
+
+            MoveBackButtonBelowActivities(orderedIndex);
+        }
+
+        private static ActivityButton FindActivityButton(List<ActivityButton> allActivities, string activityId)
+        {
+            if (allActivities == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < allActivities.Count; i++)
+            {
+                if (allActivities[i] != null && allActivities[i].activityId == activityId)
+                {
+                    return allActivities[i];
+                }
+            }
+
+            return null;
+        }
+
+        private void MoveBackButtonBelowActivities(int activityCount)
+        {
+            RectTransform backRect = backButton != null ? backButton.GetComponent<RectTransform>() : null;
+            if (backRect != null)
+            {
+                backRect.anchoredPosition = new Vector2(backRect.anchoredPosition.x, 110f - activityCount * 80f - 20f);
+            }
+        }
+
+        private bool IsPlayableActivity(string activityId)
+        {
+            if (playableActivityIds != null)
+            {
+                foreach (string playableActivityId in playableActivityIds)
+                {
+                    if (activityId == playableActivityId)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            foreach (string requiredId in RequiredPlayableActivityIds)
+            {
+                if (activityId == requiredId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void RemoveActivityButtonListeners(IEnumerable<ActivityButton> buttons)
+        {
+            if (buttons == null)
+            {
+                return;
+            }
+
+            foreach (ActivityButton activity in buttons)
+            {
+                if (activity?.button != null)
+                {
+                    activity.button.onClick.RemoveAllListeners();
+                }
+            }
         }
     }
 
