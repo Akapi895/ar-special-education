@@ -52,5 +52,15 @@ namespace Core.Support.AudioManager
 
             return null;
         }
+
+        public bool ContainsSound(string soundName)
+        {
+            if (soundDict == null)
+            {
+                InitializeDictionary();
+            }
+
+            return !string.IsNullOrEmpty(soundName) && soundDict.ContainsKey(soundName.ToLower());
+        }
     }
 }

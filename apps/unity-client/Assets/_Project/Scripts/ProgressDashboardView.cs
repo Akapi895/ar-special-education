@@ -1,4 +1,5 @@
 using Core.Data.LocalStorage;
+using Core.Learning.Models;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -97,11 +98,31 @@ namespace Project.App
             if (overallStatsText != null)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("Overall Progress");
+                sb.AppendLine("Learning Progress");
                 sb.AppendLine("================");
-                sb.AppendLine($"Activities Completed: {overall.TotalActivitiesCompleted}");
+                LearnerProfile learner = progressStorage.GetActiveLearnerProfile();
+                if (learner != null)
+                {
+                    sb.AppendLine($"Learner: {learner.DisplayName}");
+                }
+                sb.AppendLine($"Rounds Completed: {overall.TotalLearningRoundsCompleted}");
+                sb.AppendLine($"Activity Types Practiced: {overall.TotalActivityTypesWithProgress}");
                 sb.AppendLine($"Total Sessions: {overall.TotalSessions}");
                 sb.AppendLine($"Total Results: {overall.TotalResults}");
+                sb.AppendLine($"Technical Issues: {overall.TotalTechnicalIssues}");
+                if (!string.IsNullOrEmpty(overall.WeakestSkillTag))
+                {
+                    sb.AppendLine($"Needs Practice: {overall.WeakestSkillTag} ({overall.WeakestSkillScore:P0})");
+                }
+                if (!string.IsNullOrEmpty(overall.RecommendedLessonId))
+                {
+                    sb.AppendLine($"Next Lesson: {GetLessonDisplayName(overall.RecommendedLessonId)}");
+                }
+                AdaptiveLearningRecommendation recommendation = progressStorage.GetAdaptiveRecommendation();
+                if (recommendation != null && recommendation.GuidedModeRecommended)
+                {
+                    sb.AppendLine($"Mode: Guided practice ({recommendation.DifficultyAdjustment})");
+                }
                 overallStatsText.text = sb.ToString();
             }
 
@@ -124,7 +145,7 @@ namespace Project.App
                     ActivityStatistics stats = progressStorage.GetActivityStatistics(activityId);
                     if (stats != null)
                     {
-                        totalProgress += Mathf.Clamp01(stats.TotalAttempts / 10f);
+                        totalProgress += Mathf.Clamp01(stats.TotalLearningRounds / 10f);
                     }
                     count++;
                 }
@@ -150,11 +171,24 @@ namespace Project.App
                 {
                     sb.AppendLine();
                     sb.AppendLine($"{activityId}:");
-                    sb.AppendLine($"  Attempts: {stats.TotalAttempts}");
+                    sb.AppendLine($"  Learning Rounds: {stats.TotalLearningRounds}");
                     sb.AppendLine($"  Success Rate: {(stats.SuccessRate * 100):F1}%");
                     sb.AppendLine($"  Avg Time: {stats.AverageTimePerAttempt:F1}s");
                     sb.AppendLine($"  Best Time: {stats.BestTime:F1}s");
                     sb.AppendLine($"  Hints Used: {stats.TotalHintsUsed}");
+                    sb.AppendLine($"  Technical Issues: {stats.TechnicalIssueCount}");
+                    if (!string.IsNullOrEmpty(stats.MostCommonErrorType))
+                    {
+                        sb.AppendLine($"  Common Error: {stats.MostCommonErrorType} x{stats.MostCommonErrorCount}");
+                    }
+                    if (!string.IsNullOrEmpty(stats.WeakestSkillTag))
+                    {
+                        sb.AppendLine($"  Weak Skill: {stats.WeakestSkillTag}");
+                    }
+                    if (!string.IsNullOrEmpty(stats.RecommendedLessonId))
+                    {
+                        sb.AppendLine($"  Recommended: {GetLessonDisplayName(stats.RecommendedLessonId)}");
+                    }
                 }
                 else
                 {
@@ -181,11 +215,11 @@ namespace Project.App
 
                 if (stats != null && stats.TotalAttempts > 0)
                 {
-                    float completion = Mathf.Clamp01(stats.TotalAttempts / 10f);
+                    float completion = Mathf.Clamp01(stats.TotalLearningRounds / 10f);
                     if (card.progressSlider != null) card.progressSlider.value = completion;
                     if (card.progressPercentageText != null) card.progressPercentageText.text = $"{Mathf.RoundToInt(completion * 100f)}%";
                     
-                    if (card.totalAttemptsText != null) card.totalAttemptsText.text = $"{stats.TotalAttempts}";
+                    if (card.totalAttemptsText != null) card.totalAttemptsText.text = $"{stats.TotalLearningRounds}";
                     if (card.averageTimeText != null) card.averageTimeText.text = $"{stats.AverageTimePerAttempt:F1}s";
 
                     // Star rating display: <50% = 1 star, 50-80% = 2 stars, >80% = 3 stars
@@ -246,11 +280,11 @@ namespace Project.App
                 {
                     // Vietnamese localization
                     string activityName = GetActivityVietnameseName(lowestAccuracyActivity);
-                    recommendationText.text = $"Nên luyện tập thêm bài: {activityName}";
+                    recommendationText.text = $"Nen luyen tap them bai: {activityName}";
                 }
                 else
                 {
-                    recommendationText.text = "Con đang làm rất tốt tất cả các bài!";
+                    recommendationText.text = "Con dang lam tot cac bai hien tai!";
                 }
             }
         }
@@ -259,11 +293,17 @@ namespace Project.App
         {
             switch (activityId)
             {
-                case "QuantityMatch": return "Ghép Số Lượng";
-                case "CompareQuantity": return "So Sánh Số Lượng";
-                case "NumberLineJump": return "Nhảy Trên Trục Số";
+                case "QuantityMatch": return "Ghep so voi luong";
+                case "CompareQuantity": return "So sanh so luong";
+                case "NumberLineJump": return "Nhay tren truc so";
                 default: return activityId;
             }
+        }
+
+        private static string GetLessonDisplayName(string lessonId)
+        {
+            LessonDefinition lesson = LessonMapRegistry.GetLesson(lessonId);
+            return lesson != null ? $"{lesson.LessonId} - {lesson.Title}" : lessonId;
         }
 
         private void DisplayError(string errorMessage)

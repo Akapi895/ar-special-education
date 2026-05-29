@@ -27,6 +27,9 @@ namespace Core.UI.Components
         [SerializeField] private float autoHideDelay = 1.8f;
         [SerializeField] private float shakeDuration = 0.5f;
         [SerializeField] private float shakeAmount = 25f;
+        [SerializeField] private Vector2 childFriendlyPanelSize = new Vector2(820f, 150f);
+        [SerializeField] private Vector2 childFriendlyPanelPosition = new Vector2(0f, -260f);
+        [SerializeField] private int childFriendlyMessageFontSize = 36;
 
         private Vector2 originalContentPosition;
         private Coroutine activeOverlayCoroutine;
@@ -50,7 +53,7 @@ namespace Core.UI.Components
             // Soft green background glow
             if (overlayBackground != null)
             {
-                overlayBackground.color = new Color(0.4f, 0.8f, 0.5f, 0.35f);
+                overlayBackground.color = new Color(0.4f, 0.8f, 0.5f, 0.18f);
             }
 
             if (confettiParticleSystem != null)
@@ -72,7 +75,7 @@ namespace Core.UI.Components
             // Soft orange background glow (not harsh red)
             if (overlayBackground != null)
             {
-                overlayBackground.color = new Color(1.0f, 0.8f, 0.5f, 0.45f);
+                overlayBackground.color = new Color(1.0f, 0.8f, 0.5f, 0.2f);
             }
 
             TriggerEntranceAnimation();
@@ -89,7 +92,7 @@ namespace Core.UI.Components
             // Warm yellow/gold background glow
             if (overlayBackground != null)
             {
-                overlayBackground.color = new Color(0.98f, 0.85f, 0.35f, 0.45f);
+                overlayBackground.color = new Color(0.98f, 0.85f, 0.35f, 0.22f);
             }
 
             if (successParticleSystem != null)
@@ -135,6 +138,12 @@ namespace Core.UI.Components
             if (messageText != null)
             {
                 messageText.text = message;
+                messageText.fontSize = childFriendlyMessageFontSize;
+                messageText.resizeTextForBestFit = true;
+                messageText.resizeTextMinSize = 22;
+                messageText.resizeTextMaxSize = childFriendlyMessageFontSize;
+                messageText.alignment = TextAnchor.MiddleCenter;
+                messageText.color = Color.white;
             }
 
             if (overlayContainer != null)
@@ -142,8 +151,18 @@ namespace Core.UI.Components
                 overlayContainer.SetActive(true);
             }
 
+            if (overlayBackground != null)
+            {
+                overlayBackground.raycastTarget = false;
+            }
+
             if (contentPanel != null)
             {
+                contentPanel.anchorMin = new Vector2(0.5f, 0.5f);
+                contentPanel.anchorMax = new Vector2(0.5f, 0.5f);
+                contentPanel.pivot = new Vector2(0.5f, 0.5f);
+                contentPanel.sizeDelta = childFriendlyPanelSize;
+                originalContentPosition = childFriendlyPanelPosition;
                 contentPanel.anchoredPosition = originalContentPosition;
             }
         }

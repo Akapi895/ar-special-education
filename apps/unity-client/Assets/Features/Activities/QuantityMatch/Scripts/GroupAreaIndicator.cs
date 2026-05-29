@@ -13,6 +13,7 @@ namespace Features.Activities.QuantityMatch
         private float currentAlpha = 0.5f;
         private float targetScale = 1f;
         private float currentScale = 1f;
+        private float lastDrawnRadius = -1f;
 
         private Color originalColor;
         private bool isFlashingIncorrect;
@@ -40,6 +41,11 @@ namespace Features.Activities.QuantityMatch
 
         private void Update()
         {
+            if (!Mathf.Approximately(lastDrawnRadius, radius))
+            {
+                DrawCircle();
+            }
+
             if (isFlashingIncorrect)
             {
                 flashTimer += Time.deltaTime;
@@ -76,6 +82,11 @@ namespace Features.Activities.QuantityMatch
 
         private void DrawCircle()
         {
+            if (lineRenderer == null)
+            {
+                return;
+            }
+
             float angle = 0f;
             for (int i = 0; i < segments; i++)
             {
@@ -84,6 +95,8 @@ namespace Features.Activities.QuantityMatch
                 lineRenderer.SetPosition(i, new Vector3(x, 0.01f, z)); // slightly above ground
                 angle += 360f / segments;
             }
+
+            lastDrawnRadius = radius;
         }
 
         public void Highlight()

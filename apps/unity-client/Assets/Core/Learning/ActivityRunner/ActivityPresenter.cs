@@ -111,6 +111,13 @@ namespace Core.Learning.ActivityRunner
                 currentRound,
                 config.Difficulty
             );
+
+            LessonDefinition lesson = LessonMapRegistry.GetRecommendedLessonForActivity(config.ActivityId, currentRound);
+            if (lesson != null)
+            {
+                currentResult.SetLessonContext(lesson.LessonId, lesson.SkillTags);
+                currentResult.RoundId = $"{lesson.LessonId}-R{currentRound:00}";
+            }
         }
 
         /// <summary>

@@ -1,5 +1,7 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
+using Core.Support.AudioManager;
+using Core.UI.Localization;
 using Features.Activities.NumberLineJump;
 using Project.App;
 using System;
@@ -66,6 +68,9 @@ namespace Features.Activities.NumberLineJump
         private Button hintButton;
 
         [SerializeField]
+        private Button listenButton;
+
+        [SerializeField]
         private Button cancelButton;
 
         [SerializeField]
@@ -107,6 +112,9 @@ namespace Features.Activities.NumberLineJump
         private bool activityFinished;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(150f, 56f);
+        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(124f, 56f);
+        private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
+        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-160f, -24f);
         private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(104f, 180f);
         private const float RuntimeButtonGap = 16f;
         private const float RuntimeActionButtonBottomY = 52f;
@@ -116,6 +124,8 @@ namespace Features.Activities.NumberLineJump
         private const float RuntimeHintPanelBottomY = 194f;
         private const float RuntimeEquationPanelBottomY = 262f;
         private const float RuntimeFeedbackPanelBottomY = 334f;
+        private const string RuntimeHomeButtonLabel = "Trang ch\u1ee7";
+        private const int RuntimeTopNavButtonFontSize = 20;
 
         public bool HasUiReferences => startNumberText != null;
 
@@ -175,6 +185,11 @@ namespace Features.Activities.NumberLineJump
                 cancelButton.onClick.AddListener(OnCancelClicked);
             }
 
+            if (listenButton != null)
+            {
+                listenButton.onClick.AddListener(OnListenClicked);
+            }
+
             if (nextRoundButton != null)
             {
                 nextRoundButton.onClick.AddListener(OnNextRoundClicked);
@@ -184,6 +199,8 @@ namespace Features.Activities.NumberLineJump
             {
                 progressButton.onClick.AddListener(OnProgressClicked);
             }
+
+            NormalizeTopNavigationButtons();
         }
 
         /// <summary>
@@ -195,7 +212,7 @@ namespace Features.Activities.NumberLineJump
             runtimeUiRoot = panel;
 
             progressText = CreateTopText(panel, "Progress", "", 24, 24f, new Vector2(620f, 40f));
-            targetNumberText = CreateTopText(panel, "TargetNumber", "Jump to the target number", 34, 68f, new Vector2(820f, 58f));
+            targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("instruction_number_line"), 32, 68f, new Vector2(700f, 58f));
             startNumberText = CreateTopText(panel, "StartNumber", "", 22, 124f, new Vector2(360f, 38f));
             startNumberText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-205f, -124f);
             currentPositionText = CreateTopText(panel, "CurrentPosition", "", 22, 124f, new Vector2(360f, 38f));
@@ -216,16 +233,18 @@ namespace Features.Activities.NumberLineJump
             rightJumpButton = CreateEdgeJumpButton(panel, "RightJumpButton", ">", false, () => OnJumpRequested?.Invoke(JumpStepDirection.Right));
 
             float jumpActionOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
-            confirmButton = CreateButton(panel, "ConfirmButton", "Confirm", new Vector2(-jumpActionOffset, RuntimeJumpButtonBottomY), () => OnConfirmRequested?.Invoke());
-            resetButton = CreateButton(panel, "ResetButton", "Reset", new Vector2(jumpActionOffset, RuntimeJumpButtonBottomY), () => OnResetRequested?.Invoke());
+            confirmButton = CreateButton(panel, "ConfirmButton", SimpleLocalization.Get("btn_confirm"), new Vector2(-jumpActionOffset, RuntimeJumpButtonBottomY), () => OnConfirmRequested?.Invoke());
+            resetButton = CreateButton(panel, "ResetButton", SimpleLocalization.Get("btn_reset"), new Vector2(jumpActionOffset, RuntimeJumpButtonBottomY), () => OnResetRequested?.Invoke());
 
             float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
-            hintButton = CreateButton(panel, "HintButton", "Hint", new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke());
-            cancelButton = CreateButton(panel, "CancelButton", "Cancel", new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnCancelClicked);
-            nextRoundButton = CreateButton(panel, "NextButton", "Next", new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), OnNextRoundClicked);
-            progressButton = CreateButton(panel, "ProgressButton", "Progress", new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked);
+            hintButton = CreateButton(panel, "HintButton", SimpleLocalization.Get("btn_hint"), new Vector2(0f, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke());
+            cancelButton = CreateTopRightButton(panel, "CancelButton", RuntimeHomeButtonLabel, RuntimeHomeButtonTopRight, RuntimeTopNavButtonSize, OnCancelClicked);
+            listenButton = CreateTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), RuntimeListenButtonTopRight, RuntimeTopNavButtonSize, OnListenClicked);
+            nextRoundButton = CreateButton(panel, "NextButton", SimpleLocalization.Get("btn_next"), new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), OnNextRoundClicked);
+            progressButton = CreateButton(panel, "ProgressButton", SimpleLocalization.Get("btn_progress"), new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked);
             nextRoundButton.gameObject.SetActive(false);
             progressButton.gameObject.SetActive(false);
+            NormalizeTopNavigationButtons();
         }
 
         /// <summary>
@@ -269,14 +288,14 @@ namespace Features.Activities.NumberLineJump
             // Update displays
             if (startNumberText != null)
             {
-                startNumberText.text = currentUsesEquationPromptMode ? $"Start on {startNumber}" : $"Start: {startNumber}";
+                startNumberText.text = currentUsesEquationPromptMode ? $"Bat dau o {startNumber}" : $"Bat dau: {startNumber}";
             }
 
             if (targetNumberText != null)
             {
                 targetNumberText.text = currentUsesEquationPromptMode
                     ? currentEquationPrompt
-                    : $"Jump from {startNumber} to {targetNumber}";
+                    : SimpleLocalization.Get("numberline_question", startNumber, targetNumber);
             }
 
             UpdateCurrentPosition(startNumber);
@@ -306,6 +325,11 @@ namespace Features.Activities.NumberLineJump
                 hintButton.interactable = true;
             }
 
+            if (listenButton != null)
+            {
+                listenButton.gameObject.SetActive(true);
+            }
+
             if (cancelButton != null)
             {
                 cancelButton.gameObject.SetActive(true);
@@ -317,6 +341,9 @@ namespace Features.Activities.NumberLineJump
 
             // Update button states
             UpdateJumpButtonsState(allowedDirection, startNumber, minNumber, maxNumber);
+
+            SimpleAudioManager.EnsureExists().PlayInstruction("instruction_number_line");
+            SimpleAudioManager.Instance.PlayNumber(targetNumber);
         }
 
         /// <summary>
@@ -339,7 +366,7 @@ namespace Features.Activities.NumberLineJump
 
             if (currentPositionText != null)
             {
-                currentPositionText.text = $"Position: {position}";
+                currentPositionText.text = $"Dang o: {position}";
             }
 
             // Update button states based on new position
@@ -353,7 +380,7 @@ namespace Features.Activities.NumberLineJump
         {
             if (progressText != null)
             {
-                progressText.text = $"Question {current} of {total}";
+                progressText.text = $"Cau {current}/{total}";
             }
         }
 
@@ -362,7 +389,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowCorrectFeedback()
         {
-            ShowCorrectFeedback("Great job!", "");
+            ShowCorrectFeedback(SimpleLocalization.Get("feedback_correct"), "");
         }
 
         /// <summary>
@@ -395,7 +422,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowIncorrectFeedback()
         {
-            ShowIncorrectFeedback("Not quite. Try again!", "");
+            ShowIncorrectFeedback(SimpleLocalization.Get("feedback_incorrect"), "");
         }
 
         /// <summary>
@@ -420,7 +447,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowOvershootFeedback(int currentPosition, int targetPosition)
         {
-            ShowFeedback($"You went too far! You're at {currentPosition}, but the target was {targetPosition}.", Color.red);
+            ShowFeedback(SimpleLocalization.Get("numberline_overshoot", currentPosition, targetPosition), Color.red);
         }
 
         /// <summary>
@@ -428,9 +455,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowBoundaryHit(int currentPosition)
         {
-            ShowFeedback($"You can't go further from {currentPosition}. You've reached the edge!", Color.yellow);
-
-            // TODO: Play bump animation
+            ShowFeedback($"Da den canh truc so tai {currentPosition}.", Color.yellow);
             Debug.Log("[NumberLineJumpView] Play bump animation at boundary");
         }
 
@@ -439,7 +464,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowMaxJumpsExceeded()
         {
-            ShowFeedback("You've used too many jumps! Press Reset to try again.", Color.red);
+            ShowFeedback("Con da nhay qua nhieu buoc. Bam Lam lai de thu tiep.", Color.red);
             DisableInput();
         }
 
@@ -460,7 +485,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowDirectionNotAllowed(JumpStepDirection direction)
         {
-            string directionText = direction == JumpStepDirection.Right ? "right" : "left";
+            string directionText = direction == JumpStepDirection.Right ? "phai" : "trai";
             Debug.Log($"[NumberLineJumpView] Cannot jump {directionText} - not allowed for this question");
 
             // Could show a brief visual indicator
@@ -511,7 +536,7 @@ namespace Features.Activities.NumberLineJump
 
             if (feedbackOverlay != null)
             {
-                feedbackOverlay.ShowSuccess("Activity Complete! Progress saved.");
+                feedbackOverlay.ShowSuccess(SimpleLocalization.Get("feedback_success"));
             }
             else
             {
@@ -570,7 +595,7 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void HighlightTile(int number, bool highlight)
         {
-            // TODO: Implement visual highlighting of AR tiles
+            // Tile highlight is applied by the AR interaction service when objects are registered.
             Debug.Log($"[NumberLineJumpView] Highlight tile {number}: {highlight}");
         }
 
@@ -588,7 +613,7 @@ namespace Features.Activities.NumberLineJump
 
             if (cancelButton != null)
             {
-                cancelButton.interactable = enabled;
+                cancelButton.interactable = true;
             }
         }
 
@@ -771,7 +796,12 @@ namespace Features.Activities.NumberLineJump
         private void OnCancelClicked()
         {
             OnCancelRequested?.Invoke();
-            LoadSceneIfAvailable("SC_ActivitySelect");
+            LoadSceneIfAvailable("SC_MainMenu");
+        }
+
+        private void OnListenClicked()
+        {
+            SimpleAudioManager.EnsureExists().ReplayLastInstruction();
         }
 
         /// <summary>
@@ -793,7 +823,12 @@ namespace Features.Activities.NumberLineJump
         private void SetRunningActionButtonsActive(bool active)
         {
             if (hintButton != null) hintButton.gameObject.SetActive(active);
-            if (cancelButton != null) cancelButton.gameObject.SetActive(active);
+            if (listenButton != null) listenButton.gameObject.SetActive(active);
+            if (cancelButton != null)
+            {
+                cancelButton.gameObject.SetActive(true);
+                cancelButton.interactable = true;
+            }
         }
 
         private void SetNavigationButtonsActive(bool active)
@@ -933,6 +968,81 @@ namespace Features.Activities.NumberLineJump
             return button;
         }
 
+        private void NormalizeTopNavigationButtons()
+        {
+            ConfigureTopRightNavigationButton(
+                cancelButton,
+                RuntimeHomeButtonLabel,
+                RuntimeHomeButtonTopRight,
+                RuntimeTopNavButtonSize,
+                new Color(0.85f, 0.35f, 0.35f, 0.9f));
+
+            ConfigureTopRightNavigationButton(
+                listenButton,
+                SimpleLocalization.Get("btn_listen"),
+                RuntimeListenButtonTopRight,
+                RuntimeTopNavButtonSize,
+                new Color(0.2f, 0.5f, 0.9f, 0.9f));
+        }
+
+        private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            RectTransform rect = button.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(1f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(1f, 1f);
+                rect.sizeDelta = size;
+                rect.anchoredPosition = anchoredPosition;
+            }
+
+            Image image = button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = color;
+            }
+
+            Text text = button.GetComponentInChildren<Text>();
+            if (text != null)
+            {
+                text.text = label;
+                text.fontSize = RuntimeTopNavButtonFontSize;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 12;
+                text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
+                text.alignment = TextAnchor.MiddleCenter;
+            }
+        }
+
+        private static Button CreateTopRightButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = name.Contains("Listen")
+                ? new Color(0.2f, 0.5f, 0.9f, 0.9f)
+                : new Color(0.85f, 0.35f, 0.35f, 0.9f);
+
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(onClick);
+
+            Text text = CreateButtonLabel(go.transform, label);
+            text.fontSize = RuntimeTopNavButtonFontSize;
+            text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
+            return button;
+        }
+
         private static Button CreateEdgeJumpButton(Transform parent, string name, string label, bool isLeft, UnityEngine.Events.UnityAction onClick)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
@@ -995,10 +1105,10 @@ namespace Features.Activities.NumberLineJump
         {
             if (presenter != null && presenter.HasMoreRounds())
             {
-                return "Next";
+                return SimpleLocalization.Get("btn_next");
             }
 
-            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Next Activity" : "Finish";
+            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Bai tiep" : "Hoan thanh";
         }
 
         private static void LoadSceneIfAvailable(string sceneName)

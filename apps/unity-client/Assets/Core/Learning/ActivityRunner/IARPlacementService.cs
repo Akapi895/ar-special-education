@@ -1,14 +1,11 @@
-using UnityEngine;
 using System;
+using UnityEngine;
 
 namespace Core.Learning.ActivityRunner
 {
     /// <summary>
     /// Interface for AR object placement services.
     /// Learning activities use this to spawn/place objects in the AR environment.
-    ///
-    /// TODO: KHÁNH'S TEAM - Implement this interface in the AR Core module.
-    /// This interface is defined by Learning layer but implemented by AR layer.
     /// </summary>
     public interface IARPlacementService
     {
@@ -33,6 +30,26 @@ namespace Core.Learning.ActivityRunner
         Vector3 CurrentPlacementPosition { get; }
 
         /// <summary>
+        /// Check if a stable learning area has been created for the current activity session.
+        /// </summary>
+        bool HasLearningArea { get; }
+
+        /// <summary>
+        /// Root transform that all activity content should be parented under.
+        /// </summary>
+        Transform LearningAreaContentRoot { get; }
+
+        /// <summary>
+        /// Size of the learning area in meters.
+        /// </summary>
+        Vector2 LearningAreaSizeMeters { get; }
+
+        /// <summary>
+        /// Convert a local point inside the learning area to a world position.
+        /// </summary>
+        Vector3 LearningAreaToWorldPoint(Vector3 localPosition);
+
+        /// <summary>
         /// Spawn a prefab at the current placement position.
         /// </summary>
         /// <param name="prefab">The prefab to spawn.</param>
@@ -49,6 +66,16 @@ namespace Core.Learning.ActivityRunner
         /// <param name="parent">Optional parent transform.</param>
         /// <returns>The spawned GameObject.</returns>
         GameObject SpawnAtPosition(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null);
+
+        /// <summary>
+        /// Spawn a prefab using local coordinates inside the current learning area.
+        /// </summary>
+        /// <param name="prefab">The prefab to spawn.</param>
+        /// <param name="localPosition">Local position relative to the learning area root.</param>
+        /// <param name="localRotation">Local rotation relative to the learning area root.</param>
+        /// <param name="parent">Optional parent transform.</param>
+        /// <returns>The spawned GameObject.</returns>
+        GameObject SpawnAtLearningAreaPosition(GameObject prefab, Vector3 localPosition, Quaternion localRotation, Transform parent = null);
 
         /// <summary>
         /// Spawn multiple objects arranged in a grid.

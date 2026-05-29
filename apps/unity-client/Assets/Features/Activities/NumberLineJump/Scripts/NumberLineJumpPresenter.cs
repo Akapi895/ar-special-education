@@ -41,12 +41,15 @@ namespace Features.Activities.NumberLineJump
         private bool exceededMaxJumps;
         private bool isJumping;
         private Coroutine jumpAnimationCoroutine;
+        private Coroutine boundaryBumpCoroutine;
 
         private const float TileWidth = 0.28f;
         private const float TileHeight = 0.04f;
         private const float TileDepth = 0.22f;
         private const float CharacterYOffset = 0.18f;
         private const float JumpArcHeight = 0.22f;
+        private const float BoundaryBumpDistance = 0.08f;
+        private const float BoundaryBumpDuration = 0.18f;
         private const int TargetPromptQuestionCount = 5;
 
         private static readonly Color NormalTileColor = new Color(0.44f, 0.52f, 0.62f);
@@ -163,7 +166,7 @@ namespace Features.Activities.NumberLineJump
             numberTiles = new GameObject[tileCount];
 
             // Calculate positions for the number line (horizontal arrangement)
-            Vector3 centerPosition = placementService.CurrentPlacementPosition;
+            Vector3 centerPosition = GetLearningAreaCenter();
             Vector3[] positions = ARGroupSpawnUtility.CalculateGroupPositions(
                 numberOfGroups: tileCount,
                 centerPosition: centerPosition,
@@ -194,6 +197,10 @@ namespace Features.Activities.NumberLineJump
         {
             var tile = new GameObject($"NumberTile_{number}");
             tile.transform.position = position;
+            if (placementService?.HasLearningArea == true && placementService.LearningAreaContentRoot != null)
+            {
+                tile.transform.SetParent(placementService.LearningAreaContentRoot, true);
+            }
 
             var collider = tile.AddComponent<BoxCollider>();
             collider.size = new Vector3(TileWidth, TileHeight, TileDepth);
@@ -233,6 +240,8 @@ namespace Features.Activities.NumberLineJump
             {
                 labelGo.transform.rotation = Quaternion.LookRotation(labelGo.transform.position - camera.transform.position, Vector3.up);
             }
+
+            labelGo.AddComponent<NumberLineBillboardBehavior>();
         }
 
         private void ApplyTileColor(GameObject tile, int number)
@@ -320,6 +329,10 @@ namespace Features.Activities.NumberLineJump
                 characterObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 characterObject.name = "JumpCharacter";
                 characterObject.transform.position = startTilePosition + Vector3.up * CharacterYOffset;
+                if (placementService.HasLearningArea && placementService.LearningAreaContentRoot != null)
+                {
+                    characterObject.transform.SetParent(placementService.LearningAreaContentRoot, true);
+                }
                 characterObject.transform.localScale = Vector3.one * 0.16f;
 
                 Renderer renderer = characterObject.GetComponent<Renderer>();
@@ -342,7 +355,7 @@ namespace Features.Activities.NumberLineJump
 
         /// <summary>
         /// Get the character prefab.
-        /// TODO: Load from resources.
+        /// Uses the scene-level ActivityPrefabSetup fallback.
         /// </summary>
         private GameObject GetCharacterPrefab()
         {
@@ -354,15 +367,14 @@ namespace Features.Activities.NumberLineJump
             return null;
         }
 
-        /// <summary>
-        /// Get the tile prefab.
-        /// TODO: Load from resources.
-        /// </summary>
-        private GameObject GetTilePrefab()
+        private Vector3 GetLearningAreaCenter()
         {
-            // TODO: Implement prefab loading
-            Debug.LogWarning("[NumberLineJumpPresenter] GetTilePrefab() not implemented.");
-            return null;
+            if (placementService?.HasLearningArea == true && placementService.LearningAreaContentRoot != null)
+            {
+                return placementService.LearningAreaContentRoot.position;
+            }
+
+            return placementService != null ? placementService.CurrentPlacementPosition : Vector3.zero;
         }
 
         /// <summary>
@@ -385,8 +397,8 @@ namespace Features.Activities.NumberLineJump
             {
                 Debug.Log($"[NumberLineJumpPresenter] Cannot jump to {newPosition}: out of bounds");
                 hitBoundary = true;
+                PlayBoundaryBump(direction);
                 view?.ShowBoundaryHit(currentPosition);
-                // TODO: Play bump animation
                 return;
             }
 
@@ -490,6 +502,50 @@ namespace Features.Activities.NumberLineJump
                 characterObject.transform.position,
                 characterTarget,
                 jumpConfig.JumpAnimationDuration));
+        }
+
+        private void PlayBoundaryBump(JumpStepDirection direction)
+        {
+            if (characterObject == null)
+            {
+                return;
+            }
+
+            if (boundaryBumpCoroutine != null)
+            {
+                StopCoroutine(boundaryBumpCoroutine);
+            }
+
+            boundaryBumpCoroutine = StartCoroutine(AnimateBoundaryBump(direction));
+        }
+
+        private IEnumerator AnimateBoundaryBump(JumpStepDirection direction)
+        {
+            Vector3 startPosition = characterObject.transform.position;
+            Vector3 bumpDirection = direction == JumpStepDirection.Right ? Vector3.right : Vector3.left;
+            Vector3 bumpPosition = startPosition + bumpDirection * BoundaryBumpDistance;
+            float halfDuration = BoundaryBumpDuration * 0.5f;
+
+            float elapsed = 0f;
+            while (elapsed < halfDuration)
+            {
+                float t = Mathf.Clamp01(elapsed / halfDuration);
+                characterObject.transform.position = Vector3.Lerp(startPosition, bumpPosition, t);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            elapsed = 0f;
+            while (elapsed < halfDuration)
+            {
+                float t = Mathf.Clamp01(elapsed / halfDuration);
+                characterObject.transform.position = Vector3.Lerp(bumpPosition, startPosition, t);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            characterObject.transform.position = startPosition;
+            boundaryBumpCoroutine = null;
         }
 
         private IEnumerator AnimateCharacterJump(Vector3 startPosition, Vector3 targetPosition, float duration)
@@ -625,6 +681,12 @@ namespace Features.Activities.NumberLineJump
             {
                 StopCoroutine(jumpAnimationCoroutine);
                 jumpAnimationCoroutine = null;
+            }
+
+            if (boundaryBumpCoroutine != null)
+            {
+                StopCoroutine(boundaryBumpCoroutine);
+                boundaryBumpCoroutine = null;
             }
 
             isJumping = false;
@@ -855,6 +917,29 @@ namespace Features.Activities.NumberLineJump
             ClearSpawnedObjects();
 
             base.Cleanup();
+        }
+    }
+
+    public class NumberLineBillboardBehavior : MonoBehaviour
+    {
+        private Camera mainCamera;
+
+        private void LateUpdate()
+        {
+            if (mainCamera == null)
+            {
+                mainCamera = Camera.main;
+                if (mainCamera == null)
+                {
+                    return;
+                }
+            }
+
+            Vector3 direction = transform.position - mainCamera.transform.position;
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                transform.rotation = Quaternion.LookRotation(direction.normalized, mainCamera.transform.up);
+            }
         }
     }
 }

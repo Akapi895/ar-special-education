@@ -21,15 +21,15 @@ namespace Features.Activities.QuantityMatch
         [Header("Feedback Strings")]
         [Tooltip("Message shown when answer is correct")]
         [SerializeField]
-        private string correctFeedback = "Great job! You found the right group!";
+        private string correctFeedback = "Gi\u1ecfi l\u1eafm! Con \u0111\u00e3 ch\u1ecdn \u0111\u00fang nh\u00f3m!";
 
         [Tooltip("Message shown when answer is incorrect")]
         [SerializeField]
-        private string incorrectFeedback = "Not quite. Let's try again!";
+        private string incorrectFeedback = "Ch\u01b0a \u0111\u00fang r\u1ed3i. Con h\u00e3y th\u1eed \u0111\u1ebfm l\u1ea1i nh\u00e9!";
 
         [Tooltip("Message shown when max attempts are reached")]
         [SerializeField]
-        private string failedFeedback = "Good effort! Let's try another one.";
+        private string failedFeedback = "Con \u0111\u00e3 c\u1ed1 g\u1eafng r\u1ea5t t\u1ed1t. M\u00ecnh th\u1eed c\u00e2u kh\u00e1c nh\u00e9.";
 
         [Header("Hints (3-level progression)")]
         [Tooltip("Level 1 hint: General nudge")]
@@ -51,7 +51,7 @@ namespace Features.Activities.QuantityMatch
 
         [Tooltip("Spacing between groups (meters)")]
         [SerializeField]
-        private float defaultGroupSpacing = 2.1f;
+        private float defaultGroupSpacing = 1.6f;
 
         [Tooltip("Arrangement pattern for groups")]
         [SerializeField]
@@ -94,9 +94,9 @@ namespace Features.Activities.QuantityMatch
             // Return default 3-level hint progression
             return new List<ActivityHint>
             {
-                hintLevel1 ?? new ActivityHint("hint1", "Look carefully at the groups.", 1),
-                hintLevel2 ?? new ActivityHint("hint2", "The number shown is X, count each group.", 2),
-                hintLevel3 ?? new ActivityHint("hint3", "One group has exactly X objects.", 3)
+                hintLevel1 ?? new ActivityHint("hint1", "Con nh\u00ecn k\u1ef9 t\u1eebng nh\u00f3m con v\u1eadt nh\u00e9.", 1),
+                hintLevel2 ?? new ActivityHint("hint2", "S\u1ed1 c\u1ea7n t\u00ecm l\u00e0 X. Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m.", 2),
+                hintLevel3 ?? new ActivityHint("hint3", "C\u00f3 m\u1ed9t nh\u00f3m c\u00f3 \u0111\u00fang X con v\u1eadt.", 3)
             };
         }
 
@@ -148,7 +148,7 @@ namespace Features.Activities.QuantityMatch
         {
             if (hint == null)
             {
-                return "Try counting each group carefully.";
+                return "Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m th\u1eadt ch\u1eadm nh\u00e9.";
             }
 
             return hint.HintText.Replace("X", targetNumber.ToString());

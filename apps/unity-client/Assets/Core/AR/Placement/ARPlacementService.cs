@@ -36,6 +36,22 @@ namespace Core.AR.Placement
         [SerializeField]
         private float minimumPlaneArea = 0.15f;
 
+        [Header("Learning Area")]
+        [SerializeField]
+        private LearningAreaAnchor learningAreaAnchor;
+
+        [SerializeField]
+        private ARPlacementController placementController;
+
+        [SerializeField]
+        private Vector2 defaultLearningAreaSizeMeters = new Vector2(2.4f, 1.8f);
+
+        [SerializeField]
+        private bool autoCreateLearningAreaFromPlacement = true;
+
+        [SerializeField]
+        private bool hidePlaneVisualizationAfterPlacement = true;
+
         private readonly List<GameObject> spawnedObjects = new List<GameObject>();
         private readonly List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
 
@@ -48,10 +64,21 @@ namespace Core.AR.Placement
 
         public bool IsPlacementAvailable => placementAvailable;
         public Vector3 CurrentPlacementPosition => currentPlacementPosition;
+        public bool HasLearningArea => learningAreaAnchor != null && learningAreaAnchor.IsPlaced;
+        public Transform LearningAreaContentRoot => HasLearningArea ? learningAreaAnchor.ContentRoot : transform;
+        public Vector2 LearningAreaSizeMeters => HasLearningArea ? learningAreaAnchor.AreaSizeMeters : defaultLearningAreaSizeMeters;
 
         private void Awake()
         {
             ResolveReferences();
+        }
+
+        private void OnDestroy()
+        {
+            if (placementController != null)
+            {
+                placementController.OnLearningAreaPlaced -= HandleLearningAreaPlaced;
+            }
         }
 
         private void Update()
@@ -62,6 +89,7 @@ namespace Core.AR.Placement
         public void Initialize()
         {
             ResolveReferences();
+            ResolveLearningAreaController();
 
             if (raycastManager == null)
             {
@@ -83,6 +111,12 @@ namespace Core.AR.Placement
             return SpawnAtPosition(prefab, currentPlacementPosition, currentPlacementRotation, parent);
         }
 
+        public Vector3 LearningAreaToWorldPoint(Vector3 localPosition)
+        {
+            Transform root = LearningAreaContentRoot;
+            return root != null ? root.TransformPoint(localPosition) : localPosition;
+        }
+
         public GameObject SpawnAtPosition(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
         {
             if (prefab == null)
@@ -91,10 +125,19 @@ namespace Core.AR.Placement
                 return null;
             }
 
-            GameObject instance = Instantiate(prefab, position, rotation, parent);
+            Transform resolvedParent = parent != null ? parent : LearningAreaContentRoot;
+            GameObject instance = Instantiate(prefab, position, rotation, resolvedParent);
             instance.SetActive(true);
             TrackSpawned(instance);
             return instance;
+        }
+
+        public GameObject SpawnAtLearningAreaPosition(GameObject prefab, Vector3 localPosition, Quaternion localRotation, Transform parent = null)
+        {
+            Transform root = LearningAreaContentRoot;
+            Vector3 worldPosition = root != null ? root.TransformPoint(localPosition) : localPosition;
+            Quaternion worldRotation = root != null ? root.rotation * localRotation : localRotation;
+            return SpawnAtPosition(prefab, worldPosition, worldRotation, parent != null ? parent : root);
         }
 
         public GameObject[] SpawnGrid(GameObject prefab, Vector3 centerPosition, int count, float spacing)
@@ -189,6 +232,8 @@ namespace Core.AR.Placement
                 Pose pose = raycastHits[0].pose;
                 currentPlacementPosition = pose.position;
                 currentPlacementRotation = pose.rotation;
+                ARPlane hitPlane = planeManager != null ? planeManager.GetPlane(raycastHits[0].trackableId) : null;
+                EnsureLearningArea(pose, hitPlane);
 
                 if (!placementAvailable)
                 {
@@ -281,6 +326,113 @@ namespace Core.AR.Placement
             }
         }
 
+        private void ResolveLearningAreaController()
+        {
+            if (placementController == null)
+            {
+                placementController = FindAnyObjectByType<ARPlacementController>();
+            }
+
+            if (placementController == null)
+            {
+                return;
+            }
+
+            if (placementController.HasLearningArea)
+            {
+                learningAreaAnchor = placementController.CurrentLearningArea;
+            }
+
+            placementController.OnLearningAreaPlaced -= HandleLearningAreaPlaced;
+            placementController.OnLearningAreaPlaced += HandleLearningAreaPlaced;
+        }
+
+        private void HandleLearningAreaPlaced(LearningAreaAnchor anchor)
+        {
+            if (anchor == null)
+            {
+                return;
+            }
+
+            learningAreaAnchor = anchor;
+            learningAreaAnchor.SetAreaSize(defaultLearningAreaSizeMeters);
+            currentPlacementPosition = anchor.Pose.position;
+            currentPlacementRotation = anchor.Pose.rotation;
+            HidePlaneVisualizationAfterPlacement();
+
+            if (!placementAvailable)
+            {
+                SetPlacementAvailable(true);
+            }
+            else
+            {
+                OnPlacementPositionAvailable?.Invoke(currentPlacementPosition);
+            }
+        }
+
+        private void EnsureLearningArea(Pose pose, ARPlane attachedPlane = null)
+        {
+            if (!autoCreateLearningAreaFromPlacement || HasLearningArea)
+            {
+                return;
+            }
+
+            if (learningAreaAnchor == null)
+            {
+                GameObject anchorObject = new GameObject("LearningAreaAnchor");
+                anchorObject.transform.SetParent(transform, true);
+                learningAreaAnchor = anchorObject.AddComponent<LearningAreaAnchor>();
+            }
+
+            learningAreaAnchor.SetPose(pose.position, pose.rotation);
+            learningAreaAnchor.SetAreaSize(defaultLearningAreaSizeMeters);
+            learningAreaAnchor.Initialize(attachedPlane);
+            HidePlaneVisualizationAfterPlacement();
+        }
+
+        private void HidePlaneVisualizationAfterPlacement()
+        {
+            if (!hidePlaneVisualizationAfterPlacement)
+            {
+                return;
+            }
+
+            ARPlaneDetectionController planeDetectionController = FindAnyObjectByType<ARPlaneDetectionController>();
+            if (planeDetectionController != null)
+            {
+                planeDetectionController.SetPlaneVisualization(false);
+                return;
+            }
+
+            if (planeManager == null)
+            {
+                return;
+            }
+
+            foreach (ARPlane plane in planeManager.trackables)
+            {
+                if (plane == null)
+                {
+                    continue;
+                }
+
+                if (plane.TryGetComponent<ARPlaneMeshVisualizer>(out var meshVisualizer))
+                {
+                    meshVisualizer.enabled = false;
+                }
+
+                if (plane.TryGetComponent<MeshRenderer>(out var meshRenderer))
+                {
+                    meshRenderer.enabled = false;
+                }
+
+                if (plane.TryGetComponent<LineRenderer>(out var lineRenderer))
+                {
+                    lineRenderer.enabled = false;
+                }
+            }
+        }
+
         private bool TryUseBestDetectedPlane()
         {
             if (planeManager == null)
@@ -320,6 +472,7 @@ namespace Core.AR.Placement
 
             currentPlacementPosition = bestPlane.transform.position;
             currentPlacementRotation = bestPlane.transform.rotation;
+            EnsureLearningArea(new Pose(currentPlacementPosition, currentPlacementRotation), bestPlane);
 
             if (!placementAvailable)
             {

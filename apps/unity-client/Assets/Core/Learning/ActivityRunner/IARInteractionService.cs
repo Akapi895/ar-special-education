@@ -7,8 +7,7 @@ namespace Core.Learning.ActivityRunner
     /// Interface for AR interaction services.
     /// Learning activities use this to receive user input (tap, select, drag) on AR objects.
     ///
-    /// TODO: KHÁNH'S TEAM - Implement this interface in the AR Core module.
-    /// This interface is defined by Learning layer but implemented by AR layer.
+    /// Defined by the learning layer and implemented by AR interaction adapters.
     /// </summary>
     public interface IARInteractionService
     {

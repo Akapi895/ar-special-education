@@ -27,22 +27,30 @@ namespace Project.Editor
             var so = new SerializedObject(config);
 
             so.FindProperty("activityId").stringValue = "CompareQuantity";
-            so.FindProperty("displayName").stringValue = "Compare Quantity (Easy)";
-            so.FindProperty("description").stringValue = "Compare two groups of objects to find which has more, fewer, or if they are equal.";
+            so.FindProperty("displayName").stringValue = "So s\u00e1nh s\u1ed1 l\u01b0\u1ee3ng (D\u1ec5)";
+            so.FindProperty("description").stringValue = "Con so s\u00e1nh hai nh\u00f3m con v\u1eadt xem b\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n, \u00edt h\u01a1n hay b\u1eb1ng b\u00ean ph\u1ea3i.";
             so.FindProperty("numberOfRounds").intValue = 10;
             so.FindProperty("maxAttemptsPerQuestion").intValue = 3;
             so.FindProperty("maxHintsPerQuestion").intValue = 3;
-            so.FindProperty("groupSpacing").floatValue = 2.3f;
+            so.FindProperty("groupSpacing").floatValue = 3.0f;
+            so.FindProperty("correctMoreFeedback").stringValue = "\u0110\u00fang r\u1ed3i! Nh\u00f3m b\u00ean tr\u00e1i nhi\u1ec1u h\u01a1n!";
+            so.FindProperty("correctFewerFeedback").stringValue = "\u0110\u00fang r\u1ed3i! Nh\u00f3m b\u00ean tr\u00e1i \u00edt h\u01a1n!";
+            so.FindProperty("correctEqualFeedback").stringValue = "\u0110\u00fang r\u1ed3i! Hai nh\u00f3m b\u1eb1ng nhau!";
+            so.FindProperty("incorrectMoreFeedback").stringValue = "Ch\u01b0a ph\u1ea3i nhi\u1ec1u h\u01a1n. Con h\u00e3y \u0111\u1ebfm l\u1ea1i nh\u00e9!";
+            so.FindProperty("incorrectFewerFeedback").stringValue = "Ch\u01b0a ph\u1ea3i \u00edt h\u01a1n. Con h\u00e3y \u0111\u1ebfm l\u1ea1i nh\u00e9!";
+            so.FindProperty("incorrectEqualFeedback").stringValue = "Ch\u01b0a b\u1eb1ng nhau. Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m nh\u00e9!";
+            so.FindProperty("genericIncorrectFeedback").stringValue = "Ch\u01b0a \u0111\u00fang r\u1ed3i. Con th\u1eed l\u1ea1i nh\u00e9!";
+            so.FindProperty("failedFeedback").stringValue = "Con \u0111\u00e3 c\u1ed1 g\u1eafng r\u1ea5t t\u1ed1t. M\u00ecnh th\u1eed c\u00e2u kh\u00e1c nh\u00e9.";
 
             // Set up standard hints
-            SetHint(so.FindProperty("hintLevel1"), "cq_hint1", "Count each group carefully.", 1);
-            SetHint(so.FindProperty("hintLevel2"), "cq_hint2", "The left group has X. Now count the right group.", 2);
-            SetHint(so.FindProperty("hintLevel3"), "cq_hint3", "Compare X and Y - which is bigger?", 3);
+            SetHint(so.FindProperty("hintLevel1"), "cq_hint1", "Con h\u00e3y \u0111\u1ebfm t\u1eebng nh\u00f3m th\u1eadt ch\u1eadm nh\u00e9.", 1);
+            SetHint(so.FindProperty("hintLevel2"), "cq_hint2", "Nh\u00f3m b\u00ean tr\u00e1i c\u00f3 X con. B\u00e2y gi\u1edd con \u0111\u1ebfm nh\u00f3m b\u00ean ph\u1ea3i.", 2);
+            SetHint(so.FindProperty("hintLevel3"), "cq_hint3", "So s\u00e1nh X v\u00e0 Y: s\u1ed1 n\u00e0o l\u1edbn h\u01a1n?", 3);
 
             // Set up equality-specific hints
-            SetHint(so.FindProperty("equalityHintLevel1"), "cq_eq_hint1", "Count both groups - are they the same?", 1);
-            SetHint(so.FindProperty("equalityHintLevel2"), "cq_eq_hint2", "The left group has X. The right group also has X.", 2);
-            SetHint(so.FindProperty("equalityHintLevel3"), "cq_eq_hint3", "X and X are the same number - they're EQUAL!", 3);
+            SetHint(so.FindProperty("equalityHintLevel1"), "cq_eq_hint1", "Con \u0111\u1ebfm c\u1ea3 hai nh\u00f3m: hai nh\u00f3m c\u00f3 b\u1eb1ng nhau kh\u00f4ng?", 1);
+            SetHint(so.FindProperty("equalityHintLevel2"), "cq_eq_hint2", "Nh\u00f3m b\u00ean tr\u00e1i c\u00f3 X con. Nh\u00f3m b\u00ean ph\u1ea3i c\u0169ng c\u00f3 X con.", 2);
+            SetHint(so.FindProperty("equalityHintLevel3"), "cq_eq_hint3", "X v\u00e0 X l\u00e0 c\u00f9ng m\u1ed9t s\u1ed1, n\u00ean hai nh\u00f3m b\u1eb1ng nhau.", 3);
 
             var questionsProp = so.FindProperty("questions");
             questionsProp.arraySize = 10;

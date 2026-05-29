@@ -1,3 +1,6 @@
+using Core.Data;
+using Core.Data.LocalStorage;
+using Core.Learning.Models;
 using UnityEngine.SceneManagement;
 
 namespace Project.App
@@ -36,6 +39,15 @@ namespace Project.App
                 return false;
             }
 
+            if (UserPreferences.EnforceLessonPrerequisites)
+            {
+                LessonDefinition nextLesson = LessonMapRegistry.GetFirstLessonForActivity(nextActivityId);
+                if (nextLesson != null && !LessonMapRegistry.IsLessonUnlocked(nextLesson.LessonId, IsLessonMastered))
+                {
+                    return false;
+                }
+            }
+
             LoadActivity(nextActivityId);
             return true;
         }
@@ -43,13 +55,26 @@ namespace Project.App
         public static void LoadActivity(string activityId)
         {
             SelectedActivityData.ActivityId = activityId;
-            SelectedActivityData.ConfigPath = activityId;
+            SelectedActivityData.LessonId = LessonMapRegistry.GetFirstLessonForActivity(activityId)?.LessonId;
             SceneManager.LoadScene(GameplaySceneName);
         }
 
         public static void LoadProgressDashboard()
         {
             SceneManager.LoadScene(ProgressSceneName);
+        }
+
+        private static bool IsLessonMastered(string lessonId)
+        {
+            LessonDefinition lesson = LessonMapRegistry.GetLesson(lessonId);
+            if (lesson == null)
+            {
+                return false;
+            }
+
+            ActivityStatistics stats = ProgressStorageProxy.Instance.GetLessonStatistics(lessonId);
+            return stats.TotalLearningRounds >= lesson.MinimumRoundsForMastery
+                && stats.SuccessRate >= lesson.MinimumAccuracyForMastery;
         }
     }
 }

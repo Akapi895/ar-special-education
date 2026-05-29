@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: SO_CompareQuantityConfig_Easy
   m_EditorClassIdentifier: 
   activityId: CompareQuantity
-  displayName: Compare Quantity (Easy)
-  description: Compare two groups of objects to find which has more, fewer, or if
-    they are equal.
+  displayName: So sánh số lượng (Dễ)
+  description: Con so sánh hai nhóm con vật xem bên trái nhiều hơn, ít hơn hay bằng bên phải.
   difficultyLevel: 1
   maxHintsPerQuestion: 3
   maxAttemptsPerQuestion: 3
@@ -73,45 +72,45 @@ MonoBehaviour:
     CorrectAnswer: 0
     CustomHints: []
     ObjectPrefabName: 
-  moreButtonLabel: More
-  fewerButtonLabel: Fewer
-  equalButtonLabel: Equal
-  correctMoreFeedback: Yes! The left group has MORE!
-  correctFewerFeedback: Yes! The left group has FEWER!
-  correctEqualFeedback: Yes! Both groups are EQUAL!
-  incorrectMoreFeedback: Not more. Look again!
-  incorrectFewerFeedback: Not fewer. Try counting again!
-  incorrectEqualFeedback: Not equal. Count each group carefully!
-  genericIncorrectFeedback: Not quite. Let's try again!
-  failedFeedback: Good effort! Let's try another one.
+  moreButtonLabel: Bên trái nhiều hơn
+  fewerButtonLabel: Bên trái ít hơn
+  equalButtonLabel: Bằng nhau
+  correctMoreFeedback: Đúng rồi! Nhóm bên trái nhiều hơn!
+  correctFewerFeedback: Đúng rồi! Nhóm bên trái ít hơn!
+  correctEqualFeedback: Đúng rồi! Hai nhóm bằng nhau!
+  incorrectMoreFeedback: Chưa phải nhiều hơn. Con hãy đếm lại nhé!
+  incorrectFewerFeedback: Chưa phải ít hơn. Con hãy đếm lại nhé!
+  incorrectEqualFeedback: Chưa bằng nhau. Con hãy đếm từng nhóm nhé!
+  genericIncorrectFeedback: Chưa đúng rồi. Con thử lại nhé!
+  failedFeedback: Con đã cố gắng rất tốt. Mình thử câu khác nhé.
   hintLevel1:
     HintId: cq_hint1
-    HintText: Count each group carefully.
+    HintText: Con hãy đếm từng nhóm thật chậm nhé.
     Level: 1
     ARHint: 
   hintLevel2:
     HintId: cq_hint2
-    HintText: The left group has X. Now count the right group.
+    HintText: Nhóm bên trái có X con. Bây giờ con đếm nhóm bên phải.
     Level: 2
     ARHint: 
   hintLevel3:
     HintId: cq_hint3
-    HintText: Compare X and Y - which is bigger?
+    HintText: "So sánh X và Y: số nào lớn hơn?"
     Level: 3
     ARHint: 
   equalityHintLevel1:
     HintId: cq_eq_hint1
-    HintText: Count both groups - are they the same?
+    HintText: "Con đếm cả hai nhóm: hai nhóm có bằng nhau không?"
     Level: 1
     ARHint: 
   equalityHintLevel2:
     HintId: cq_eq_hint2
-    HintText: The left group has X. The right group also has X.
+    HintText: Nhóm bên trái có X con. Nhóm bên phải cũng có X con.
     Level: 2
     ARHint: 
   equalityHintLevel3:
     HintId: cq_eq_hint3
-    HintText: X and X are the same number - they're EQUAL!
+    HintText: X và X là cùng một số, nên hai nhóm bằng nhau.
     Level: 3
     ARHint: 
-  groupSpacing: 2.3
+  groupSpacing: 3

@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Define custom colors using CSS variables */
+:root {
+  --primary: #06325a;
+  --accent: #3498db;
+  --light-bg: #f1f5f9;
+}
+
+@theme {
+  /* Register colors for Tailwind */
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-light-bg: var(--light-bg);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}

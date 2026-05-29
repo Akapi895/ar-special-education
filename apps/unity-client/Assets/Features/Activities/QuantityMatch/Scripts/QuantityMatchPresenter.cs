@@ -2,7 +2,9 @@ using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Features.Activities;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Features.Activities.QuantityMatch
 {
@@ -25,17 +27,23 @@ namespace Features.Activities.QuantityMatch
 
         // Spawned objects tracking
         private GameObject[] spawnedGroups;
+        private readonly List<GameObject> simulationRoamBoundaries = new List<GameObject>();
         private const int SelectionQuestionCount = 5;
         private const float MinimumReadableObjectSpacing = 0.64f;
         private const float MaximumReadableObjectSpacing = 0.78f;
-        private const float MinimumReadableGroupSpacing = 2.1f;
-        private const float GroupSeparationPadding = 0.5f;
+        private const float MinimumReadableGroupSpacing = 1.45f;
+        private const float MaximumReadableGroupSpacing = 1.8f;
+        private const float GroupSeparationPadding = 0.35f;
         private const float GroupHitboxHeight = 0.95f;
         private const float GroupHitboxPadding = 0.7f;
         private const float ViewportSafeMarginX = 0.16f;
         private const float ViewportSafeMarginY = 0.18f;
+        private const float SimulationFreeRoamSpeed = 0.55f;
+        private const float SimulationFreeRoamMinWait = 0.15f;
+        private const float SimulationFreeRoamMaxWait = 0.9f;
         private bool currentUsesNumberInputMode;
         private int currentRoundNumber;
+        private int[] countedTapsByGroup;
 
         [Header("Prefabs")]
         [SerializeField]
@@ -113,11 +121,16 @@ namespace Features.Activities.QuantityMatch
             if (placementService == null)
             {
                 Debug.LogError("[QuantityMatchPresenter] AR Placement Service not available. Cannot spawn groups.");
-                // TODO: Show error in UI
+                view?.ShowActivityFailed("Khong tim thay dich vu AR. Hay quay lai va thu lai.", currentResult);
                 return;
             }
 
             spawnedGroups = new GameObject[currentQuestion.NumberOfGroups];
+            countedTapsByGroup = new int[currentQuestion.NumberOfGroups];
+            if (UseSimulationFreeRoamMode())
+            {
+                SimulationAnimalCameraTracker.ClearTracking();
+            }
 
             // Calculate positions based on arrangement pattern
             Vector3[] groupPositions = CalculateGroupPositions();
@@ -132,7 +145,7 @@ namespace Features.Activities.QuantityMatch
                 spawnedGroups[i] = group;
 
                 // Register the group as interactable
-                if (interactionService != null)
+                if (interactionService != null && !UseSimulationFreeRoamMode())
                 {
                     interactionService.RegisterInteractable(group, i);  // Store group index as data
                 }
@@ -149,7 +162,12 @@ namespace Features.Activities.QuantityMatch
         private Vector3[] CalculateGroupPositions()
         {
             Vector3[] positions = new Vector3[currentQuestion.NumberOfGroups];
-            Vector3 center = placementService.CurrentPlacementPosition;
+            Vector3 center = GetLearningAreaCenter();
+            if (UseSimulationFreeRoamMode())
+            {
+                return CalculateSimulationGroupPositions(center);
+            }
+
             float spacing = GetReadableGroupSpacing();
 
             switch (quantityConfig.GroupArrangement)
@@ -200,13 +218,13 @@ namespace Features.Activities.QuantityMatch
                     break;
 
                 case GroupArrangementPattern.Vertical:
-                    // Arrange in a vertical column
-                    float totalHeight = (currentQuestion.NumberOfGroups - 1) * spacing;
-                    float startY = center.y - totalHeight / 2f;
+                    // Arrange in a ground-plane column instead of stacking groups upward.
+                    float totalDepth = (currentQuestion.NumberOfGroups - 1) * spacing;
+                    float startZ = center.z - totalDepth / 2f;
 
                     for (int i = 0; i < currentQuestion.NumberOfGroups; i++)
                     {
-                        positions[i] = new Vector3(center.x, startY + i * spacing, center.z);
+                        positions[i] = new Vector3(center.x, center.y, startZ + i * spacing);
                     }
                     break;
 
@@ -237,6 +255,66 @@ namespace Features.Activities.QuantityMatch
             return positions;
         }
 
+        private Vector3[] CalculateSimulationGroupPositions(Vector3 center)
+        {
+            int groupCount = currentQuestion.NumberOfGroups;
+            Vector3[] positions = new Vector3[groupCount];
+            if (groupCount <= 0)
+            {
+                return positions;
+            }
+
+            float spacing = GetSimulationGroupSpacing();
+            Vector3 right = Vector3.right;
+            Vector3 forward = Vector3.forward;
+            Camera camera = Camera.main;
+            if (camera != null)
+            {
+                right = camera.transform.right;
+                right.y = 0f;
+                if (right.sqrMagnitude < 0.0001f)
+                {
+                    right = Vector3.right;
+                }
+                right.Normalize();
+
+                forward = camera.transform.forward;
+                forward.y = 0f;
+                if (forward.sqrMagnitude < 0.0001f)
+                {
+                    forward = Vector3.forward;
+                }
+                forward.Normalize();
+            }
+
+            if (groupCount == 1)
+            {
+                positions[0] = center;
+                return positions;
+            }
+
+            if (groupCount <= 3)
+            {
+                float start = -(groupCount - 1) * spacing * 0.5f;
+                for (int i = 0; i < groupCount; i++)
+                {
+                    positions[i] = center + right * (start + i * spacing);
+                }
+                return positions;
+            }
+
+            float ringRadius = spacing / (2f * Mathf.Sin(Mathf.PI / groupCount));
+            for (int i = 0; i < groupCount; i++)
+            {
+                float angle = (360f / groupCount) * i * Mathf.Deg2Rad;
+                positions[i] = center
+                    + right * (Mathf.Cos(angle) * ringRadius)
+                    + forward * (Mathf.Sin(angle) * ringRadius);
+            }
+
+            return positions;
+        }
+
         /// <summary>
         /// Spawn a single group with the given number of objects.
         /// </summary>
@@ -251,9 +329,19 @@ namespace Features.Activities.QuantityMatch
 
             GameObject group = new GameObject($"QuantityGroup_{groupIndex + 1}_Count{objectCount}");
             group.transform.SetPositionAndRotation(position, CalculateReadableGroupRotation(position));
+            if (placementService?.HasLearningArea == true && placementService.LearningAreaContentRoot != null)
+            {
+                group.transform.SetParent(placementService.LearningAreaContentRoot, true);
+            }
 
+            bool freeRoamMode = UseSimulationFreeRoamMode();
             float spacing = GetReadableObjectSpacing();
             Vector3[] localPositions = CalculateReadableGroundGridPositions(objectCount, spacing, out float width, out float depth);
+            float groupRoamRadius = GetSimulationGroupRoamRadius(width, depth);
+            if (freeRoamMode)
+            {
+                CreateSimulationGroupRoamBoundary(group, groupIndex, groupRoamRadius);
+            }
 
             // Get a specific animal prefab for this group to ensure only 1 species of animal per group
             GameObject groupPrefab = null;
@@ -270,19 +358,39 @@ namespace Features.Activities.QuantityMatch
             for (int i = 0; i < localPositions.Length; i++)
             {
                 Vector3 worldPosition = group.transform.TransformPoint(localPositions[i]);
-                GameObject obj = placementService?.SpawnAtPosition(groupPrefab, worldPosition, group.transform.rotation, group.transform);
+                Transform animalParent = freeRoamMode && placementService?.LearningAreaContentRoot != null
+                    ? placementService.LearningAreaContentRoot
+                    : group.transform;
+                GameObject obj = placementService?.SpawnAtPosition(groupPrefab, worldPosition, group.transform.rotation, animalParent);
                 if (obj != null)
                 {
                     obj.name = $"Group{groupIndex + 1}_Animal{i + 1}";
-                    obj.transform.localPosition = localPositions[i];
-                    obj.transform.localRotation = Quaternion.Euler(0f, UnityEngine.Random.Range(-14f, 14f), 0f);
+                    if (freeRoamMode)
+                    {
+                        obj.transform.position = worldPosition;
+                        obj.transform.rotation = Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f);
+                    }
+                    else
+                    {
+                        obj.transform.localPosition = localPositions[i];
+                        obj.transform.localRotation = Quaternion.Euler(0f, UnityEngine.Random.Range(-14f, 14f), 0f);
+                    }
+
                     ActivityPrefabSetup.Instance?.PrepareLearningObject(obj, true);
+                    if (freeRoamMode)
+                    {
+                        ConfigureSimulationFreeRoam(obj, group.transform.position, groupRoamRadius);
+                        SimulationAnimalCameraTracker.RegisterAnimal(obj.transform);
+                    }
                 }
             }
 
-            AddGroupHitbox(group, width, depth);
+            if (freeRoamMode)
+            {
+                return group;
+            }
 
-            // Add Area Indicator visual effect on ground
+            AddGroupHitbox(group, width, depth);
             var indicatorGo = new GameObject("AreaIndicator");
             indicatorGo.transform.SetParent(group.transform, false);
             indicatorGo.transform.localPosition = Vector3.zero;
@@ -304,6 +412,111 @@ namespace Features.Activities.QuantityMatch
             return group;
         }
 
+        private void ConfigureSimulationFreeRoam(GameObject animal, Vector3 groupCenterWorld, float roamRadius)
+        {
+            if (animal == null)
+            {
+                return;
+            }
+
+            var presentation = animal.GetComponent<ARAnimalPresentation>();
+            if (presentation == null)
+            {
+                presentation = animal.AddComponent<ARAnimalPresentation>();
+            }
+
+            presentation.ConfigureWandering(
+                true,
+                roamRadius,
+                SimulationFreeRoamSpeed,
+                SimulationFreeRoamMinWait,
+                SimulationFreeRoamMaxWait,
+                true);
+            presentation.ConfigureFixedWanderArea(GetSimulationFreeRoamCenterLocal(animal.transform, groupCenterWorld), roamRadius);
+            presentation.ResetBasePose();
+        }
+
+        private void CreateSimulationGroupRoamBoundary(GameObject group, int groupIndex, float radius)
+        {
+            if (group == null)
+            {
+                return;
+            }
+
+            var boundary = new GameObject($"SimulationGroup{groupIndex + 1}RoamCircle");
+            boundary.transform.SetParent(group.transform, false);
+            boundary.transform.localPosition = Vector3.zero;
+            boundary.transform.localRotation = Quaternion.identity;
+            simulationRoamBoundaries.Add(boundary);
+
+            var indicator = boundary.AddComponent<GroupAreaIndicator>();
+            indicator.radius = radius;
+            indicator.pulseSpeed = 0.6f;
+            indicator.SetColor(GetGroupColor(groupIndex));
+
+            var selectionCollider = boundary.AddComponent<SphereCollider>();
+            selectionCollider.center = Vector3.up * 0.04f;
+            selectionCollider.radius = radius;
+            selectionCollider.isTrigger = true;
+
+            interactionService?.RegisterInteractable(boundary, groupIndex);
+            SimulationAnimalCameraTracker.AddRoamArea(group.transform.position, radius);
+        }
+
+        private Vector3 GetSimulationFreeRoamCenterLocal(Transform target, Vector3 centerWorld)
+        {
+            Transform parent = target != null ? target.parent : null;
+            return parent != null ? parent.InverseTransformPoint(centerWorld) : centerWorld;
+        }
+
+        private static float GetSimulationGroupRoamRadius(float width, float depth)
+        {
+            float contentRadius = Mathf.Max(width, depth) * 0.5f;
+            return Mathf.Clamp(contentRadius + 0.55f, 0.9f, 1.7f);
+        }
+
+        private float GetSimulationGroupSpacing()
+        {
+            if (currentQuestion?.ObjectCountsPerGroup == null)
+            {
+                return 2.4f;
+            }
+
+            float spacing = GetReadableObjectSpacing();
+            float maxRadius = 0.9f;
+            for (int i = 0; i < currentQuestion.ObjectCountsPerGroup.Length; i++)
+            {
+                CalculateReadableGroundGridPositions(
+                    currentQuestion.ObjectCountsPerGroup[i],
+                    spacing,
+                    out float width,
+                    out float depth);
+                maxRadius = Mathf.Max(maxRadius, GetSimulationGroupRoamRadius(width, depth));
+            }
+
+            return maxRadius * 2f + 0.6f;
+        }
+
+        private static Color GetGroupColor(int groupIndex)
+        {
+            if (groupIndex == 0)
+            {
+                return new Color(0.45f, 0.68f, 0.9f, 0.72f);
+            }
+
+            if (groupIndex == 1)
+            {
+                return new Color(0.95f, 0.6f, 0.4f, 0.72f);
+            }
+
+            return new Color(0.45f, 0.8f, 0.5f, 0.72f);
+        }
+
+        private static bool UseSimulationFreeRoamMode()
+        {
+            return Application.isEditor && !Application.isMobilePlatform;
+        }
+
         private static Quaternion CalculateReadableGroupRotation(Vector3 groupPosition)
         {
             Camera camera = Camera.main;
@@ -321,6 +534,16 @@ namespace Features.Activities.QuantityMatch
             }
 
             return Quaternion.LookRotation(direction.normalized, Vector3.up);
+        }
+
+        private Vector3 GetLearningAreaCenter()
+        {
+            if (placementService?.HasLearningArea == true && placementService.LearningAreaContentRoot != null)
+            {
+                return placementService.LearningAreaContentRoot.position;
+            }
+
+            return placementService != null ? placementService.CurrentPlacementPosition : Vector3.zero;
         }
 
         private float GetReadableObjectSpacing()
@@ -348,10 +571,12 @@ namespace Features.Activities.QuantityMatch
                 largestFootprint = Mathf.Max(largestFootprint, Mathf.Max(width, depth) + objectSpacing);
             }
 
-            return Mathf.Max(
+            float desiredSpacing = Mathf.Max(
                 quantityConfig.DefaultGroupSpacing,
                 MinimumReadableGroupSpacing,
                 largestFootprint + GroupSeparationPadding);
+
+            return Mathf.Clamp(desiredSpacing, MinimumReadableGroupSpacing, MaximumReadableGroupSpacing);
         }
 
         private static Vector3[] CalculateReadableGroundGridPositions(int count, float spacing, out float width, out float depth)
@@ -488,7 +713,7 @@ namespace Features.Activities.QuantityMatch
 
         /// <summary>
         /// Get the prefab to use for spawning objects.
-        /// TODO: Load from resources or use a default.
+        /// Uses the scene-level ActivityPrefabSetup fallback when no explicit prefab is assigned.
         /// </summary>
         private GameObject GetObjectPrefab()
         {
@@ -633,28 +858,60 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         private void HandleObjectTapped(GameObject tappedObject)
         {
-            if (currentState != ActivityState.InProgress || currentUsesNumberInputMode)
+            if (currentState != ActivityState.InProgress)
             {
                 return;
             }
 
-            // Get the group index from the tapped object
             if (interactionService != null)
             {
                 object data = interactionService.GetInteractableData(tappedObject);
                 if (data is int groupIndex)
                 {
-                    // Trigger indicator highlight
-                    var indicator = tappedObject.GetComponentInChildren<GroupAreaIndicator>();
-                    if (indicator != null)
-                    {
-                        indicator.Highlight();
-                    }
-
-                    // Get the object count for this group
-                    int objectCount = currentQuestion.ObjectCountsPerGroup[groupIndex];
-                    HandleGroupSelected(groupIndex, objectCount);
+                    HandleGroupCountTap(groupIndex, tappedObject);
                 }
+            }
+        }
+
+        private void HandleGroupCountTap(int groupIndex, GameObject tappedObject)
+        {
+            if (currentQuestion == null
+                || groupIndex < 0
+                || groupIndex >= currentQuestion.ObjectCountsPerGroup.Length)
+            {
+                return;
+            }
+
+            int objectCount = currentQuestion.ObjectCountsPerGroup[groupIndex];
+            var indicator = tappedObject.GetComponentInChildren<GroupAreaIndicator>();
+            if (indicator != null)
+            {
+                indicator.Highlight();
+            }
+
+            if (UseSimulationFreeRoamMode() && !currentUsesNumberInputMode)
+            {
+                HandleGroupSelected(groupIndex, objectCount);
+                return;
+            }
+
+            if (countedTapsByGroup == null || countedTapsByGroup.Length != currentQuestion.NumberOfGroups)
+            {
+                countedTapsByGroup = new int[currentQuestion.NumberOfGroups];
+            }
+
+            countedTapsByGroup[groupIndex]++;
+            if (objectCount > 0 && countedTapsByGroup[groupIndex] > objectCount)
+            {
+                countedTapsByGroup[groupIndex] = 1;
+            }
+
+            view?.ShowCountingFeedback(groupIndex, countedTapsByGroup[groupIndex], objectCount);
+            Debug.Log($"[QuantityMatchPresenter] Count tap on group {groupIndex}: {countedTapsByGroup[groupIndex]}/{objectCount}");
+
+            if (!currentUsesNumberInputMode && objectCount > 0 && countedTapsByGroup[groupIndex] >= objectCount)
+            {
+                HandleGroupSelected(groupIndex, objectCount);
             }
         }
 
@@ -761,6 +1018,17 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         private void ClearSpawnedObjects()
         {
+            for (int i = simulationRoamBoundaries.Count - 1; i >= 0; i--)
+            {
+                if (simulationRoamBoundaries[i] != null)
+                {
+                    interactionService?.UnregisterInteractable(simulationRoamBoundaries[i]);
+                    Destroy(simulationRoamBoundaries[i]);
+                }
+            }
+            simulationRoamBoundaries.Clear();
+            SimulationAnimalCameraTracker.ClearTracking();
+
             if (spawnedGroups != null)
             {
                 foreach (GameObject group in spawnedGroups)
@@ -872,6 +1140,387 @@ namespace Features.Activities.QuantityMatch
             // Gently pulsate label size to signify interactivity for kids
             float pulse = 1f + Mathf.Sin(Time.time * 2.5f) * 0.06f;
             transform.localScale = baseScale * pulse;
+        }
+    }
+
+    internal sealed class SimulationAnimalCameraTracker : MonoBehaviour
+    {
+        private const int XrSimulationEnvironmentLayer = 30;
+        private const float MinimumFarClipPlane = 250f;
+        private const float AutoFrameDelaySeconds = 1.0f;
+        private const float PreferredPitchDegrees = 22f;
+        private const float MinimumFrameDistance = 4.0f;
+        private const float MaximumFrameDistance = 18.0f;
+        private const float FramePadding = 1.45f;
+        private const float OrbitSensitivity = 0.16f;
+        private const float ZoomSensitivity = 0.012f;
+        private const float MinimumOrbitPitch = 10f;
+        private const float MaximumOrbitPitch = 72f;
+
+        private static readonly List<Transform> Animals = new List<Transform>();
+        private static SimulationAnimalCameraTracker instance;
+        private static bool hasRoamArea;
+        private static Bounds roamAreaBounds;
+        private static Vector3 roamAreaCenterWorld;
+        private static float roamAreaRadius = 2.4f;
+
+        private Camera trackedCamera;
+        private float allAnimalsOffscreenSince = -1f;
+        private float orbitYaw;
+        private float orbitPitch = PreferredPitchDegrees;
+        private float orbitDistance = MinimumFrameDistance;
+        private bool orbitInitialized;
+
+        public static void ClearTracking()
+        {
+            Animals.Clear();
+            hasRoamArea = false;
+            roamAreaBounds = default;
+            roamAreaCenterWorld = Vector3.zero;
+            roamAreaRadius = 2.4f;
+
+            if (instance != null)
+            {
+                instance.allAnimalsOffscreenSince = -1f;
+                instance.orbitInitialized = false;
+            }
+        }
+
+        public static void AddRoamArea(Vector3 centerWorld, float radius)
+        {
+            radius = Mathf.Max(0.5f, radius);
+            Bounds areaBounds = new Bounds(centerWorld, new Vector3(radius * 2f, 1f, radius * 2f));
+            if (hasRoamArea)
+            {
+                roamAreaBounds.Encapsulate(areaBounds);
+            }
+            else
+            {
+                roamAreaBounds = areaBounds;
+            }
+
+            hasRoamArea = true;
+            roamAreaCenterWorld = roamAreaBounds.center;
+            roamAreaRadius = Mathf.Max(roamAreaBounds.extents.x, roamAreaBounds.extents.z, radius);
+            EnsureInstance();
+            if (instance != null)
+            {
+                instance.orbitInitialized = false;
+                instance.FrameAllAnimals();
+            }
+        }
+
+        public static void RegisterAnimal(Transform animal)
+        {
+            if (animal == null || !Application.isEditor || Application.isMobilePlatform)
+            {
+                return;
+            }
+
+            Animals.RemoveAll(item => item == null);
+            if (!Animals.Contains(animal))
+            {
+                Animals.Add(animal);
+            }
+
+            EnsureInstance();
+        }
+
+        private static void EnsureInstance()
+        {
+            Camera camera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+            if (camera == null)
+            {
+                return;
+            }
+
+            if (instance == null || instance.trackedCamera != camera)
+            {
+                instance = camera.GetComponent<SimulationAnimalCameraTracker>();
+                if (instance == null)
+                {
+                    instance = camera.gameObject.AddComponent<SimulationAnimalCameraTracker>();
+                }
+            }
+
+            instance.trackedCamera = camera;
+            instance.ConfigureCamera();
+        }
+
+        private void Awake()
+        {
+            trackedCamera = GetComponent<Camera>();
+            ConfigureCamera();
+        }
+
+        private void LateUpdate()
+        {
+            if (!Application.isEditor || Application.isMobilePlatform)
+            {
+                return;
+            }
+
+            ConfigureCamera();
+            Animals.RemoveAll(item => item == null);
+            if (Animals.Count == 0)
+            {
+                allAnimalsOffscreenSince = -1f;
+                return;
+            }
+
+            if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
+            {
+                FrameAllAnimals();
+                allAnimalsOffscreenSince = -1f;
+                return;
+            }
+
+            if (HandleManualCameraControls())
+            {
+                allAnimalsOffscreenSince = -1f;
+                return;
+            }
+
+            if (AnyAnimalVisible())
+            {
+                allAnimalsOffscreenSince = -1f;
+                return;
+            }
+
+            if (allAnimalsOffscreenSince < 0f)
+            {
+                allAnimalsOffscreenSince = Time.time;
+                return;
+            }
+
+            if (Time.time - allAnimalsOffscreenSince >= AutoFrameDelaySeconds)
+            {
+                FrameAllAnimals();
+                allAnimalsOffscreenSince = -1f;
+            }
+        }
+
+        private void ConfigureCamera()
+        {
+            if (trackedCamera == null)
+            {
+                trackedCamera = GetComponent<Camera>();
+            }
+
+            if (trackedCamera == null)
+            {
+                return;
+            }
+
+            trackedCamera.cullingMask = ~0 & ~(1 << XrSimulationEnvironmentLayer);
+            trackedCamera.nearClipPlane = Mathf.Min(trackedCamera.nearClipPlane, 0.01f);
+            trackedCamera.farClipPlane = Mathf.Max(trackedCamera.farClipPlane, MinimumFarClipPlane);
+        }
+
+        private bool HandleManualCameraControls()
+        {
+            if (trackedCamera == null || Mouse.current == null || !hasRoamArea)
+            {
+                return false;
+            }
+
+            float scroll = Mouse.current.scroll.ReadValue().y;
+            bool rightPressed = Mouse.current.rightButton.isPressed;
+            Vector2 delta = rightPressed ? Mouse.current.delta.ReadValue() : Vector2.zero;
+            bool hasDrag = rightPressed && delta.sqrMagnitude > 0.01f;
+            bool hasScroll = Mathf.Abs(scroll) >= 0.01f;
+            if (!hasDrag && !hasScroll)
+            {
+                return false;
+            }
+
+            EnsureOrbitStateFromCamera();
+
+            if (hasDrag)
+            {
+                orbitYaw += delta.x * OrbitSensitivity;
+                orbitPitch = Mathf.Clamp(orbitPitch - delta.y * OrbitSensitivity, MinimumOrbitPitch, MaximumOrbitPitch);
+            }
+
+            if (hasScroll)
+            {
+                float maxDistance = Mathf.Max(MaximumFrameDistance, roamAreaRadius * 4f);
+                orbitDistance = Mathf.Clamp(orbitDistance - scroll * ZoomSensitivity, MinimumFrameDistance, maxDistance);
+            }
+
+            ApplyOrbitCamera();
+            return true;
+        }
+
+        private void EnsureOrbitStateFromCamera()
+        {
+            if (orbitInitialized || trackedCamera == null)
+            {
+                return;
+            }
+
+            Vector3 offset = trackedCamera.transform.position - roamAreaCenterWorld;
+            orbitDistance = Mathf.Clamp(offset.magnitude, MinimumFrameDistance, Mathf.Max(MaximumFrameDistance, roamAreaRadius * 4f));
+            Vector3 flat = new Vector3(offset.x, 0f, offset.z);
+            if (flat.sqrMagnitude > 0.0001f)
+            {
+                orbitYaw = Mathf.Atan2(-flat.x, -flat.z) * Mathf.Rad2Deg;
+            }
+
+            orbitPitch = Mathf.Clamp(Mathf.Asin(Mathf.Clamp(offset.y / Mathf.Max(orbitDistance, 0.001f), -1f, 1f)) * Mathf.Rad2Deg,
+                MinimumOrbitPitch,
+                MaximumOrbitPitch);
+            orbitInitialized = true;
+        }
+
+        private void ApplyOrbitCamera()
+        {
+            if (trackedCamera == null)
+            {
+                return;
+            }
+
+            Quaternion orbitRotation = Quaternion.Euler(orbitPitch, orbitYaw, 0f);
+            Vector3 cameraPosition = roamAreaCenterWorld + orbitRotation * new Vector3(0f, 0f, -orbitDistance);
+            trackedCamera.transform.SetPositionAndRotation(
+                cameraPosition,
+                Quaternion.LookRotation(roamAreaCenterWorld - cameraPosition, Vector3.up));
+        }
+
+        private bool AnyAnimalVisible()
+        {
+            if (trackedCamera == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < Animals.Count; i++)
+            {
+                Transform animal = Animals[i];
+                if (animal == null)
+                {
+                    continue;
+                }
+
+                Vector3 viewport = trackedCamera.WorldToViewportPoint(animal.position);
+                if (viewport.z > 0f
+                    && viewport.x >= -0.08f
+                    && viewport.x <= 1.08f
+                    && viewport.y >= -0.08f
+                    && viewport.y <= 1.08f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void FrameAllAnimals()
+        {
+            if (trackedCamera == null)
+            {
+                return;
+            }
+
+            if (!TryGetAnimalBounds(out Bounds bounds))
+            {
+                if (!hasRoamArea)
+                {
+                    return;
+                }
+
+                bounds = new Bounds(roamAreaCenterWorld, Vector3.one * roamAreaRadius * 2f);
+            }
+
+            Vector3 center = bounds.center;
+            float radius = Mathf.Max(bounds.extents.x, bounds.extents.z, bounds.extents.y, 1.0f);
+            if (hasRoamArea)
+            {
+                center = roamAreaCenterWorld;
+                radius = Mathf.Max(radius, roamAreaRadius);
+            }
+
+            float distance = Mathf.Clamp(
+                radius * FramePadding / Mathf.Tan(trackedCamera.fieldOfView * 0.5f * Mathf.Deg2Rad),
+                MinimumFrameDistance,
+                Mathf.Max(MaximumFrameDistance, roamAreaRadius * 4f));
+
+            Vector3 forward = trackedCamera.transform.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 0.0001f)
+            {
+                forward = Vector3.forward;
+            }
+            forward.Normalize();
+
+            Quaternion lookRotation = Quaternion.LookRotation(forward, Vector3.up)
+                * Quaternion.Euler(PreferredPitchDegrees, 0f, 0f);
+            Vector3 lookDirection = lookRotation * Vector3.forward;
+            Vector3 cameraPosition = center - lookDirection * distance;
+            cameraPosition.y = Mathf.Max(cameraPosition.y, center.y + 1.4f);
+
+            trackedCamera.transform.SetPositionAndRotation(
+                cameraPosition,
+                Quaternion.LookRotation(center - cameraPosition, Vector3.up));
+
+            Vector3 offset = cameraPosition - center;
+            orbitYaw = Mathf.Atan2(-offset.x, -offset.z) * Mathf.Rad2Deg;
+            orbitPitch = PreferredPitchDegrees;
+            orbitDistance = distance;
+            orbitInitialized = true;
+        }
+
+        private static bool TryGetAnimalBounds(out Bounds bounds)
+        {
+            bounds = default;
+            bool initialized = false;
+
+            for (int i = 0; i < Animals.Count; i++)
+            {
+                Transform animal = Animals[i];
+                if (animal == null)
+                {
+                    continue;
+                }
+
+                Renderer[] renderers = animal.GetComponentsInChildren<Renderer>();
+                if (renderers.Length == 0)
+                {
+                    if (!initialized)
+                    {
+                        bounds = new Bounds(animal.position, Vector3.one * 0.5f);
+                        initialized = true;
+                    }
+                    else
+                    {
+                        bounds.Encapsulate(animal.position);
+                    }
+
+                    continue;
+                }
+
+                for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+                {
+                    Renderer renderer = renderers[rendererIndex];
+                    if (renderer == null)
+                    {
+                        continue;
+                    }
+
+                    if (!initialized)
+                    {
+                        bounds = renderer.bounds;
+                        initialized = true;
+                    }
+                    else
+                    {
+                        bounds.Encapsulate(renderer.bounds);
+                    }
+                }
+            }
+
+            return initialized;
         }
     }
 }

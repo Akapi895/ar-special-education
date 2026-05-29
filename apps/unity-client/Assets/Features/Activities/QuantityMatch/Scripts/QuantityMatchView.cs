@@ -1,5 +1,7 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
+using Core.Support.AudioManager;
+using Core.UI.Localization;
 using Features.Activities.QuantityMatch;
 using Project.App;
 using System;
@@ -38,6 +40,9 @@ namespace Features.Activities.QuantityMatch
         private Button hintButton;
 
         [SerializeField]
+        private Button listenButton;
+
+        [SerializeField]
         private Button cancelButton;
 
         [SerializeField]
@@ -57,6 +62,9 @@ namespace Features.Activities.QuantityMatch
         private Text numberInputText;
 
         [SerializeField]
+        private Text numberInputPromptText;
+
+        [SerializeField]
         private Button[] digitButtons;
 
         [SerializeField]
@@ -65,9 +73,15 @@ namespace Features.Activities.QuantityMatch
         [SerializeField]
         private Button submitNumberButton;
 
+        [SerializeField]
+        private Button decrementNumberButton;
+
+        [SerializeField]
+        private Button incrementNumberButton;
+
         [Header("Navigation")]
         [SerializeField]
-        private string activitySelectSceneName = "SC_ActivitySelect";
+        private string homeSceneName = "SC_MainMenu";
 
         [Header("Group Selection UI")]
         [SerializeField]
@@ -98,25 +112,41 @@ namespace Features.Activities.QuantityMatch
 
         private Button[] runtimeGroupButtons;
         private Transform runtimeUiRoot;
+        private Canvas numberInputOverlayCanvas;
         private bool activityFinished;
         private bool numberInputButtonsRegistered;
+        private bool numberInputControlsInteractable;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
-        private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(120f, 80f);
-        private static readonly Vector2 RuntimeNumberInputPanelSize = new Vector2(820f, 280f);
+        private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(108f, 70f);
+        private static readonly Vector2 RuntimeNumberInputPanelSize = new Vector2(900f, 330f);
+        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(124f, 56f);
+        private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
+        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-160f, -24f);
         private const float RuntimeButtonGap = 28f;
         private const float RuntimeDigitButtonGap = 12f;
-        private const float RuntimeActionButtonBottomY = 52f;
-        private const float RuntimeGroupButtonBottomY = 128f;
-        private const float RuntimeHintPanelBottomY = 318f;
-        private const float RuntimeFeedbackPanelBottomY = 394f;
-        private const float RuntimeNumberInputPanelBottomY = 182f;
+        private const float RuntimeActionButtonBottomY = 112f;
+        private const float RuntimeGroupButtonBottomY = 238f;
+        private const float RuntimeHintPanelBottomY = 374f;
+        private const float RuntimeFeedbackPanelBottomY = 450f;
+        private const float RuntimeNumberInputPanelBottomY = 190f;
         private const int MaxNumberInputLength = 2;
+        private const int NumberChoiceMin = 1;
+        private const int NumberChoiceMax = 10;
+        private const string NumberQuestionTitle = "Con \u0111\u1ebfm \u0111\u01b0\u1ee3c bao nhi\u00eau con?";
+        private const string NumberInputPrompt = "Ch\u1ecdn s\u1ed1 con v\u1eadt con \u0111\u1ebfm \u0111\u01b0\u1ee3c";
+        private const string NumberInputEmptyValue = "?";
+        private const string NumberInputClearLabel = "X\u00f3a";
+        private const string NumberInputSubmitLabel = "Tr\u1ea3 l\u1eddi";
+        private const string RuntimeHomeButtonLabel = "Trang ch\u1ee7";
+        private const int RuntimeTopNavButtonFontSize = 20;
 
         public bool HasUiReferences => targetNumberText != null;
 
         private void Awake()
         {
+            CacheRuntimeUiRoot();
+
             // Hide feedback panels initially
             if (feedbackPanel != null)
             {
@@ -154,6 +184,11 @@ namespace Features.Activities.QuantityMatch
                 cancelButton.onClick.AddListener(OnCancelClicked);
             }
 
+            if (listenButton != null)
+            {
+                listenButton.onClick.AddListener(OnListenClicked);
+            }
+
             if (nextRoundButton != null)
             {
                 nextRoundButton.onClick.AddListener(OnNextRoundClicked);
@@ -164,6 +199,7 @@ namespace Features.Activities.QuantityMatch
                 progressButton.onClick.AddListener(OnProgressClicked);
             }
 
+            NormalizeTopNavigationButtons();
             RegisterNumberInputButtons();
         }
 
@@ -183,20 +219,8 @@ namespace Features.Activities.QuantityMatch
                 mainCam.backgroundColor = new Color(0.65f, 0.88f, 0.98f, 1f); // bright sky-blue
             }
 
-            // Fullscreen Background Gradient (soft blue to soft cream pastel)
-            var bgGo = new GameObject("BackgroundGradient", typeof(RectTransform), typeof(Image));
-            var bgRect = bgGo.GetComponent<RectTransform>();
-            bgRect.SetParent(panel, false);
-            bgRect.anchorMin = Vector2.zero;
-            bgRect.anchorMax = Vector2.one;
-            bgRect.offsetMin = Vector2.zero;
-            bgRect.offsetMax = Vector2.zero;
-            var bgImage = bgGo.GetComponent<Image>();
-            bgImage.sprite = CreateVerticalGradientSprite(new Color(0.72f, 0.85f, 0.97f, 0.12f), new Color(1.0f, 0.96f, 0.90f, 0.12f));
-            bgImage.raycastTarget = false;
-            bgGo.transform.SetAsFirstSibling();
-
-            targetNumberText = CreateTopText(panel, "TargetNumber", "Chọn nhóm có con vật", 36, 28f, new Vector2(920f, 72f));
+            CreateTopHeaderPanel(panel, "QuestionHeaderPanel", 24f, new Vector2(700f, 88f));
+            targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("quantity_choose_group", "?"), 34, 30f, new Vector2(660f, 78f));
             progressText = CreateTopLeftText(panel, "Progress", "", 24, new Vector2(40f, -40f), new Vector2(300f, 60f));
 
             feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0, RuntimeFeedbackPanelBottomY), true);
@@ -211,7 +235,8 @@ namespace Features.Activities.QuantityMatch
             hintButton = CreateSizedBottomButton(panel, "HintButton", "💡", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(140f, 140f), () => OnHintRequested?.Invoke(), 72);
             
             // Small top-right Cancel button (100x100px, soft-red, icon cross) - enlarged for kids
-            cancelButton = CreateSizedTopRightButton(panel, "CancelButton", "✕", new Vector2(-40f, -40f), new Vector2(100f, 100f), OnCancelClicked, 48);
+            cancelButton = CreateSizedTopRightButton(panel, "CancelButton", RuntimeHomeButtonLabel, RuntimeHomeButtonTopRight, RuntimeTopNavButtonSize, OnCancelClicked, RuntimeTopNavButtonFontSize);
+            listenButton = CreateSizedTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), RuntimeListenButtonTopRight, RuntimeTopNavButtonSize, OnListenClicked, RuntimeTopNavButtonFontSize);
 
             // Centered bottom buttons for transitioning (hidden by default)
             nextRoundButton = CreateSizedBottomButton(panel, "NextButton", "▶ Tiếp tục", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(240f, 100f), OnNextRoundClicked, 28);
@@ -221,6 +246,7 @@ namespace Features.Activities.QuantityMatch
 
             CreateNumberInputUi(panel);
             RegisterNumberInputButtons();
+            NormalizeTopNavigationButtons();
             SetNumberInputPanelActive(false);
         }
 
@@ -257,6 +283,7 @@ namespace Features.Activities.QuantityMatch
             currentNumberOfGroups = numberOfGroups;
             currentUsesNumberInputMode = useNumberInputMode;
             activityFinished = false;
+            EnsureRuntimeGroupButtons(numberOfGroups);
 
             UpdateTargetNumber(targetNumber);
             HideFeedback();
@@ -264,12 +291,13 @@ namespace Features.Activities.QuantityMatch
             if (currentUsesNumberInputMode)
             {
                 SetRuntimeGroupButtonsActive(false);
+                EnsureFriendlyNumberInputUi();
                 ResetNumberInput();
                 SetNumberInputPanelActive(true);
             }
             else
             {
-                SetRuntimeGroupButtonsActive(true);
+                SetRuntimeGroupButtonsActive(!UseSimulationCircleSelectionMode());
                 SetNumberInputPanelActive(false);
             }
 
@@ -285,7 +313,12 @@ namespace Features.Activities.QuantityMatch
 
             if (hintButton != null)
             {
-                hintButton.gameObject.SetActive(true);
+                hintButton.gameObject.SetActive(!currentUsesNumberInputMode);
+            }
+
+            if (listenButton != null)
+            {
+                listenButton.gameObject.SetActive(true);
             }
 
             if (cancelButton != null)
@@ -304,22 +337,14 @@ namespace Features.Activities.QuantityMatch
             if (targetNumberText != null)
             {
                 targetNumberText.text = currentUsesNumberInputMode
-                    ? "Có bao nhiêu con vật?"
-                    : $"Chọn nhóm có đúng {targetNumber} con";
+                    ? NumberQuestionTitle
+                    : SimpleLocalization.Get("quantity_choose_group", targetNumber);
             }
 
-            // Play voice instruction for kids
-            if (Core.Support.AudioManager.SimpleAudioManager.Instance != null)
-            {
-                if (currentUsesNumberInputMode)
-                {
-                    Core.Support.AudioManager.SimpleAudioManager.Instance.PlaySound("co_bao_nhieu_con_vat");
-                }
-                else
-                {
-                    Core.Support.AudioManager.SimpleAudioManager.Instance.PlaySound($"chon_{targetNumber}");
-                }
-            }
+            SimpleAudioManager.EnsureExists().PlayInstruction(currentUsesNumberInputMode
+                ? "instruction_quantity_count"
+                : "instruction_quantity_match");
+            SimpleAudioManager.Instance.PlayNumber(targetNumber);
         }
 
         /// <summary>
@@ -358,8 +383,11 @@ namespace Features.Activities.QuantityMatch
             SetRuntimeGroupButtonsActive(false);
             SetNumberInputPanelActive(false);
             SetRunningActionButtonsActive(false);
-
-            if (presenter != null && presenter.HasMoreRounds())
+            if (nextRoundButton != null)
+            {
+                ShowContinueButton();
+            }
+            else if (presenter != null && presenter.HasMoreRounds())
             {
                 CancelInvoke(nameof(AutoContinueToNextRound));
                 Invoke(nameof(AutoContinueToNextRound), 2.0f);
@@ -385,6 +413,23 @@ namespace Features.Activities.QuantityMatch
             }
         }
 
+        private void ShowContinueButton()
+        {
+            if (nextRoundButton == null)
+            {
+                return;
+            }
+
+            string label = presenter != null && presenter.HasMoreRounds()
+                ? "Tiep tuc"
+                : "Hoc tiep";
+            SetButtonLabel(nextRoundButton, label);
+            var rect = nextRoundButton.GetComponent<RectTransform>();
+            rect.anchoredPosition = new Vector2(0f, RuntimeActionButtonBottomY);
+            rect.sizeDelta = new Vector2(240f, 100f);
+            nextRoundButton.gameObject.SetActive(true);
+        }
+
         /// <summary>
         /// Show incorrect feedback.
         /// </summary>
@@ -398,6 +443,8 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         public void ShowIncorrectFeedback(string message)
         {
+            DisableInput();
+
             if (feedbackOverlay != null)
             {
                 feedbackOverlay.ShowIncorrect(message);
@@ -529,9 +576,20 @@ namespace Features.Activities.QuantityMatch
         /// </summary>
         public void HighlightGroup(int groupIndex, bool highlight)
         {
-            // TODO: Implement visual highlighting of AR groups
-            // This would involve communicating with AR service to highlight
+            // Group highlight is applied by the AR interaction service when objects are registered.
             Debug.Log($"[QuantityMatchView] Highlight group {groupIndex}: {highlight}");
+        }
+
+        public void ShowCountingFeedback(int groupIndex, int countedSoFar, int groupObjectCount)
+        {
+            int displayGroup = groupIndex + 1;
+            string message = groupObjectCount > 0
+                ? $"Nhom {displayGroup}: dem {countedSoFar}/{groupObjectCount}"
+                : $"Nhom {displayGroup}: dem {countedSoFar}";
+
+            ShowFeedback(message, new Color(0.1f, 0.85f, 1f));
+            CancelInvoke(nameof(HideFeedback));
+            Invoke(nameof(HideFeedback), 1.0f);
         }
 
         /// <summary>
@@ -649,7 +707,13 @@ namespace Features.Activities.QuantityMatch
         private void OnCancelClicked()
         {
             OnCancelRequested?.Invoke();
-            LoadSceneIfAvailable(activitySelectSceneName);
+            LoadSceneIfAvailable(homeSceneName);
+        }
+
+        private void OnListenClicked()
+        {
+            SimpleAudioManager.EnsureExists().ReplayLastInstruction();
+            SimpleAudioManager.Instance.PlayNumber(currentTargetNumber);
         }
 
         /// <summary>
@@ -672,9 +736,81 @@ namespace Features.Activities.QuantityMatch
             }
         }
 
+        private void CacheRuntimeUiRoot()
+        {
+            if (runtimeUiRoot != null)
+            {
+                return;
+            }
+
+            if (targetNumberText != null && targetNumberText.transform.parent != null)
+            {
+                runtimeUiRoot = targetNumberText.transform.parent;
+                return;
+            }
+
+            if (numberInputPanel != null && numberInputPanel.transform.parent != null)
+            {
+                runtimeUiRoot = numberInputPanel.transform.parent;
+                return;
+            }
+
+            Canvas canvas = GetComponentInChildren<Canvas>(true);
+            if (canvas != null)
+            {
+                runtimeUiRoot = canvas.transform;
+            }
+        }
+
+        private Transform ResolveRuntimeUiRoot()
+        {
+            CacheRuntimeUiRoot();
+            return runtimeUiRoot;
+        }
+
         private void EnsureRuntimeGroupButtons(int numberOfGroups)
         {
-            // Stubbed out: Group buttons are removed to allow direct touch interaction with animal groups
+            if (runtimeUiRoot == null || numberOfGroups <= 0)
+            {
+                return;
+            }
+
+            if (runtimeGroupButtons != null && runtimeGroupButtons.Length == numberOfGroups)
+            {
+                return;
+            }
+
+            if (runtimeGroupButtons != null)
+            {
+                foreach (Button button in runtimeGroupButtons)
+                {
+                    if (button != null)
+                    {
+                        Destroy(button.gameObject);
+                    }
+                }
+            }
+
+            runtimeGroupButtons = new Button[numberOfGroups];
+            float rowWidth = RuntimeButtonSize.x * numberOfGroups + RuntimeButtonGap * (numberOfGroups - 1);
+            float startX = -rowWidth * 0.5f + RuntimeButtonSize.x * 0.5f;
+
+            for (int i = 0; i < numberOfGroups; i++)
+            {
+                int groupIndex = i;
+                float x = startX + i * (RuntimeButtonSize.x + RuntimeButtonGap);
+                Button button = CreateSizedBottomButton(
+                    runtimeUiRoot,
+                    $"GroupButton_{i + 1}",
+                    $"Nhom {i + 1}",
+                    new Vector2(x, RuntimeGroupButtonBottomY),
+                    RuntimeButtonSize,
+                    () => OnGroupButtonClicked(groupIndex),
+                    22);
+
+                button.gameObject.SetActive(false);
+                runtimeGroupButtons[i] = button;
+            }
         }
 
         private void SetRuntimeGroupButtonsActive(bool active)
@@ -739,29 +875,41 @@ namespace Features.Activities.QuantityMatch
                 hintButton.gameObject.SetActive(active);
             }
 
+            if (listenButton != null)
+            {
+                listenButton.gameObject.SetActive(active);
+            }
+
             if (cancelButton != null)
             {
-                cancelButton.gameObject.SetActive(active);
+                cancelButton.gameObject.SetActive(true);
+                cancelButton.interactable = true;
             }
+        }
+
+        private static bool UseSimulationCircleSelectionMode()
+        {
+            return Application.isEditor && !Application.isMobilePlatform;
         }
 
         private void RegisterNumberInputButtons()
         {
-            if (numberInputButtonsRegistered)
-            {
-                return;
-            }
-
             bool registeredAny = false;
 
             if (digitButtons != null)
             {
                 for (int i = 0; i < digitButtons.Length; i++)
                 {
-                    int digit = i;
+                    int answer = NumberChoiceMin + i;
+                    if (answer > NumberChoiceMax)
+                    {
+                        continue;
+                    }
+
                     if (digitButtons[i] != null)
                     {
-                        digitButtons[i].onClick.AddListener(() => AppendNumberDigit(digit));
+                        digitButtons[i].onClick.RemoveAllListeners();
+                        digitButtons[i].onClick.AddListener(() => ChooseNumberAnswer(answer));
                         registeredAny = true;
                     }
                 }
@@ -769,13 +917,29 @@ namespace Features.Activities.QuantityMatch
 
             if (clearNumberButton != null)
             {
+                clearNumberButton.onClick.RemoveAllListeners();
                 clearNumberButton.onClick.AddListener(ResetNumberInput);
                 registeredAny = true;
             }
 
             if (submitNumberButton != null)
             {
+                submitNumberButton.onClick.RemoveAllListeners();
                 submitNumberButton.onClick.AddListener(SubmitNumberInput);
+                registeredAny = true;
+            }
+
+            if (decrementNumberButton != null)
+            {
+                decrementNumberButton.onClick.RemoveAllListeners();
+                decrementNumberButton.onClick.AddListener(() => AdjustNumberInput(-1));
+                registeredAny = true;
+            }
+
+            if (incrementNumberButton != null)
+            {
+                incrementNumberButton.onClick.RemoveAllListeners();
+                incrementNumberButton.onClick.AddListener(() => AdjustNumberInput(1));
                 registeredAny = true;
             }
 
@@ -806,6 +970,36 @@ namespace Features.Activities.QuantityMatch
             UpdateNumberInputText();
         }
 
+        private void ChooseNumberAnswer(int answer)
+        {
+            if (!currentUsesNumberInputMode)
+            {
+                return;
+            }
+
+            currentNumberInput = Mathf.Clamp(answer, NumberChoiceMin, NumberChoiceMax).ToString();
+            UpdateNumberInputText();
+            SubmitNumberInput();
+        }
+
+        private void AdjustNumberInput(int delta)
+        {
+            if (!currentUsesNumberInputMode || delta == 0)
+            {
+                return;
+            }
+
+            int value = 0;
+            if (!string.IsNullOrEmpty(currentNumberInput))
+            {
+                int.TryParse(currentNumberInput, out value);
+            }
+
+            value = Mathf.Clamp(value + delta, NumberChoiceMin, NumberChoiceMax);
+            currentNumberInput = value.ToString();
+            UpdateNumberInputText();
+        }
+
         private void ResetNumberInput()
         {
             currentNumberInput = string.Empty;
@@ -829,41 +1023,96 @@ namespace Features.Activities.QuantityMatch
         {
             if (numberInputText != null)
             {
-                numberInputText.text = string.IsNullOrEmpty(currentNumberInput) ? "_" : currentNumberInput;
+                numberInputText.text = string.IsNullOrEmpty(currentNumberInput) ? NumberInputEmptyValue : currentNumberInput;
             }
+
+            UpdateNumberInputActionButtonStates();
         }
 
         private void SetNumberInputPanelActive(bool active)
         {
+            if (active && currentUsesNumberInputMode)
+            {
+                EnsureFriendlyNumberInputUi();
+            }
+
+            if (numberInputOverlayCanvas != null)
+            {
+                bool panelUsesOverlay = numberInputPanel != null
+                    && numberInputPanel.transform.IsChildOf(numberInputOverlayCanvas.transform);
+                numberInputOverlayCanvas.gameObject.SetActive(active && panelUsesOverlay);
+            }
+
             if (numberInputPanel != null)
             {
                 numberInputPanel.SetActive(active);
+                if (active)
+                {
+                    numberInputPanel.transform.SetAsLastSibling();
+                }
             }
 
             SetNumberInputInteractable(active);
+
+            if (active)
+            {
+                Canvas.ForceUpdateCanvases();
+            }
         }
 
         private void SetNumberInputInteractable(bool interactable)
         {
+            numberInputControlsInteractable = interactable;
+
             if (digitButtons != null)
             {
                 foreach (Button button in digitButtons)
                 {
                     if (button != null)
                     {
+                        button.gameObject.SetActive(currentUsesNumberInputMode || interactable);
+                        button.enabled = true;
                         button.interactable = interactable;
+                        Image image = button.GetComponent<Image>();
+                        if (image != null)
+                        {
+                            image.raycastTarget = true;
+                        }
                     }
                 }
             }
 
+            if (decrementNumberButton != null)
+            {
+                decrementNumberButton.gameObject.SetActive(false);
+                decrementNumberButton.enabled = true;
+                decrementNumberButton.interactable = interactable;
+            }
+
+            if (incrementNumberButton != null)
+            {
+                incrementNumberButton.gameObject.SetActive(false);
+                incrementNumberButton.enabled = true;
+                incrementNumberButton.interactable = interactable;
+            }
+
+            UpdateNumberInputActionButtonStates();
+        }
+
+        private void UpdateNumberInputActionButtonStates()
+        {
+            bool hasValue = !string.IsNullOrEmpty(currentNumberInput);
+
             if (clearNumberButton != null)
             {
-                clearNumberButton.interactable = interactable;
+                clearNumberButton.gameObject.SetActive(false);
+                clearNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
 
             if (submitNumberButton != null)
             {
-                submitNumberButton.interactable = interactable;
+                submitNumberButton.gameObject.SetActive(false);
+                submitNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
         }
 
@@ -889,13 +1138,305 @@ namespace Features.Activities.QuantityMatch
                 float y = row == 0 ? 10f : -80f;
                 digitButtons[i] = CreateSizedButton(
                     numberInputPanel.transform,
-                    $"DigitButton_{i}",
-                    i.ToString(),
+                    $"DigitButton_{NumberChoiceMin + i}",
+                    (NumberChoiceMin + i).ToString(),
                     new Vector2(x, y),
                     RuntimeDigitButtonSize,
                     null,
                     36);
             }
+        }
+
+        private void EnsureFriendlyNumberInputUi()
+        {
+            Transform parent = ResolveNumberInputOverlayParent();
+            bool needsRuntimePanel = numberInputPanel == null
+                || numberInputPanel.transform.parent != parent
+                || numberInputPanel.name != "RuntimeNumberKeypadPanel";
+
+            if (needsRuntimePanel)
+            {
+                if (numberInputPanel != null && numberInputPanel.name != "RuntimeNumberKeypadPanel")
+                {
+                    numberInputPanel.SetActive(false);
+                }
+
+                Transform existingPanel = parent != null ? parent.Find("RuntimeNumberKeypadPanel") : null;
+                numberInputPanel = existingPanel != null
+                    ? existingPanel.gameObject
+                    : CreateSubPanel(parent, "RuntimeNumberKeypadPanel", new Vector2(0f, RuntimeNumberInputPanelBottomY), true);
+            }
+
+            numberInputPanel.SetActive(true);
+            ConfigureFriendlyNumberInputPanel();
+            CreateFriendlyNumberInputControls();
+            RegisterNumberInputButtons();
+            UpdateNumberInputText();
+            numberInputPanel.transform.SetAsLastSibling();
+        }
+
+        private Transform ResolveNumberInputOverlayParent()
+        {
+            Transform root = ResolveRuntimeUiRoot();
+            if (root != null)
+            {
+                if (numberInputOverlayCanvas != null)
+                {
+                    numberInputOverlayCanvas.gameObject.SetActive(false);
+                }
+
+                return root;
+            }
+
+            if (numberInputOverlayCanvas == null)
+            {
+                Transform existingCanvas = transform.Find("QuantityMatchNumberInputCanvas");
+                numberInputOverlayCanvas = existingCanvas != null
+                    ? existingCanvas.GetComponent<Canvas>()
+                    : null;
+            }
+
+            if (numberInputOverlayCanvas == null)
+            {
+                numberInputOverlayCanvas = CreateStandaloneRuntimeCanvas(transform, "QuantityMatchNumberInputCanvas", 1000);
+            }
+
+            numberInputOverlayCanvas.gameObject.SetActive(true);
+
+            Transform existingPanel = numberInputOverlayCanvas.transform.Find("NumberInputOverlayRoot");
+            if (existingPanel != null)
+            {
+                existingPanel.gameObject.SetActive(true);
+                return existingPanel;
+            }
+
+            RectTransform overlayRoot = CreateUiPanel(numberInputOverlayCanvas.transform, "NumberInputOverlayRoot");
+            overlayRoot.gameObject.SetActive(true);
+            return overlayRoot;
+        }
+
+        private void ConfigureFriendlyNumberInputPanel()
+        {
+            if (numberInputPanel == null)
+            {
+                return;
+            }
+
+            RectTransform panelRect = numberInputPanel.GetComponent<RectTransform>();
+            if (panelRect != null)
+            {
+                panelRect.anchorMin = new Vector2(0.5f, 0f);
+                panelRect.anchorMax = new Vector2(0.5f, 0f);
+                panelRect.pivot = new Vector2(0.5f, 0.5f);
+                panelRect.sizeDelta = RuntimeNumberInputPanelSize;
+                panelRect.anchoredPosition = new Vector2(0f, RuntimeNumberInputPanelBottomY);
+            }
+
+            Image image = numberInputPanel.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = new Color(0.03f, 0.05f, 0.08f, 0.48f);
+                image.raycastTarget = false;
+            }
+        }
+
+        private void CreateFriendlyNumberInputControls()
+        {
+            if (numberInputPanel == null)
+            {
+                return;
+            }
+
+            Transform panel = numberInputPanel.transform;
+            numberInputPromptText = EnsurePanelChildText(panel, numberInputPromptText, "NumberInputPrompt", NumberInputPrompt, 30, new Vector2(0f, 112f), new Vector2(800f, 48f), Color.white);
+            numberInputText = EnsureNumberInputDisplay(panel, numberInputText, "AnswerText", NumberInputEmptyValue, 52, new Vector2(0f, 66f), new Vector2(210f, 70f));
+            numberInputText.gameObject.SetActive(false);
+
+            decrementNumberButton = EnsureNumberInputButton(panel, decrementNumberButton, "DecreaseNumberButton", "-", new Vector2(-180f, 66f), new Vector2(82f, 70f), 40, new Color(0.2f, 0.5f, 0.9f, 1f), Color.white);
+            incrementNumberButton = EnsureNumberInputButton(panel, incrementNumberButton, "IncreaseNumberButton", "+", new Vector2(180f, 66f), new Vector2(82f, 70f), 40, new Color(0.2f, 0.5f, 0.9f, 1f), Color.white);
+            decrementNumberButton.gameObject.SetActive(false);
+            incrementNumberButton.gameObject.SetActive(false);
+
+            if (digitButtons == null || digitButtons.Length != 10)
+            {
+                digitButtons = new Button[10];
+            }
+
+            float rowWidth = RuntimeDigitButtonSize.x * 5f + RuntimeDigitButtonGap * 4f;
+            float startX = -rowWidth * 0.5f + RuntimeDigitButtonSize.x * 0.5f;
+            for (int i = 0; i < digitButtons.Length; i++)
+            {
+                int answer = NumberChoiceMin + i;
+                int row = i < 5 ? 0 : 1;
+                int col = i % 5;
+                float x = startX + col * (RuntimeDigitButtonSize.x + RuntimeDigitButtonGap);
+                float y = row == 0 ? 36f : -54f;
+                digitButtons[i] = EnsureNumberInputButton(
+                    panel,
+                    digitButtons[i],
+                    $"DigitButton_{answer}",
+                    answer.ToString(),
+                    new Vector2(x, y),
+                    RuntimeDigitButtonSize,
+                    34,
+                    new Color(0.96f, 0.98f, 1f, 1f),
+                    new Color(0.05f, 0.08f, 0.12f, 1f));
+            }
+
+            clearNumberButton = EnsureNumberInputButton(panel, clearNumberButton, "ClearNumberButton", NumberInputClearLabel, new Vector2(-155f, -154f), new Vector2(210f, 66f), 26, new Color(0.45f, 0.5f, 0.56f, 1f), Color.white);
+            submitNumberButton = EnsureNumberInputButton(panel, submitNumberButton, "SubmitNumberButton", NumberInputSubmitLabel, new Vector2(155f, -154f), new Vector2(260f, 70f), 28, new Color(0.16f, 0.65f, 0.34f, 1f), Color.white);
+            clearNumberButton.gameObject.SetActive(false);
+            submitNumberButton.gameObject.SetActive(false);
+        }
+
+        private static Text EnsurePanelChildText(Transform parent, Text current, string name, string content, int fontSize, Vector2 anchoredPosition, Vector2 size, Color color)
+        {
+            Text text = current;
+            if (text == null)
+            {
+                Transform existing = parent.Find(name);
+                text = existing != null ? existing.GetComponent<Text>() : null;
+            }
+
+            if (text == null)
+            {
+                var go = new GameObject(name, typeof(RectTransform), typeof(Text));
+                text = go.GetComponent<Text>();
+            }
+
+            text.gameObject.name = name;
+            text.gameObject.SetActive(true);
+            text.enabled = true;
+            ConfigureCenteredRect(text.GetComponent<RectTransform>(), parent, anchoredPosition, size);
+            text.text = content;
+            text.fontSize = fontSize;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 18;
+            text.resizeTextMaxSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = color;
+            text.raycastTarget = false;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
+            return text;
+        }
+
+        private static Text EnsureNumberInputDisplay(Transform parent, Text current, string name, string content, int fontSize, Vector2 anchoredPosition, Vector2 size)
+        {
+            Text text = current;
+            if (text == null)
+            {
+                Transform existing = parent.Find(name);
+                text = existing != null ? existing.GetComponent<Text>() : null;
+            }
+
+            if (text == null)
+            {
+                var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Text));
+                text = go.GetComponent<Text>();
+            }
+
+            text.gameObject.name = name;
+            text.gameObject.SetActive(true);
+            text.enabled = true;
+            ConfigureCenteredRect(text.GetComponent<RectTransform>(), parent, anchoredPosition, size);
+            Image image = text.GetComponent<Image>();
+            if (image == null)
+            {
+                image = text.gameObject.AddComponent<Image>();
+            }
+
+            image.color = new Color(1f, 1f, 1f, 0.98f);
+            image.raycastTarget = false;
+
+            text.text = content;
+            text.fontSize = fontSize;
+            text.resizeTextForBestFit = true;
+            text.resizeTextMinSize = 30;
+            text.resizeTextMaxSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.color = new Color(0.05f, 0.08f, 0.12f, 1f);
+            text.raycastTarget = false;
+            return text;
+        }
+
+        private static Button EnsureNumberInputButton(Transform parent, Button current, string name, string label, Vector2 anchoredPosition, Vector2 size, int fontSize, Color backgroundColor, Color textColor)
+        {
+            Button button = current;
+            if (button == null)
+            {
+                Transform existing = parent.Find(name);
+                button = existing != null ? existing.GetComponent<Button>() : null;
+            }
+
+            if (button == null)
+            {
+                var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+                button = go.GetComponent<Button>();
+            }
+
+            button.gameObject.name = name;
+            button.gameObject.SetActive(true);
+            button.enabled = true;
+            ConfigureCenteredRect(button.GetComponent<RectTransform>(), parent, anchoredPosition, size);
+
+            Image image = button.GetComponent<Image>();
+            if (image == null)
+            {
+                image = button.gameObject.AddComponent<Image>();
+            }
+
+            image.color = backgroundColor;
+            image.raycastTarget = true;
+            button.targetGraphic = image;
+            button.interactable = true;
+
+            Text labelText = button.GetComponentInChildren<Text>();
+            if (labelText == null)
+            {
+                labelText = CreateButtonLabel(button.transform, label);
+            }
+
+            labelText.gameObject.SetActive(true);
+            labelText.enabled = true;
+            labelText.gameObject.name = "Label";
+            RectTransform labelRect = labelText.GetComponent<RectTransform>();
+            if (labelRect != null)
+            {
+                labelRect.SetParent(button.transform, false);
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = new Vector2(8f, 4f);
+                labelRect.offsetMax = new Vector2(-8f, -4f);
+            }
+
+            labelText.text = label;
+            labelText.fontSize = fontSize;
+            labelText.resizeTextForBestFit = true;
+            labelText.resizeTextMinSize = 16;
+            labelText.resizeTextMaxSize = fontSize;
+            labelText.color = textColor;
+            labelText.alignment = TextAnchor.MiddleCenter;
+            labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            labelText.raycastTarget = false;
+            return button;
+        }
+
+        private static void ConfigureCenteredRect(RectTransform rect, Transform parent, Vector2 anchoredPosition, Vector2 size)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = anchoredPosition;
         }
 
         private static RectTransform CreateUiPanel(Transform parent, string name)
@@ -910,6 +1451,32 @@ namespace Features.Activities.QuantityMatch
             return rect;
         }
 
+        private static Canvas CreateStandaloneRuntimeCanvas(Transform parent, string name = "QuantityMatchCanvas", int sortingOrder = 0)
+        {
+            var canvasGo = new GameObject(name, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvasGo.transform.SetParent(parent, false);
+
+            var canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.overrideSorting = sortingOrder != 0;
+            canvas.sortingOrder = sortingOrder;
+
+            var scaler = canvasGo.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1080f, 1920f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
+
+            if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            {
+                var eventSystem = new GameObject("EventSystem");
+                eventSystem.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                eventSystem.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            }
+
+            return canvas;
+        }
+
         private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition, bool anchorToBottom = false)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image));
@@ -921,10 +1488,10 @@ namespace Features.Activities.QuantityMatch
                 rect.anchorMax = new Vector2(0.5f, 0f);
             }
 
-            rect.sizeDelta = new Vector2(720, 64);
+            rect.sizeDelta = new Vector2(660, 58);
             rect.anchoredPosition = anchoredPosition;
             var image = go.GetComponent<Image>();
-            image.color = new Color(0f, 0f, 0f, 0.5f);
+            image.color = new Color(0.02f, 0.03f, 0.04f, 0.32f);
             image.raycastTarget = false;
             return go;
         }
@@ -962,6 +1529,23 @@ namespace Features.Activities.QuantityMatch
             rect.sizeDelta = size;
             rect.anchoredPosition = new Vector2(0f, -topOffset);
             return text;
+        }
+
+        private static GameObject CreateTopHeaderPanel(Transform parent, string name, float topOffset, Vector2 size)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = new Vector2(0f, -topOffset);
+
+            var image = go.GetComponent<Image>();
+            image.color = new Color(0.03f, 0.05f, 0.08f, 0.58f);
+            image.raycastTarget = false;
+            return go;
         }
 
         private static Text CreatePanelText(Transform parent, string name, string content, int fontSize)
@@ -1099,10 +1683,10 @@ namespace Features.Activities.QuantityMatch
         {
             if (presenter != null && presenter.HasMoreRounds())
             {
-                return "Next";
+                return SimpleLocalization.Get("btn_next");
             }
 
-            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Next Activity" : "Finish";
+            return ActivityFlowNavigator.TryGetNextActivityId(activityId, out _) ? "Bai tiep" : "Hoan thanh";
         }
 
         private static void LoadSceneIfAvailable(string sceneName)
@@ -1161,6 +1745,58 @@ namespace Features.Activities.QuantityMatch
             return Sprite.Create(texture, new Rect(0, 0, 2, 128), new Vector2(0.5f, 0.5f));
         }
 
+        private void NormalizeTopNavigationButtons()
+        {
+            ConfigureTopRightNavigationButton(
+                cancelButton,
+                RuntimeHomeButtonLabel,
+                RuntimeHomeButtonTopRight,
+                RuntimeTopNavButtonSize,
+                new Color(0.85f, 0.35f, 0.35f, 0.9f));
+
+            ConfigureTopRightNavigationButton(
+                listenButton,
+                SimpleLocalization.Get("btn_listen"),
+                RuntimeListenButtonTopRight,
+                RuntimeTopNavButtonSize,
+                new Color(0.2f, 0.5f, 0.9f, 0.9f));
+        }
+
+        private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            RectTransform rect = button.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(1f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(1f, 1f);
+                rect.sizeDelta = size;
+                rect.anchoredPosition = anchoredPosition;
+            }
+
+            Image image = button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = color;
+            }
+
+            Text text = button.GetComponentInChildren<Text>();
+            if (text != null)
+            {
+                text.text = label;
+                text.fontSize = RuntimeTopNavButtonFontSize;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 12;
+                text.resizeTextMaxSize = RuntimeTopNavButtonFontSize;
+                text.alignment = TextAnchor.MiddleCenter;
+            }
+        }
+
         private static Button CreateSizedTopRightButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick, int fontSize)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
@@ -1171,7 +1807,9 @@ namespace Features.Activities.QuantityMatch
             rect.pivot = new Vector2(1f, 1f);
             rect.sizeDelta = size;
             rect.anchoredPosition = anchoredPosition;
-            go.GetComponent<Image>().color = new Color(0.85f, 0.35f, 0.35f, 0.8f);
+            go.GetComponent<Image>().color = name.Contains("Listen")
+                ? new Color(0.2f, 0.5f, 0.9f, 0.9f)
+                : new Color(0.85f, 0.35f, 0.35f, 0.85f);
 
             var button = go.GetComponent<Button>();
             if (onClick != null)

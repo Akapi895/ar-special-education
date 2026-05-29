@@ -66,6 +66,30 @@ namespace Features.Activities.NumberLineJump
         public string CharacterPrefabName => characterPrefabName;
         public string TilePrefabName => tilePrefabName;
 
+        public void Configure(
+            int numberLineMin,
+            int numberLineMax,
+            int startNumber,
+            int targetNumber,
+            JumpDirection jumpDirection,
+            int maxJumpsAllowed = 10,
+            bool showEquationDuringJumps = true,
+            List<ActivityHint> customHints = null,
+            string characterPrefabName = "",
+            string tilePrefabName = "")
+        {
+            this.numberLineMin = numberLineMin;
+            this.numberLineMax = numberLineMax;
+            this.startNumber = startNumber;
+            this.targetNumber = targetNumber;
+            this.jumpDirection = jumpDirection;
+            this.maxJumpsAllowed = maxJumpsAllowed;
+            this.showEquationDuringJumps = showEquationDuringJumps;
+            this.customHints = customHints ?? new List<ActivityHint>();
+            this.characterPrefabName = characterPrefabName;
+            this.tilePrefabName = tilePrefabName;
+        }
+
         /// <summary>
         /// Validate the question data.
         /// </summary>

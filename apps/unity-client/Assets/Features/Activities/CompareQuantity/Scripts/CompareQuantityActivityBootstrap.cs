@@ -27,6 +27,24 @@ namespace Features.Activities.CompareQuantity
 
         private bool started;
 
+        public void Configure(CompareQuantityPresenter presenter, CompareQuantityView view, CompareQuantityConfig config,
+            bool autoStartWhenReady = false)
+        {
+            this.presenter = presenter;
+            this.view = view;
+            this.config = config;
+            this.autoStartWhenReady = autoStartWhenReady;
+        }
+
+        public void SetAutoStartWhenReady(bool value)
+        {
+            autoStartWhenReady = value;
+            if (!value)
+            {
+                CancelInvoke(nameof(TryStartActivity));
+            }
+        }
+
         private void Awake()
         {
             if (presenter == null)
@@ -52,7 +70,7 @@ namespace Features.Activities.CompareQuantity
 
         private void Start()
         {
-            if (autoStartWhenReady)
+            if (autoStartWhenReady && Project.App.GameplayActivityRouter.Instance == null)
             {
                 Invoke(nameof(TryStartActivity), startDelaySeconds);
             }
@@ -83,9 +101,9 @@ namespace Features.Activities.CompareQuantity
                 return;
             }
 
-            if (!bootstrap.Placement.IsPlacementAvailable)
+            if (!bootstrap.Placement.IsPlacementAvailable || !bootstrap.Placement.HasLearningArea)
             {
-                Debug.Log("[CompareQuantityActivityBootstrap] Waiting for placement...");
+                Debug.Log("[CompareQuantityActivityBootstrap] Waiting for learning area placement...");
                 Invoke(nameof(TryStartActivity), 0.5f);
                 return;
             }

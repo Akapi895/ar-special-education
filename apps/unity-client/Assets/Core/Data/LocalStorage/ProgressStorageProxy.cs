@@ -132,6 +132,19 @@ namespace Core.Data.LocalStorage
             }
         }
 
+        public void SaveTechnicalIssue(
+            TechnicalIssueType issueType,
+            string activityId = null,
+            string lessonId = null,
+            string note = null,
+            string source = null)
+        {
+            if (autoSave)
+            {
+                Instance.SaveTechnicalIssue(issueType, activityId, lessonId, note, source);
+            }
+        }
+
         /// <summary>
         /// Get statistics for the current activity.
         /// </summary>
@@ -146,6 +159,41 @@ namespace Core.Data.LocalStorage
         public ActivityStatistics GetActivityStatistics(string activityId)
         {
             return Instance.GetActivityStatistics(activityId);
+        }
+
+        public ActivityStatistics GetLessonStatistics(string lessonId)
+        {
+            return Instance.GetLessonStatistics(lessonId);
+        }
+
+        public SkillMastery GetWeakestSkillMastery()
+        {
+            return Instance.GetWeakestSkillMastery();
+        }
+
+        public LearnerProfile GetActiveLearnerProfile()
+        {
+            return Instance.GetActiveLearnerProfile();
+        }
+
+        public LearnerProfile CreateOrUpdateLearnerProfile(string displayName, int ageYears = 0, string grade = null)
+        {
+            return Instance.CreateOrUpdateLearnerProfile(displayName, ageYears, grade);
+        }
+
+        public bool SetActiveLearnerProfile(string learnerId)
+        {
+            return Instance.SetActiveLearnerProfile(learnerId);
+        }
+
+        public AdaptiveLearningRecommendation GetAdaptiveRecommendation()
+        {
+            return Instance.GetAdaptiveRecommendation();
+        }
+
+        public ParentTeacherSummary GetParentTeacherSummary()
+        {
+            return Instance.GetParentTeacherSummary();
         }
 
         /// <summary>

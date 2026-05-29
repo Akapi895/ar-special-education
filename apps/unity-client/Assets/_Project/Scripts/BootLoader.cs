@@ -29,11 +29,16 @@ namespace Project.App
 
         private void InitializeServices()
         {
+            Core.Support.Performance.RuntimePerformanceSettings.Apply();
+
             // Initialize progress storage proxy
             Core.Data.LocalStorage.ProgressStorageProxy.Initialize();
 
             // Initialize feedback service proxy
             Core.Support.FeedbackSystem.FeedbackServiceProxy.Initialize();
+
+            // Ensure audio preferences and replay support exist before scenes request sounds.
+            Core.Support.AudioManager.SimpleAudioManager.EnsureExists();
 
             Debug.Log("[BootLoader] Services initialized.");
         }

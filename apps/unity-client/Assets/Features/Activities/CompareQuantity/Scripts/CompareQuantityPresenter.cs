@@ -4,6 +4,7 @@ using Core.Learning.Utils;
 using Features.Activities;
 using Features.Activities.CompareQuantity;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Features.Activities.CompareQuantity
@@ -28,6 +29,11 @@ namespace Features.Activities.CompareQuantity
         // Spawned objects tracking
         private GameObject leftGroup;
         private GameObject rightGroup;
+        private readonly List<GameObject> pairingVisuals = new List<GameObject>();
+        private Material pairLineMaterial;
+        private Material surplusMarkerMaterial;
+        [SerializeField] private bool showPairingGuides;
+        private int currentRoundNumber;
 
         // Events specific to Compare Quantity
         public event Action OnGroupsSpawned;
@@ -74,6 +80,7 @@ namespace Features.Activities.CompareQuantity
             }
 
             bool isEquality = currentQuestion.IsEqualityQuestion();
+            currentRoundNumber = roundNumber;
             Debug.Log($"[CompareQuantityPresenter] Loading round {roundNumber}: " +
                      $"Left={currentQuestion.LeftGroupCount}, Right={currentQuestion.RightGroupCount}, " +
                      $"Correct={currentQuestion.CorrectAnswer}, IsEquality={isEquality}");
@@ -103,18 +110,18 @@ namespace Features.Activities.CompareQuantity
             // Calculate positions for side-by-side arrangement
             Vector3[] positions = ARGroupSpawnUtility.CalculateGroupPositions(
                 numberOfGroups: 2,
-                centerPosition: placementService.CurrentPlacementPosition,
-                spacing: compareConfig.GroupSpacing,
+                centerPosition: GetLearningAreaCenter(),
+                spacing: GetReadableCompareGroupSpacing(),
                 arrangementPattern: GroupArrangementPattern.SideBySide
             );
 
-            // Get the prefab to use
-            GameObject prefab = GetObjectPrefab();
+            GameObject leftPrefab = GetObjectPrefab(0, null);
+            GameObject rightPrefab = GetObjectPrefab(1, leftPrefab);
 
             // Spawn left group
             leftGroup = ARGroupSpawnUtility.SpawnGroup(
                 placementService: placementService,
-                prefab: prefab,
+                prefab: leftPrefab,
                 position: positions[0],
                 objectCount: currentQuestion.LeftGroupCount,
                 arrangementPattern: ObjectArrangementPattern.Circle,
@@ -127,12 +134,11 @@ namespace Features.Activities.CompareQuantity
                 interactionService.RegisterInteractable(leftGroup, "Left");
             }
             ActivityPrefabSetup.Instance?.PrepareLearningObjectGroup(leftGroup);
-            AddGroupLabel(leftGroup, "Left Group");
 
             // Spawn right group
             rightGroup = ARGroupSpawnUtility.SpawnGroup(
                 placementService: placementService,
-                prefab: prefab,
+                prefab: rightPrefab,
                 position: positions[1],
                 objectCount: currentQuestion.RightGroupCount,
                 arrangementPattern: ObjectArrangementPattern.Circle,
@@ -145,9 +151,177 @@ namespace Features.Activities.CompareQuantity
                 interactionService.RegisterInteractable(rightGroup, "Right");
             }
             ActivityPrefabSetup.Instance?.PrepareLearningObjectGroup(rightGroup);
-            AddGroupLabel(rightGroup, "Right Group");
+            if (showPairingGuides)
+            {
+                CreatePairingVisuals();
+            }
 
             OnGroupsSpawned?.Invoke();
+        }
+
+        private float GetReadableCompareGroupSpacing()
+        {
+            int largerCount = currentQuestion != null
+                ? Mathf.Max(currentQuestion.LeftGroupCount, currentQuestion.RightGroupCount)
+                : 5;
+            float largerRadius = CalculateCircleRadius(Mathf.Max(1, largerCount));
+            return Mathf.Max(compareConfig.GroupSpacing, largerRadius * 2f + 2.2f, 3.0f);
+        }
+
+        private static float CalculateCircleRadius(int objectCount)
+        {
+            if (objectCount <= 1)
+            {
+                return 0f;
+            }
+
+            float sin = Mathf.Sin(Mathf.PI / objectCount);
+            return sin <= 0.0001f ? 0.68f : 0.68f / (2f * sin);
+        }
+
+        private void CreatePairingVisuals()
+        {
+            ClearPairingVisuals();
+
+            List<Transform> leftObjects = GetCountableChildren(leftGroup);
+            List<Transform> rightObjects = GetCountableChildren(rightGroup);
+            int pairCount = Mathf.Min(leftObjects.Count, rightObjects.Count);
+
+            Transform parent = placementService?.HasLearningArea == true
+                ? placementService.LearningAreaContentRoot
+                : null;
+
+            for (int i = 0; i < pairCount; i++)
+            {
+                CreatePairLine(i, leftObjects[i].position, rightObjects[i].position, parent);
+            }
+
+            if (leftObjects.Count > rightObjects.Count)
+            {
+                MarkSurplusObjects(leftObjects, pairCount, parent);
+            }
+            else if (rightObjects.Count > leftObjects.Count)
+            {
+                MarkSurplusObjects(rightObjects, pairCount, parent);
+            }
+        }
+
+        private void CreatePairLine(int index, Vector3 leftPosition, Vector3 rightPosition, Transform parent)
+        {
+            var lineObject = new GameObject($"ComparePairLine_{index + 1}");
+            lineObject.transform.SetParent(parent, true);
+
+            LineRenderer line = lineObject.AddComponent<LineRenderer>();
+            line.positionCount = 2;
+            line.useWorldSpace = true;
+            line.widthMultiplier = 0.025f;
+            line.material = GetPairLineMaterial();
+            line.startColor = new Color(0.15f, 0.85f, 1f, 0.9f);
+            line.endColor = line.startColor;
+            line.SetPosition(0, leftPosition + Vector3.up * 0.16f);
+            line.SetPosition(1, rightPosition + Vector3.up * 0.16f);
+
+            pairingVisuals.Add(lineObject);
+        }
+
+        private void MarkSurplusObjects(List<Transform> objects, int startIndex, Transform parent)
+        {
+            for (int i = startIndex; i < objects.Count; i++)
+            {
+                Transform item = objects[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                marker.name = "SurplusMarker";
+                marker.transform.SetParent(parent, true);
+                marker.transform.position = item.position + Vector3.up * 0.24f;
+                marker.transform.localScale = Vector3.one * 0.09f;
+
+                Collider collider = marker.GetComponent<Collider>();
+                if (collider != null)
+                {
+                    Destroy(collider);
+                }
+
+                Renderer renderer = marker.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.sharedMaterial = GetSurplusMarkerMaterial();
+                }
+
+                pairingVisuals.Add(marker);
+            }
+        }
+
+        private static List<Transform> GetCountableChildren(GameObject group)
+        {
+            var children = new List<Transform>();
+            if (group == null)
+            {
+                return children;
+            }
+
+            foreach (Transform child in group.transform)
+            {
+                if (child == null || child.name == "GroupLabel")
+                {
+                    continue;
+                }
+
+                children.Add(child);
+            }
+
+            return children;
+        }
+
+        private Material GetPairLineMaterial()
+        {
+            if (pairLineMaterial == null)
+            {
+                Shader shader = Shader.Find("Sprites/Default");
+                pairLineMaterial = new Material(shader != null ? shader : Shader.Find("Universal Render Pipeline/Unlit"));
+                pairLineMaterial.color = new Color(0.15f, 0.85f, 1f, 0.9f);
+            }
+
+            return pairLineMaterial;
+        }
+
+        private Material GetSurplusMarkerMaterial()
+        {
+            if (surplusMarkerMaterial == null)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+                surplusMarkerMaterial = new Material(shader != null ? shader : Shader.Find("Sprites/Default"));
+                surplusMarkerMaterial.color = new Color(1f, 0.72f, 0.12f, 0.95f);
+            }
+
+            return surplusMarkerMaterial;
+        }
+
+        private void ClearPairingVisuals()
+        {
+            for (int i = pairingVisuals.Count - 1; i >= 0; i--)
+            {
+                if (pairingVisuals[i] != null)
+                {
+                    Destroy(pairingVisuals[i]);
+                }
+            }
+
+            pairingVisuals.Clear();
+        }
+
+        private Vector3 GetLearningAreaCenter()
+        {
+            if (placementService?.HasLearningArea == true && placementService.LearningAreaContentRoot != null)
+            {
+                return placementService.LearningAreaContentRoot.position;
+            }
+
+            return placementService != null ? placementService.CurrentPlacementPosition : Vector3.zero;
         }
 
         private static void AddGroupLabel(GameObject group, string labelText)
@@ -176,15 +350,27 @@ namespace Features.Activities.CompareQuantity
             }
         }
 
-        /// <summary>
-        /// Get the prefab to use for spawning objects.
-        /// TODO: Load from resources or use a default.
-        /// </summary>
-        private GameObject GetObjectPrefab()
+        private GameObject GetObjectPrefab(int groupIndex, GameObject avoidPrefab)
         {
-            if (ActivityPrefabSetup.Instance != null)
+            ActivityPrefabSetup setup = ActivityPrefabSetup.Instance;
+            if (setup != null)
             {
-                return ActivityPrefabSetup.Instance.GetLearningObjectPrefab();
+                int baseIndex = Mathf.Max(0, currentRoundNumber - 1) * 2 + groupIndex;
+                for (int offset = 0; offset < 12; offset++)
+                {
+                    GameObject prefab = setup.GetAnimalPrefab(baseIndex + offset);
+                    if (prefab == null)
+                    {
+                        continue;
+                    }
+
+                    if (avoidPrefab == null || prefab.name != avoidPrefab.name)
+                    {
+                        return prefab;
+                    }
+                }
+
+                return setup.GetLearningObjectPrefab();
             }
 
             Debug.LogWarning("[CompareQuantityPresenter] No object prefab assigned. Add ActivityPrefabSetup for runtime placeholders.");
@@ -382,6 +568,8 @@ namespace Features.Activities.CompareQuantity
         /// </summary>
         private void ClearSpawnedObjects()
         {
+            ClearPairingVisuals();
+
             if (leftGroup != null)
             {
                 interactionService?.UnregisterInteractable(leftGroup);
@@ -414,6 +602,18 @@ namespace Features.Activities.CompareQuantity
             }
 
             ClearSpawnedObjects();
+
+            if (pairLineMaterial != null)
+            {
+                Destroy(pairLineMaterial);
+                pairLineMaterial = null;
+            }
+
+            if (surplusMarkerMaterial != null)
+            {
+                Destroy(surplusMarkerMaterial);
+                surplusMarkerMaterial = null;
+            }
 
             base.Cleanup();
         }

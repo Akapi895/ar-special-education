@@ -1,0 +1,57 @@
+import axiosClient from '../client/axiosClient';
+import { parentApi } from '../parentApi';
+
+// ==================== TYPES ====================
+
+export interface ChildOnboardingData {
+  full_name: string;
+  nickname: string;
+  date_of_birth: string; // ISO format YYYY-MM-DD
+  gender: string;
+  username: string; // For child login
+  password: string; // Plain password, will be hashed by backend
+  favorite_topics: string[];
+  personality?: string[];
+  interests?: string[];
+  strengths?: string[];
+  challenges?: string[];
+  discipline_autonomy: Record<string, string | null>;
+  emotional_intelligence: Record<string, string | null>;
+  social_interaction: Record<string, string | null>;
+}
+
+export interface OnboardingRequest {
+  parent_email: string;  // Email to identify the parent
+  parent_display_name: string;
+  phone_number?: string;
+  children: ChildOnboardingData[];
+}
+
+export interface OnboardingResponse {
+  message: string;
+  children: Array<{
+    id: string;
+    name: string;
+    nickname: string;
+  }>;
+}
+
+// ==================== API CALLS ====================
+
+/**
+ * Complete onboarding process
+ * Creates children and assessments in one transaction
+ */
+export const completeOnboarding = async (
+  data: OnboardingRequest
+): Promise<OnboardingResponse> => {
+  const response = await axiosClient.post<OnboardingResponse>(
+    parentApi.onboarding.complete,
+    data
+  );
+  return response.data;
+};
+
+export default {
+  completeOnboarding,
+};
