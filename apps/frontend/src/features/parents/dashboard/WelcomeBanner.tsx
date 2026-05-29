@@ -3,6 +3,7 @@
  * Clean design with improved typography
  */
 
+import { memo } from 'react';
 import { Flame, Calendar } from 'lucide-react';
 
 interface WelcomeBannerProps {
@@ -55,4 +56,4 @@ const WelcomeBanner = ({ childName, childAge, streak }: WelcomeBannerProps) => {
   );
 };
 
-export default WelcomeBanner;
+export default memo(WelcomeBanner);

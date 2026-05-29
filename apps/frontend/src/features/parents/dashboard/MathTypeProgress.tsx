@@ -3,6 +3,8 @@
  * Clean design with unified indigo progress bars
  */
 
+import { memo } from 'react';
+
 interface MathProgress {
   counting: { current: number; target: number };
   comparison: { current: number; target: number };
@@ -121,4 +123,4 @@ const MathTypeProgress = ({ progress, compact = false }: MathTypeProgressProps) 
   );
 };
 
-export default MathTypeProgress;
+export default memo(MathTypeProgress);

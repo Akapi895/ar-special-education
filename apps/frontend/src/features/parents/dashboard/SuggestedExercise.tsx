@@ -3,6 +3,7 @@
  * Clean design with better button layout and spacing
  */
 
+import { memo } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 interface SuggestedExercise {
@@ -118,5 +119,5 @@ const SuggestedExerciseCard = ({ exercise, onStart, onViewDetails }: SuggestedEx
   );
 };
 
-export default SuggestedExerciseCard;
+export default memo(SuggestedExerciseCard);
 export type { SuggestedExercise };

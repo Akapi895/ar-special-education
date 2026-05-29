@@ -387,6 +387,14 @@ namespace Features.Activities.NumberLineJump
                 return;
             }
 
+            if (!currentQuestion.IsDirectionAllowed(direction))
+            {
+                Debug.Log($"[NumberLineJumpPresenter] Direction {direction} not allowed for this question (config: {currentQuestion.JumpDirection})");
+                PlayBoundaryBump(direction);
+                view?.ShowBoundaryHit(currentPosition);
+                return;
+            }
+
             // Calculate new position
             int newPosition = direction == JumpStepDirection.Right
                 ? currentPosition + 1
@@ -581,7 +589,8 @@ namespace Features.Activities.NumberLineJump
 
             string equation = NumberLineJumpAnswer.GetCurrentEquation(
                 currentQuestion.StartNumber,
-                currentPosition
+                currentPosition,
+                currentQuestion.TargetNumber
             );
             view?.UpdateEquation(equation);
         }

@@ -5,6 +5,7 @@
 
 import axiosClient, { getErrorMessage } from '../client/axiosClient';
 import { API_ENDPOINTS, STORAGE_KEYS } from '../client/apiConfig';
+import { mockUserProfile } from '../mockData';
 
 // Request types
 export interface LoginRequest {
@@ -48,17 +49,28 @@ export interface AuthResponse {
  */
 export const register = async (data: RegisterRequest): Promise<AuthResponse> => {
   try {
+    if ((import.meta.env.VITE_USE_MOCKS as string) === 'true') {
+      const mockToken = 'mock-token-registered';
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
+      const authResponse: AuthResponse = {
+        token: mockToken,
+        user: {
+          id: mockUserProfile.id,
+          email: mockUserProfile.email,
+          displayName: mockUserProfile.full_name,
+          role: 'parent',
+          hasCompletedOnboarding: mockUserProfile.onboarding_completed,
+        },
+      };
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(authResponse.user));
+      return Promise.resolve(authResponse);
+    }
+
     // Call register endpoint
-    await axiosClient.post<{ message: string }>(
-      API_ENDPOINTS.AUTH.REGISTER,
-      data
-    );
+    await axiosClient.post<{ message: string }>(API_ENDPOINTS.AUTH.REGISTER, data);
 
     // After successful registration, login to get token
-    const loginResponse = await login({
-      email: data.email,
-      password: data.password,
-    });
+    const loginResponse = await login({ email: data.email, password: data.password });
 
     return loginResponse;
   } catch (error) {
@@ -72,11 +84,25 @@ export const register = async (data: RegisterRequest): Promise<AuthResponse> => 
  */
 export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
   try {
+    if ((import.meta.env.VITE_USE_MOCKS as string) === 'true') {
+      const mockToken = 'mock-token-login';
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, mockToken);
+      const authResponse: AuthResponse = {
+        token: mockToken,
+        user: {
+          id: mockUserProfile.id,
+          email: mockUserProfile.email,
+          displayName: mockUserProfile.full_name,
+          role: 'parent',
+          hasCompletedOnboarding: mockUserProfile.onboarding_completed,
+        },
+      };
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(authResponse.user));
+      return Promise.resolve(authResponse);
+    }
+
     // Call login endpoint
-    const response = await axiosClient.post<TokenResponse>(
-      API_ENDPOINTS.AUTH.LOGIN,
-      credentials
-    );
+    const response = await axiosClient.post<TokenResponse>(API_ENDPOINTS.AUTH.LOGIN, credentials);
 
     const { access_token } = response.data;
 
@@ -113,6 +139,10 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
  */
 export const getCurrentUser = async (): Promise<UserResponse> => {
   try {
+    if ((import.meta.env.VITE_USE_MOCKS as string) === 'true') {
+      return Promise.resolve(mockUserProfile as UserResponse);
+    }
+
     const response = await axiosClient.get<UserResponse>(API_ENDPOINTS.AUTH.ME);
     return response.data;
   } catch (error) {
@@ -126,8 +156,12 @@ export const getCurrentUser = async (): Promise<UserResponse> => {
  */
 export const logout = async (): Promise<void> => {
   try {
-    // Call logout endpoint to invalidate session on server
-    await axiosClient.post(API_ENDPOINTS.AUTH.LOGOUT);
+    if ((import.meta.env.VITE_USE_MOCKS as string) === 'true') {
+      // No-op for mock mode
+    } else {
+      // Call logout endpoint to invalidate session on server
+      await axiosClient.post(API_ENDPOINTS.AUTH.LOGOUT);
+    }
   } catch (error) {
     console.error('Logout API error:', error);
     // Continue with local logout even if API fails

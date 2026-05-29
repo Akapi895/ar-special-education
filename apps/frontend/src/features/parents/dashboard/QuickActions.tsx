@@ -3,6 +3,7 @@
  * Compact grid layout with consistent styling
  */
 
+import { memo } from 'react';
 import { BookOpen, Heart, Lightbulb, BookMarked, BarChart3, Settings } from 'lucide-react';
 
 interface QuickActionsProps {
@@ -79,7 +80,7 @@ const QuickActions = ({
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
       <h3 className="text-lg font-bold text-gray-900 mb-4">Hành động nhanh</h3>
       
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {actions.map((action) => {
           const Icon = action.icon;
           
@@ -106,4 +107,4 @@ const QuickActions = ({
   );
 };
 
-export default QuickActions;
+export default memo(QuickActions);

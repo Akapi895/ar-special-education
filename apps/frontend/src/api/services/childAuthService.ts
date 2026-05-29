@@ -24,10 +24,18 @@ export interface ChildLoginResponse {
 export const loginChild = async (
   credentials: ChildLoginCredentials
 ): Promise<ChildLoginResponse> => {
-  const response = await axiosClient.post<ChildLoginResponse>(
-    childApi.auth.login,
-    credentials
-  );
+  // Support mock mode
+  if ((import.meta.env.VITE_USE_MOCKS as string) === 'true') {
+    return Promise.resolve({
+      access_token: 'mock-child-token',
+      token_type: 'bearer',
+      user_type: 'child',
+      child_id: 'child-123',
+      child_name: 'Mock Child',
+    });
+  }
+
+  const response = await axiosClient.post<ChildLoginResponse>(childApi.auth.login, credentials);
   return response.data;
 };
 

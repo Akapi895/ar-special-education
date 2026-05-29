@@ -3,9 +3,16 @@
  * Provides consistent error handling across the application
  */
 
-import toast from 'react-hot-toast';
 import { getErrorMessage } from '../api/client/axiosClient';
 import { translateUiString } from '../i18n/runtime';
+import {
+    dismissToast as dismissToastHelper,
+    showToastError,
+    showToastInfo,
+    showToastLoading,
+    showToastSuccess,
+    showToastWarning,
+} from './toast';
 
 /**
  * Handle API errors with toast notifications
@@ -17,10 +24,7 @@ export const handleApiError = (error: unknown, customMessage?: string): string =
     const message = translateUiString(customMessage || getErrorMessage(error));
 
     // Show toast notification
-    toast.error(message, {
-        duration: 5000,
-        icon: '⚠️',
-    });
+    showToastError(message);
 
     // Log to console in development
     if (import.meta.env.DEV) {
@@ -38,10 +42,7 @@ export const handleApiError = (error: unknown, customMessage?: string): string =
  * @param message - Success message to display
  */
 export const showSuccess = (message: string) => {
-    toast.success(translateUiString(message), {
-        duration: 3000,
-        icon: '✅',
-    });
+    showToastSuccess(message);
 };
 
 /**
@@ -49,10 +50,7 @@ export const showSuccess = (message: string) => {
  * @param message - Info message to display
  */
 export const showInfo = (message: string) => {
-    toast(translateUiString(message), {
-        duration: 3000,
-        icon: 'ℹ️',
-    });
+    showToastInfo(message);
 };
 
 /**
@@ -60,13 +58,7 @@ export const showInfo = (message: string) => {
  * @param message - Warning message to display
  */
 export const showWarning = (message: string) => {
-    toast(translateUiString(message), {
-        duration: 4000,
-        icon: '⚠️',
-        style: {
-            border: '1px solid #f59e0b',
-        },
-    });
+    showToastWarning(message);
 };
 
 /**
@@ -75,7 +67,7 @@ export const showWarning = (message: string) => {
  * @returns Toast ID for dismissing later
  */
 export const showLoading = (message: string = 'Loading...') => {
-    return toast.loading(translateUiString(message));
+    return showToastLoading(message);
 };
 
 /**
@@ -83,11 +75,7 @@ export const showLoading = (message: string = 'Loading...') => {
  * @param toastId - Optional toast ID to dismiss specific toast
  */
 export const dismissToast = (toastId?: string) => {
-    if (toastId) {
-        toast.dismiss(toastId);
-    } else {
-        toast.dismiss();
-    }
+    return dismissToastHelper(toastId);
 };
 
 export default {

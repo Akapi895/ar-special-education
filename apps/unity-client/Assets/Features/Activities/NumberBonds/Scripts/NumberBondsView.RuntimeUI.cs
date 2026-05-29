@@ -1,4 +1,5 @@
 using Core.UI.Components;
+using Core.UI.Layout;
 using Core.UI.Localization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -44,56 +45,22 @@ namespace Features.Activities.NumberBonds
 
         private static RectTransform CreateUiPanel(Transform parent, string name)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            return rect;
+            return UIActivityLayoutHelpers.CreateUiPanel(parent, name);
         }
 
         private static Text CreateTopText(Transform parent, string name, string content, int fontSize, float topOffset, Vector2 size)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = new Vector2(0f, -topOffset);
-            Text text = go.GetComponent<Text>();
-            ConfigureText(text, content, fontSize);
-            return text;
+            return UIActivityLayoutHelpers.CreateTopText(parent, name, content, fontSize, topOffset, size);
         }
 
         private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = anchoredPosition;
-            go.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
-            return go;
+            return UIActivityLayoutHelpers.CreateSubPanel(parent, name, anchoredPosition, size);
         }
 
         private static Text CreatePanelText(Transform parent, string name, string content, int fontSize)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(16f, 6f);
-            rect.offsetMax = new Vector2(-16f, -6f);
-            Text text = go.GetComponent<Text>();
-            ConfigureText(text, content, fontSize);
-            return text;
+            return UIActivityLayoutHelpers.CreatePanelText(parent, name, content, fontSize);
         }
 
         private static Button CreateButton(Transform parent, string name, string label,
@@ -115,16 +82,7 @@ namespace Features.Activities.NumberBonds
 
         private static Text CreateButtonLabel(Transform parent, string label)
         {
-            var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(8f, 4f);
-            rect.offsetMax = new Vector2(-8f, -4f);
-            Text text = go.GetComponent<Text>();
-            ConfigureText(text, label, 22);
-            return text;
+            return UIActivityLayoutHelpers.CreateButtonLabel(parent, label);
         }
 
         private static void ConfigureText(Text text, string content, int fontSize)
@@ -144,39 +102,22 @@ namespace Features.Activities.NumberBonds
 
         private static void SetButtonActive(Button button, bool active)
         {
-            if (button != null)
-            {
-                button.gameObject.SetActive(active);
-            }
+            UIActivityLayoutHelpers.SetButtonActive(button, active);
         }
 
         private static void SetPanelActive(GameObject panel, bool active)
         {
-            if (panel != null)
-            {
-                panel.SetActive(active);
-            }
+            UIActivityLayoutHelpers.SetPanelActive(panel, active);
         }
 
         private static void SetButtonLabel(Button button, string label)
         {
-            Text text = button != null ? button.GetComponentInChildren<Text>(true) : null;
-            if (text != null)
-            {
-                text.text = label;
-            }
+            UIActivityLayoutHelpers.SetButtonLabel(button, label);
         }
 
         private static void LoadSceneIfAvailable(string sceneName)
         {
-            if (Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                SceneManager.LoadScene(sceneName);
-            }
-            else
-            {
-                Debug.LogWarning($"[NumberBondsView] Scene '{sceneName}' is not available in Build Settings.");
-            }
+            UIActivityLayoutHelpers.LoadSceneIfAvailable(sceneName);
         }
     }
 }

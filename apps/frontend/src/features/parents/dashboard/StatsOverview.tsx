@@ -3,6 +3,8 @@
  * Clean, minimal design with accent colors only
  */
 
+import { memo } from 'react';
+
 interface StatsOverviewProps {
   exercisesCompleted: number;
   totalExercises: number;
@@ -67,7 +69,7 @@ const StatsOverview = ({
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {stats.map((stat) => (
         <div
           key={stat.key}
@@ -91,4 +93,4 @@ const StatsOverview = ({
   );
 };
 
-export default StatsOverview;
+export default memo(StatsOverview);

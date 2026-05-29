@@ -33,10 +33,10 @@ const Card = ({
   };
 
   const variantStyles = {
-    default: 'bg-white border border-gray-100',
+    default: 'bg-[var(--app-surface)] border border-[var(--app-border)]',
     gradient: 'bg-gradient-card border border-gray-100',
     glass: 'glass border-white/30',
-    outlined: 'bg-white border-2 border-gray-200',
+    outlined: 'bg-[var(--app-surface)] border-2 border-[var(--app-border)]',
   };
 
   const hoverStyle = hover 
@@ -59,12 +59,12 @@ const Card = ({
         <div className="mb-5 flex items-start justify-between">
           <div className="flex-1">
             {translatedTitle && (
-              <h3 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+              <h3 className="mb-1 flex items-center gap-2 text-xl font-bold text-[var(--app-text)]">
                 {translatedTitle}
               </h3>
             )}
             {translatedSubtitle && (
-              <p className="text-sm text-gray-600">{translatedSubtitle}</p>
+              <p className="text-sm text-[var(--app-text-muted)]">{translatedSubtitle}</p>
             )}
           </div>
           {badge && (

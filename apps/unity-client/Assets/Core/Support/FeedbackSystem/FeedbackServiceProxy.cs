@@ -139,9 +139,9 @@ namespace Core.Support.FeedbackSystem
                     GameObject vfxInstance = Instantiate(prefabToSpawn, spawnPos, spawnRot);
                     Destroy(vfxInstance, vfxDestroyDelay);
 
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                     Debug.Log($"[FeedbackServiceProxy] Spawned VFX: {effectName}");
-                    #endif
+#endif
                 }
                 catch (Exception ex)
                 {
@@ -166,6 +166,8 @@ namespace Core.Support.FeedbackSystem
 
             ParticleSystem particles = vfxGo.AddComponent<ParticleSystem>();
             var main = particles.main;
+            main.playOnAwake = false;
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             main.duration = positive ? 0.95f : 0.45f;
             main.loop = false;
             main.startLifetime = positive ? new ParticleSystem.MinMaxCurve(0.65f, 1.15f) : new ParticleSystem.MinMaxCurve(0.28f, 0.55f);
@@ -186,7 +188,9 @@ namespace Core.Support.FeedbackSystem
             var velocity = particles.velocityOverLifetime;
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.Local;
+            velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
             velocity.y = positive ? new ParticleSystem.MinMaxCurve(0.25f, 0.65f) : new ParticleSystem.MinMaxCurve(0.05f, 0.18f);
+            velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
             var sizeOverLifetime = particles.sizeOverLifetime;
             sizeOverLifetime.enabled = true;

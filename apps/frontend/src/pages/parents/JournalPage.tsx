@@ -5,6 +5,8 @@
 import { useState } from 'react';
 import { Plus, Heart, TrendingUp } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import EmptyState from '../../components/ui/EmptyState';
+import PageContainer from '../../components/layout/PageContainer';
 import { mockEmotionEntries } from '../../api/mockData';
 
 const EMOTION_CONFIG = {
@@ -20,7 +22,8 @@ const JournalPage = () => {
   const entries = mockEmotionEntries;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-light-bg">
+      <PageContainer maxWidth="lg" padding="md" spacing="md" className="py-4 sm:py-6">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Nhật ký học tập</h1>
@@ -155,20 +158,13 @@ const JournalPage = () => {
 
       {/* Empty State */}
       {entries.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📝</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Chưa có ghi chép nào
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Bắt đầu ghi nhận cảm xúc và tiến độ học tập của con
-          </p>
-          <Button className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Thêm ghi chép đầu tiên
-          </Button>
-        </div>
+        <EmptyState
+          icon="inbox"
+          title="Chưa có ghi chép nào"
+          description="Bắt đầu ghi nhận cảm xúc và tiến độ học tập của con"
+        />
       )}
+      </PageContainer>
     </div>
   );
 };

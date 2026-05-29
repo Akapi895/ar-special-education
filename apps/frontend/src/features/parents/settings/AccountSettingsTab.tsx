@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
-import toast from 'react-hot-toast';
 import Card from '../../../components/ui/Card';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
-import Modal from '../../../components/ui/Modal';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import type { UserProfile, PasswordChangeData } from '../../../types/user.types';
 import {
   getUserProfile,
@@ -13,8 +13,10 @@ import {
   deleteAccount,
 } from '../../../api/services/userService';
 import { logout } from '../../../api/services/authService';
+import { showToastError, showToastSuccess } from '../../../utils/toast';
 
 const AccountSettingsTab = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -54,7 +56,7 @@ const AccountSettingsTab = () => {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load profile';
       setError(errorMsg);
-      toast.error(errorMsg);
+      showToastError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -105,11 +107,11 @@ const AccountSettingsTab = () => {
       
       setProfile({ ...profile, displayName });
       setHasUnsavedChanges(false);
-      toast.success('Personal information saved successfully!');
+      showToastSuccess('Personal information saved successfully!');
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to update profile';
       setError(errorMsg);
-      toast.error(errorMsg);
+      showToastError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -118,11 +120,11 @@ const AccountSettingsTab = () => {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('New passwords do not match!');
+      showToastError('New passwords do not match!');
       return;
     }
     if (passwordData.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      showToastError('Password must be at least 8 characters');
       return;
     }
     
@@ -135,7 +137,7 @@ const AccountSettingsTab = () => {
         new_password: passwordData.newPassword,
       });
       
-      toast.success('Password updated successfully!');
+      showToastSuccess('Password updated successfully!');
       setPasswordData({
         currentPassword: '',
         newPassword: '',
@@ -144,7 +146,7 @@ const AccountSettingsTab = () => {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to update password';
       setError(errorMsg);
-      toast.error(errorMsg);
+      showToastError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -154,12 +156,12 @@ const AccountSettingsTab = () => {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== 'DELETE') {
-      toast.error('Please type "DELETE" exactly to confirm');
+      showToastError('Please type "DELETE" exactly to confirm');
       return;
     }
     
     if (!deletePassword) {
-      toast.error('Please enter your password');
+      showToastError('Please enter your password');
       return;
     }
     
@@ -172,17 +174,17 @@ const AccountSettingsTab = () => {
         password: deletePassword,
       });
       
-      toast.success('Account has been deleted');
+      showToastSuccess('Account has been deleted');
       
       // Logout and redirect after 2 seconds
       setTimeout(() => {
         logout();
-        window.location.href = '/';
+        navigate('/', { replace: true });
       }, 2000);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to delete account';
       setError(errorMsg);
-      toast.error(errorMsg);
+      showToastError(errorMsg);
     } finally {
       setSaving(false);
       setIsDeleteModalOpen(false);
@@ -374,14 +376,19 @@ const AccountSettingsTab = () => {
       </Card>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmDialog
         isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
           setDeleteConfirmText('');
+          setDeletePassword('');
         }}
         title="Confirm Account Deletion"
-        size="md"
+        confirmLabel="Delete Permanently"
+        confirmVariant="danger"
+        confirmDisabled={deleteConfirmText !== 'DELETE' || !deletePassword}
+        loading={saving}
+        onConfirm={handleDeleteAccount}
       >
         <div className="space-y-4">
           <div className="p-4 rounded-xl border-2 border-red-300 shadow-soft" style={{ background: 'linear-gradient(to right, rgb(254 242 242), rgb(254 226 226))' }}>
@@ -424,25 +431,9 @@ const AccountSettingsTab = () => {
           </div>
 
           <div className="flex gap-3 justify-end pt-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setDeleteConfirmText('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDeleteAccount}
-              disabled={deleteConfirmText !== 'DELETE' || !deletePassword || saving}
-            >
-              {saving ? 'Deleting...' : 'Delete Permanently'}
-            </Button>
           </div>
-          </div>
-        </Modal>
+        </div>
+      </ConfirmDialog>
     </div>
   );
 };

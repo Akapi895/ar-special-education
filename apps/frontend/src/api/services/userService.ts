@@ -4,6 +4,7 @@
  */
 
 import axiosClient, { getErrorMessage } from '../client/axiosClient';
+import { mockUserProfile, mockNotificationSettings } from '../mockData';
 import { API_ENDPOINTS } from '../client/apiConfig';
 
 // Request types
@@ -54,6 +55,10 @@ export interface UserProfile {
  * Get current user profile
  */
 export const getUserProfile = async (): Promise<UserProfile> => {
+  // In dev, allow using local mock data by setting VITE_USE_MOCKS=true
+  if ((import.meta.env.VITE_USE_MOCKS as string) === 'true') {
+    return Promise.resolve(mockUserProfile as UserProfile);
+  }
   try {
     const response = await axiosClient.get<UserProfile>(API_ENDPOINTS.AUTH.ME);
     return response.data;
@@ -110,6 +115,9 @@ export const deleteAccount = async (
  * Get notification settings
  */
 export const getNotificationSettings = async (): Promise<NotificationSettings> => {
+  if ((import.meta.env.VITE_USE_MOCKS as string) === 'true') {
+    return Promise.resolve(mockNotificationSettings);
+  }
   try {
     const response = await axiosClient.get<NotificationSettings>(
       API_ENDPOINTS.AUTH.NOTIFICATION_SETTINGS

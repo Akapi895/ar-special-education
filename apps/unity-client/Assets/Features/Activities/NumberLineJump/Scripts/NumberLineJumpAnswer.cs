@@ -165,19 +165,19 @@ namespace Features.Activities.NumberLineJump
         /// <summary>
         /// Get the current equation string at a specific point during jumping.
         /// </summary>
-        public static string GetCurrentEquation(int startNumber, int currentPosition)
+        public static string GetCurrentEquation(int startNumber, int currentPosition, int targetNumber)
         {
-            int change = currentPosition - startNumber;
+            int totalChange = targetNumber - startNumber;
 
-            if (change == 0)
+            if (totalChange == 0)
             {
-                return $"{startNumber}";
+                return $"{startNumber} = {currentPosition}";
             }
 
-            string operation = change >= 0 ? "+" : "-";
-            int absChange = Mathf.Abs(change);
+            string operation = totalChange >= 0 ? "+" : "-";
+            int absChange = Mathf.Abs(totalChange);
 
-            return $"{startNumber} {operation} {absChange} = ?";
+            return $"{startNumber} {operation} {absChange} = {currentPosition}";
         }
 
         /// <summary>

@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, BookOpen } from 'lucide-react';
-import { Loading } from '../../components/ui';
+import { SkeletonCard } from '../../components/ui';
+import { NoResultsFound } from '../../components/ui/EmptyState';
+import PageContainer from '../../components/layout/PageContainer';
 import Badge from '../../components/ui/Badge';
 import { getAllExercises, type Exercise, type CPAStage, type MathType } from '../../api/services/exerciseService';
 
@@ -55,8 +57,7 @@ const ExerciseLibraryPage = () => {
     }
   };
 
-  const filteredExercises = exercises.filter((exercise) => {
-    // Search filter
+  const filteredExercises = useMemo(() => exercises.filter((exercise) => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       if (
@@ -67,29 +68,53 @@ const ExerciseLibraryPage = () => {
       }
     }
 
-    // CPA Stage filter
     if (selectedStage !== 'all' && exercise.cpaStage !== selectedStage) {
       return false;
     }
 
-    // Math Type filter
     if (selectedMathType !== 'all' && exercise.mathType !== selectedMathType) {
       return false;
     }
 
     return true;
-  });
+  }), [exercises, searchQuery, selectedStage, selectedMathType]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loading text="Đang tải bài tập..." />
+      <div className="min-h-screen bg-light-bg px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-soft animate-pulse">
+          <div className="h-8 w-64 rounded-lg bg-gray-200 skeleton mb-2" />
+          <div className="h-4 w-80 max-w-full rounded-lg bg-gray-200 skeleton" />
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-soft space-y-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="h-12 rounded-xl bg-gray-200 skeleton" />
+            <div className="flex flex-wrap gap-2">
+              <div className="h-10 w-20 rounded-xl bg-gray-200 skeleton" />
+              <div className="h-10 w-20 rounded-xl bg-gray-200 skeleton" />
+              <div className="h-10 w-20 rounded-xl bg-gray-200 skeleton" />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="h-8 w-20 rounded-full bg-gray-200 skeleton" />
+            <div className="h-8 w-24 rounded-full bg-gray-200 skeleton" />
+            <div className="h-8 w-28 rounded-full bg-gray-200 skeleton" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <SkeletonCard key={index} />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-light-bg">
+      <PageContainer maxWidth="xl" padding="md" spacing="md" className="py-4 sm:py-6">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Thư viện bài tập</h1>
@@ -99,8 +124,8 @@ const ExerciseLibraryPage = () => {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-4 mb-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
           {/* Search */}
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -109,12 +134,12 @@ const ExerciseLibraryPage = () => {
               placeholder="Tìm kiếm bài tập..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
           {/* CPA Stage Filter */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 lg:justify-end">
             <button
               onClick={() => setSelectedStage('all')}
               className={`px-4 py-2 rounded-lg border transition-colors ${
@@ -142,7 +167,7 @@ const ExerciseLibraryPage = () => {
         </div>
 
         {/* Math Type Filter */}
-        <div className="flex flex-wrap gap-2 mt-4">
+        <div className="flex flex-wrap gap-2 mt-4 overflow-x-auto pb-1">
           <span className="text-sm text-gray-600 flex items-center gap-2">
             <Filter className="w-4 h-4" />
             Loại toán:
@@ -179,12 +204,12 @@ const ExerciseLibraryPage = () => {
       </p>
 
       {/* Exercise Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {filteredExercises.map((exercise) => (
           <div
             key={exercise.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => navigate(`/exercises/${exercise.id}`)}
+            className="bg-white rounded-2xl shadow-soft border border-gray-100 p-5 hover:shadow-medium transition-shadow cursor-pointer"
+            onClick={() => navigate('/parent/exercises')}
           >
             {/* CPA Stage Badge */}
             <div className="flex items-start justify-between mb-3">
@@ -228,16 +253,15 @@ const ExerciseLibraryPage = () => {
 
       {/* Empty State */}
       {filteredExercises.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Không tìm thấy bài tập
-          </h3>
-          <p className="text-gray-600">
-            Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
-          </p>
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-white">
+          <NoResultsFound onReset={() => {
+            setSearchQuery('');
+            setSelectedStage('all');
+            setSelectedMathType('all');
+          }} />
         </div>
       )}
+      </PageContainer>
     </div>
   );
 };

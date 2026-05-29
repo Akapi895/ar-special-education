@@ -3,6 +3,7 @@
  * Clean timeline with subtle separators
  */
 
+import { memo } from 'react';
 import { CheckCircle2, Circle, Trophy } from 'lucide-react';
 
 interface Activity {
@@ -183,5 +184,5 @@ const ActivityFeed = ({ activities, onViewAll }: ActivityFeedProps) => {
   );
 };
 
-export default ActivityFeed;
+export default memo(ActivityFeed);
 export type { Activity };

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Gift, AlertCircle, TrendingDown, FileText } from 'lucide-react';
-import toast from 'react-hot-toast';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/ui/Button';
 import type { NotificationSettings } from '../../../types/user.types';
@@ -8,6 +7,7 @@ import {
   getNotificationSettings,
   updateNotificationSettings,
 } from '../../../api/services/userService';
+import { showToastError, showToastSuccess } from '../../../utils/toast';
 
 interface ToggleSwitchProps {
   enabled: boolean;
@@ -121,7 +121,7 @@ const NotificationSettingsTab = () => {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load settings';
       setError(errorMsg);
-      toast.error(errorMsg);
+      showToastError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -192,11 +192,11 @@ const NotificationSettingsTab = () => {
       
       await updateNotificationSettings(backendSettings);
       
-      toast.success('Notification settings saved successfully!');
+      showToastSuccess('Notification settings saved successfully!');
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to update settings';
       setError(errorMsg);
-      toast.error(errorMsg);
+      showToastError(errorMsg);
     } finally {
       setSaving(false);
     }
