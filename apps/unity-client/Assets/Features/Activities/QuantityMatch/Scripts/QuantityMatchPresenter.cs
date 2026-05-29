@@ -28,7 +28,10 @@ namespace Features.Activities.QuantityMatch
         // Spawned objects tracking
         private GameObject[] spawnedGroups;
         private readonly List<GameObject> simulationRoamBoundaries = new List<GameObject>();
-        private const int SelectionQuestionCount = 5;
+        private bool currentUsesNumberInputMode;
+        private int currentRoundNumber;
+        private int[] countedTapsByGroup;
+
         private const float MinimumReadableObjectSpacing = 0.64f;
         private const float MaximumReadableObjectSpacing = 0.78f;
         private const float MinimumReadableGroupSpacing = 1.45f;
@@ -41,9 +44,6 @@ namespace Features.Activities.QuantityMatch
         private const float SimulationFreeRoamSpeed = 0.55f;
         private const float SimulationFreeRoamMinWait = 0.15f;
         private const float SimulationFreeRoamMaxWait = 0.9f;
-        private bool currentUsesNumberInputMode;
-        private int currentRoundNumber;
-        private int[] countedTapsByGroup;
 
         [Header("Prefabs")]
         [SerializeField]
@@ -100,7 +100,9 @@ namespace Features.Activities.QuantityMatch
 
             Debug.Log($"[QuantityMatchPresenter] Loading round {roundNumber}: Target = {currentQuestion.TargetNumber}");
             currentRoundNumber = roundNumber;
-            currentUsesNumberInputMode = roundNumber > SelectionQuestionCount;
+            currentUsesNumberInputMode = quantityConfig != null
+                && quantityConfig.SwitchToNumberInputAtRound > 0
+                && roundNumber >= quantityConfig.SwitchToNumberInputAtRound;
 
             // Clear previous objects
             ClearSpawnedObjects();

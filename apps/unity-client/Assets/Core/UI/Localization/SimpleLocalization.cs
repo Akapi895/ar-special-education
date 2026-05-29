@@ -22,6 +22,7 @@ namespace Core.UI.Localization
             { "btn_reset", "L\u00e0m l\u1ea1i" },
             { "activity_quantity_match", "Gh\u00e9p s\u1ed1 v\u1edbi l\u01b0\u1ee3ng" },
             { "activity_compare_quantity", "So s\u00e1nh s\u1ed1 l\u01b0\u1ee3ng" },
+            { "activity_number_bonds", "T\u00e1ch-g\u1ed9p s\u1ed1" },
             { "activity_number_line", "Nh\u1ea3y tr\u00ean tr\u1ee5c s\u1ed1" },
             { "feedback_correct", "Con l\u00e0m \u0111\u00fang r\u1ed3i!" },
             { "feedback_incorrect", "Ch\u01b0a \u0111\u00fang, th\u1eed l\u1ea1i nh\u00e9!" },
@@ -41,6 +42,7 @@ namespace Core.UI.Localization
             { "instruction_quantity_match", "H\u00e3y ch\u1ecdn nh\u00f3m c\u00f3 \u0111\u00fang s\u1ed1 con v\u1eadt." },
             { "instruction_quantity_count", "Con h\u00e3y \u0111\u1ebfm s\u1ed1 con v\u1eadt r\u1ed3i ch\u1ecdn \u0111\u00e1p \u00e1n." },
             { "instruction_compare_quantity", "H\u00e3y so s\u00e1nh hai nh\u00f3m v\u1eadt." },
+            { "instruction_number_bonds", "H\u00e3y t\u00e1ch t\u1ed5ng th\u00e0nh hai ph\u1ea7n." },
             { "instruction_number_line", "H\u00e3y nh\u1ea3y tr\u00ean tr\u1ee5c s\u1ed1 \u0111\u1ebfn \u0111\u00e1p \u00e1n." }
         };
 

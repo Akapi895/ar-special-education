@@ -2,6 +2,7 @@ using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
 using Core.UI.Components;
+using Core.UI.Layout;
 using Core.UI.Localization;
 using Features.Activities.CompareQuantity;
 using Project.App;
@@ -102,9 +103,6 @@ namespace Features.Activities.CompareQuantity
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(190f, 78f);
         private static readonly Vector2 RuntimeComparisonButtonSize = new Vector2(136f, 136f);
-        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(146f, 64f);
-        private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
-        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-188f, -24f);
         private static readonly Vector2 RuntimeFeedbackPanelSize = new Vector2(790f, 128f);
         private static readonly Vector2 RuntimeFeedbackPanelCenter = new Vector2(0f, -270f);
         private const float RuntimeButtonGap = 34f;
@@ -227,9 +225,9 @@ namespace Features.Activities.CompareQuantity
             equalButton = CreateButton(panel, "EqualButton", SimpleLocalization.Get("compare_equal"), new Vector2(RuntimeComparisonButtonSize.x + RuntimeButtonGap, RuntimeAnswerButtonBottomY), () => OnAnswerButtonClicked(ComparisonAnswer.Equal), out equalButtonText);
 
             float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
-            hintButton = CreateButton(panel, "HintButton", SimpleLocalization.Get("btn_hint"), new Vector2(0f, RuntimeActionButtonBottomY), () => OnHintRequested?.Invoke(), out _);
-            cancelButton = CreateTopRightButton(panel, "CancelButton", RuntimeHomeButtonLabel, RuntimeHomeButtonTopRight, RuntimeTopNavButtonSize, OnCancelClicked, out _);
-            listenButton = CreateTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), RuntimeListenButtonTopRight, RuntimeTopNavButtonSize, OnListenClicked, out _);
+            hintButton = UIActivityNavButtons.CreateHintButton(panel, () => OnHintRequested?.Invoke());
+            cancelButton = UIActivityNavButtons.CreateHomeButton(panel, OnCancelClicked);
+            listenButton = UIActivityNavButtons.CreateListenButton(panel, OnListenClicked);
             nextRoundButton = CreateButton(panel, "NextButton", SimpleLocalization.Get("btn_next"), new Vector2(-actionButtonOffset, RuntimeActionButtonBottomY), OnNextRoundClicked, out _);
             progressButton = CreateButton(panel, "ProgressButton", SimpleLocalization.Get("btn_progress"), new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked, out _);
             nextRoundButton.gameObject.SetActive(false);
@@ -366,6 +364,7 @@ namespace Features.Activities.CompareQuantity
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(true);
+                CenterNavigationButton(nextRoundButton);
                 UIKidFriendlyStyle.PlayFeedback(nextRoundButton, true);
             }
         }
@@ -450,6 +449,7 @@ namespace Features.Activities.CompareQuantity
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("CompareQuantity", out _));
+                CenterNavigationButton(nextRoundButton);
             }
 
             if (progressButton != null)
@@ -484,6 +484,7 @@ namespace Features.Activities.CompareQuantity
             if (nextRoundButton != null)
             {
                 nextRoundButton.gameObject.SetActive(ActivityFlowNavigator.TryGetNextActivityId("CompareQuantity", out _));
+                CenterNavigationButton(nextRoundButton);
             }
 
             if (progressButton != null)
@@ -661,8 +662,26 @@ namespace Features.Activities.CompareQuantity
 
         private void SetNavigationButtonsActive(bool active)
         {
-            if (nextRoundButton != null) nextRoundButton.gameObject.SetActive(active);
+            if (nextRoundButton != null)
+            {
+                nextRoundButton.gameObject.SetActive(active);
+                if (active) CenterNavigationButton(nextRoundButton);
+            }
             if (progressButton != null) progressButton.gameObject.SetActive(active);
+        }
+
+        /// <summary>
+        /// Center the navigation button on screen.
+        /// </summary>
+        private void CenterNavigationButton(Button button)
+        {
+            if (button == null) return;
+            RectTransform rect = button.GetComponent<RectTransform>();
+            if (rect == null) return;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
         }
 
         private static string FormatComparisonLabel(string subject, string label)
@@ -806,14 +825,7 @@ namespace Features.Activities.CompareQuantity
 
         private static RectTransform CreateUiPanel(Transform parent, string name)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            return rect;
+            return UIActivityLayoutHelpers.CreateUiPanel(parent, name);
         }
 
         private static GameObject CreateTopPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size, float alpha)
@@ -861,79 +873,24 @@ namespace Features.Activities.CompareQuantity
 
         private static GameObject CreateSubPanel(Transform parent, string name, Vector2 anchoredPosition, Vector2 size)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = anchoredPosition;
-
-            var image = go.GetComponent<Image>();
-            image.color = new Color(0f, 0f, 0f, 0.55f);
-            image.raycastTarget = false;
-            return go;
+            return UIActivityLayoutHelpers.CreateSubPanel(parent, name, anchoredPosition, size);
         }
 
         private static Text CreatePanelText(Transform parent, string name, string content, int fontSize)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(16f, 6f);
-            rect.offsetMax = new Vector2(-16f, -6f);
-
-            var text = go.GetComponent<Text>();
-            text.text = content;
-            text.fontSize = fontSize;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 14;
-            text.resizeTextMaxSize = fontSize;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = Color.white;
-            text.raycastTarget = false;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-            return text;
+            return UIActivityLayoutHelpers.CreatePanelText(parent, name, content, fontSize);
         }
 
         private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, UnityEngine.Events.UnityAction onClick, out Text labelText)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.sizeDelta = RuntimeButtonSize;
-            rect.anchoredPosition = anchoredPosition;
-            go.GetComponent<Image>().color = new Color(0.2f, 0.5f, 0.9f, 1f);
-
-            var button = go.GetComponent<Button>();
-            button.onClick.AddListener(onClick);
-
-            labelText = CreateButtonLabel(go.transform, label);
-            UIKidFriendlyStyle.Apply(button, name, label, 26);
+            Button button = UIActivityLayoutHelpers.CreateButton(parent, name, label, anchoredPosition, onClick, RuntimeButtonSize);
+            labelText = button.GetComponentInChildren<Text>();
             return button;
         }
 
         private void NormalizeTopNavigationButtons()
         {
-            ConfigureTopRightNavigationButton(
-                cancelButton,
-                RuntimeHomeButtonLabel,
-                RuntimeHomeButtonTopRight,
-                RuntimeTopNavButtonSize,
-                KidButtonPurpose.Home);
-
-            ConfigureTopRightNavigationButton(
-                listenButton,
-                SimpleLocalization.Get("btn_listen"),
-                RuntimeListenButtonTopRight,
-                RuntimeTopNavButtonSize,
-                KidButtonPurpose.Listen);
+            // Buttons are already configured correctly by UIActivityNavButtons
         }
 
         private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, KidButtonPurpose purpose)
@@ -987,39 +944,34 @@ namespace Features.Activities.CompareQuantity
             return button;
         }
 
-        private static Text CreateButtonLabel(Transform parent, string label)
+        private static Button CreateTopLeftButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick, out Text labelText)
         {
-            var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             var rect = go.GetComponent<RectTransform>();
             rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(8f, 4f);
-            rect.offsetMax = new Vector2(-8f, -4f);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = new Color(0.2f, 0.5f, 0.9f, 0.92f);
 
-            var text = go.GetComponent<Text>();
-            text.text = label;
-            text.fontSize = 22;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 14;
-            text.resizeTextMaxSize = 22;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = Color.white;
-            text.raycastTarget = false;
-            return text;
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(onClick);
+
+            labelText = CreateButtonLabel(go.transform, label);
+            UIKidFriendlyStyle.Apply(button, name, label, RuntimeTopNavButtonFontSize);
+            return button;
+        }
+
+        private static Text CreateButtonLabel(Transform parent, string label)
+        {
+            return UIActivityLayoutHelpers.CreateButtonLabel(parent, label);
         }
 
         private static void LoadSceneIfAvailable(string sceneName)
         {
-            if (Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                SceneManager.LoadScene(sceneName);
-            }
-            else
-            {
-                Debug.LogWarning($"[CompareQuantityView] Scene '{sceneName}' is not available in Build Settings.");
-            }
+            UIActivityLayoutHelpers.LoadSceneIfAvailable(sceneName);
         }
     }
 }

@@ -1,0 +1,441 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
+import Card from '../../../components/ui/Card';
+import Input from '../../../components/ui/Input';
+import Button from '../../../components/ui/Button';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
+import type { UserProfile, PasswordChangeData } from '../../../types/user.types';
+import {
+  getUserProfile,
+  updateProfile,
+  changePassword,
+  deleteAccount,
+} from '../../../api/services/userService';
+import { logout } from '../../../api/services/authService';
+import { showToastError, showToastSuccess } from '../../../utils/toast';
+
+const AccountSettingsTab = () => {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [displayName, setDisplayName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [passwordData, setPasswordData] = useState<PasswordChangeData>({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Fetch user profile on mount
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getUserProfile();
+      
+      const userProfile: UserProfile = {
+        id: data.id,
+        displayName: data.full_name,
+        email: data.email,
+        createdAt: new Date(data.created_at).toLocaleDateString('vi-VN'),
+      };
+      
+      setProfile(userProfile);
+      setDisplayName(data.full_name);
+      setPhoneNumber(data.phone_number || '');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load profile';
+      setError(errorMsg);
+      showToastError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Keyboard shortcut: Ctrl+S to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (hasUnsavedChanges) {
+          handleSaveProfile();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasUnsavedChanges]);
+
+  const getPasswordStrength = (password: string): { strength: number; label: string; color: string } => {
+    if (!password) return { strength: 0, label: '', color: '' };
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+    
+    if (strength <= 2) return { strength: (strength / 5) * 100, label: 'Weak', color: 'bg-red-500' };
+    if (strength <= 3) return { strength: (strength / 5) * 100, label: 'Medium', color: 'bg-yellow-500' };
+    return { strength: (strength / 5) * 100, label: 'Strong', color: 'bg-green-500' };
+  };
+
+  const passwordStrength = getPasswordStrength(passwordData.newPassword);
+
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    
+    try {
+      setSaving(true);
+      setError(null);
+      
+      await updateProfile({
+        full_name: displayName,
+        phone_number: phoneNumber || undefined,
+      });
+      
+      setProfile({ ...profile, displayName });
+      setHasUnsavedChanges(false);
+      showToastSuccess('Personal information saved successfully!');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update profile';
+      setError(errorMsg);
+      showToastError(errorMsg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      showToastError('New passwords do not match!');
+      return;
+    }
+    if (passwordData.newPassword.length < 8) {
+      showToastError('Password must be at least 8 characters');
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      setError(null);
+      
+      await changePassword({
+        current_password: passwordData.currentPassword,
+        new_password: passwordData.newPassword,
+      });
+      
+      showToastSuccess('Password updated successfully!');
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update password';
+      setError(errorMsg);
+      showToastError(errorMsg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const [deletePassword, setDeletePassword] = useState('');
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      showToastError('Please type "DELETE" exactly to confirm');
+      return;
+    }
+    
+    if (!deletePassword) {
+      showToastError('Please enter your password');
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      setError(null);
+      
+      await deleteAccount({
+        confirmation: deleteConfirmText,
+        password: deletePassword,
+      });
+      
+      showToastSuccess('Account has been deleted');
+      
+      // Logout and redirect after 2 seconds
+      setTimeout(() => {
+        logout();
+        navigate('/', { replace: true });
+      }, 2000);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to delete account';
+      setError(errorMsg);
+      showToastError(errorMsg);
+    } finally {
+      setSaving(false);
+      setIsDeleteModalOpen(false);
+      setDeleteConfirmText('');
+      setDeletePassword('');
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-500 text-sm">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center p-6 bg-red-50 border border-red-200 rounded-xl">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+          <p className="text-gray-700 font-medium mb-1">Failed to load profile</p>
+          <p className="text-gray-500 text-sm">Please refresh the page or try again later</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 shadow-soft">
+          {error}
+        </div>
+      )}
+
+      {/* Unsaved Changes Warning */}
+      {hasUnsavedChanges && (
+        <div className="p-4 rounded-xl border-2 border-yellow-300 shadow-soft flex items-center gap-3 animate-slide-down" style={{ background: 'linear-gradient(to right, rgb(254 252 232), rgb(254 243 199))' }}>
+          <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium text-yellow-800">You have unsaved changes</p>
+            <p className="text-sm text-yellow-700">Press "Save Changes" or Ctrl+S to save</p>
+          </div>
+        </div>
+      )}
+
+      {/* Title */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">
+          Parent Account Information
+        </h2>
+        <p className="text-gray-600 text-sm">Manage your personal information and security settings</p>
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Column 1: Personal Information */}
+        <Card title="Personal Information" padding="md" className="border-l-4 border-l-blue-500">
+          <div className="space-y-4">
+            <Input
+              label="Display Name"
+              type="text"
+              value={displayName}
+              onChange={(e) => {
+                setDisplayName(e.target.value);
+                setHasUnsavedChanges(true);
+              }}
+              placeholder="e.g., Parent of Baby Bap"
+              fullWidth
+            />
+            <Input
+              label="Phone Number"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => {
+                setPhoneNumber(e.target.value);
+                setHasUnsavedChanges(true);
+              }}
+              placeholder="e.g., +84 123 456 789"
+              fullWidth
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={profile.email}
+              disabled
+              fullWidth
+              helperText="Login email cannot be changed"
+            />
+            <div className="pt-2">
+              <Button onClick={handleSaveProfile} disabled={saving}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Column 2: Security */}
+        <Card title="Security" subtitle="Change Password" padding="md" className="border-l-4 border-l-purple-500">
+          <form onSubmit={handleUpdatePassword} className="space-y-4">
+            <Input
+              label="Current Password"
+              type="password"
+              value={passwordData.currentPassword}
+              onChange={(e) =>
+                setPasswordData({ ...passwordData, currentPassword: e.target.value })
+              }
+              required
+              fullWidth
+            />
+            <div>
+              <Input
+                label="New Password"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) =>
+                  setPasswordData({ ...passwordData, newPassword: e.target.value })
+                }
+                required
+                fullWidth
+              />
+              {/* Password Strength Indicator */}
+              {passwordData.newPassword && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600">Password Strength:</span>
+                    <span className={`font-medium ${
+                      passwordStrength.label === 'Weak' ? 'text-red-600' :
+                      passwordStrength.label === 'Medium' ? 'text-yellow-600' :
+                      'text-green-600'
+                    }`}>
+                      {passwordStrength.label}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                      style={{ width: `${passwordStrength.strength}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <Input
+              label="Confirm New Password"
+              type="password"
+              value={passwordData.confirmPassword}
+              onChange={(e) =>
+                setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+              }
+              required
+              fullWidth
+            />
+            <div className="pt-2">
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Updating...' : 'Update Password'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+
+      {/* Block 3: Danger Zone */}
+      <Card padding="md" className="border-2 border-red-200 bg-red-50/30 shadow-soft border-l-4 border-l-red-500">
+        <div className="space-y-4">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+            <h3 className="text-lg font-semibold text-red-600 mb-2 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Account
+            </h3>
+            <p className="text-sm text-gray-600">
+              This action cannot be undone. All your data and children's data will be
+              permanently deleted.
+            </p>
+          </div>
+          <Button
+            variant="danger"
+            onClick={() => setIsDeleteModalOpen(true)}
+          >
+            Delete Account Permanently
+          </Button>
+        </div>
+      </Card>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteConfirmText('');
+          setDeletePassword('');
+        }}
+        title="Confirm Account Deletion"
+        confirmLabel="Delete Permanently"
+        confirmVariant="danger"
+        confirmDisabled={deleteConfirmText !== 'DELETE' || !deletePassword}
+        loading={saving}
+        onConfirm={handleDeleteAccount}
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl border-2 border-red-300 shadow-soft" style={{ background: 'linear-gradient(to right, rgb(254 242 242), rgb(254 226 226))' }}>
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-red-800 font-semibold mb-1">Critical Warning</p>
+                <p className="text-sm text-red-700">
+                  This action will permanently delete your account and all related data.
+                  You will not be able to recover it.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Type <span className="font-bold text-red-600">DELETE</span> to confirm:
+            </label>
+            <Input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="DELETE"
+              fullWidth
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Enter your password:
+            </label>
+            <Input
+              type="password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              placeholder="Your password"
+              fullWidth
+            />
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
+          </div>
+        </div>
+      </ConfirmDialog>
+    </div>
+  );
+};
+
+export default AccountSettingsTab;

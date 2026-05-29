@@ -10,8 +10,9 @@ namespace Project.App
         private static readonly string[] ActivityOrder =
         {
             "QuantityMatch",
-            "NumberLineJump",
-            "CompareQuantity"
+            "CompareQuantity",
+            "NumberBonds",
+            "NumberLineJump"
         };
 
         private const string GameplaySceneName = "SC_ARGameplay";

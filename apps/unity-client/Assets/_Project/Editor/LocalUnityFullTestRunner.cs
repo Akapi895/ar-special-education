@@ -8,6 +8,7 @@ using Core.AR.Sandbox;
 using Core.Data.LocalStorage;
 using Core.Learning.Models;
 using Features.Activities.CompareQuantity;
+using Features.Activities.NumberBonds;
 using Features.Activities.NumberLineJump;
 using Features.Activities.QuantityMatch;
 using Project.App;
@@ -31,6 +32,8 @@ namespace Project.Editor
             "Assets/Features/Activities/NumberLineJump/ScriptableObjects/SO_NumberLineJumpConfig_Easy.asset";
         private const string CompareQuantityConfigPath =
             "Assets/Features/Activities/CompareQuantity/ScriptableObjects/SO_CompareQuantityConfig_Easy.asset";
+        private const string NumberBondsConfigPath =
+            "Assets/_Project/Resources/ActivityConfigs/SO_NumberBondsConfig_Demo.asset";
 
         private const string BootScenePath = "Assets/_Project/Scenes/SC_Boot.unity";
         private const string MainMenuScenePath = "Assets/_Project/Scenes/SC_MainMenu.unity";
@@ -63,7 +66,7 @@ namespace Project.Editor
             CompleteRound2,
             WaitProgressSaved,
             WaitQuantityCompletionControls,
-            WaitNumberLineReady,
+            WaitCompareReady,
             StopAfterGameplay,
             WaitGameplayStopped,
             EnterBoot,
@@ -71,7 +74,7 @@ namespace Project.Editor
             WaitDashboard,
             WaitMainMenuReturn,
             WaitActivitySelect,
-            WaitShellGameplay,
+            WaitShellNumberBondsReady,
             StopAfterShell,
             WaitShellStopped,
             Aborting
@@ -172,6 +175,7 @@ namespace Project.Editor
             ValidateConfig<QuantityMatchConfig>(QuantityMatchConfigPath);
             ValidateConfig<NumberLineJumpConfig>(NumberLineJumpConfigPath);
             ValidateConfig<CompareQuantityConfig>(CompareQuantityConfigPath);
+            ValidateConfig<NumberBondsConfig>(NumberBondsConfigPath);
 
             ValidateFileExists(BootScenePath);
             ValidateFileExists(MainMenuScenePath);
@@ -275,15 +279,15 @@ namespace Project.Editor
                         if (IsActiveButton("NextButton"))
                         {
                             ClickButton("NextButton");
-                            Advance(Stage.WaitNumberLineReady);
+                            Advance(Stage.WaitCompareReady);
                         }
                         break;
 
-                    case Stage.WaitNumberLineReady:
-                        if (IsNumberLineReady())
+                    case Stage.WaitCompareReady:
+                        if (IsCompareReady())
                         {
-                            ValidateNumberLineRuntimeUi();
-                            Notes.Add("Quantity Match Next routes to Number Line Jump.");
+                            ValidateCompareRuntimeUi();
+                            Notes.Add("Quantity Match Next routes to Compare Quantity.");
                             Advance(Stage.StopAfterGameplay);
                         }
                         break;
@@ -334,15 +338,16 @@ namespace Project.Editor
                         if (SceneManager.GetActiveScene().name == "SC_ActivitySelect")
                         {
                             ValidateActivitySelectPlayMode();
-                            ClickButton("QuantityMatchButton");
-                            Advance(Stage.WaitShellGameplay);
+                            ClickButton("NumberBondsButton");
+                            Advance(Stage.WaitShellNumberBondsReady);
                         }
                         break;
 
-                    case Stage.WaitShellGameplay:
-                        if (IsGameplayReady())
+                    case Stage.WaitShellNumberBondsReady:
+                        if (IsNumberBondsReady())
                         {
-                            Notes.Add("Boot -> MainMenu -> Dashboard -> ActivitySelect -> QuantityMatch flow passed.");
+                            ValidateNumberBondsRuntimeUi();
+                            Notes.Add("Boot -> MainMenu -> Dashboard -> ActivitySelect -> NumberBonds flow passed.");
                             Advance(Stage.StopAfterShell);
                         }
                         break;
@@ -499,6 +504,7 @@ namespace Project.Editor
             Require(FindButton("QuantityMatchButton")?.interactable == true, "Quantity Match button is playable.");
             Require(FindButton("NumberLineJumpButton") != null, "Number Line Jump button exists.");
             Require(FindButton("CompareQuantityButton") != null, "Compare Quantity button exists.");
+            Require(FindButton("NumberBondsButton") != null, "Number Bonds button exists.");
         }
 
         private static bool IsGameplayReady()
@@ -512,6 +518,56 @@ namespace Project.Editor
             return presenter != null
                 && presenter.CurrentState == ActivityState.InProgress
                 && FindButton("GroupButton_1") != null;
+        }
+
+        private static bool IsCompareReady()
+        {
+            if (SceneManager.GetActiveScene().name != "SC_ARGameplay")
+            {
+                return false;
+            }
+
+            var presenter = Object.FindFirstObjectByType<CompareQuantityPresenter>();
+            return presenter != null
+                && presenter.CurrentState == ActivityState.InProgress
+                && IsActiveButton("MoreButton")
+                && IsActiveButton("FewerButton")
+                && IsActiveButton("EqualButton");
+        }
+
+        private static void ValidateCompareRuntimeUi()
+        {
+            Require(FindText("QuestionText")?.text.Length > 0, "Compare Quantity question text is visible.");
+            Require(IsActiveButton("MoreButton"), "Compare Quantity more button is active.");
+            Require(IsActiveButton("FewerButton"), "Compare Quantity fewer button is active.");
+            Require(IsActiveButton("EqualButton"), "Compare Quantity equal button is active.");
+            Require(!ButtonsOverlap("MoreButton", "FewerButton"), "Compare Quantity answer buttons do not overlap.");
+            Require(!ButtonsOverlap("FewerButton", "EqualButton"), "Compare Quantity answer buttons do not overlap.");
+        }
+
+        private static bool IsNumberBondsReady()
+        {
+            if (SceneManager.GetActiveScene().name != "SC_ARGameplay")
+            {
+                return false;
+            }
+
+            var presenter = Object.FindFirstObjectByType<NumberBondsPresenter>();
+            return presenter != null
+                && presenter.CurrentState == ActivityState.InProgress
+                && IsActiveButton("ConfirmButton")
+                && FindText("ExpressionText") != null;
+        }
+
+        private static void ValidateNumberBondsRuntimeUi()
+        {
+            Require(FindText("InstructionText")?.text.Length > 0, "Number Bonds instruction text is visible.");
+            Require(FindText("ExpressionText")?.text.Contains("=") == true, "Number Bonds expression text is visible.");
+            Require(IsActiveButton("ConfirmButton"), "Number Bonds confirm button is active.");
+            Require(IsActiveButton("HintButton"), "Number Bonds hint button is active.");
+            Require(IsActiveButton("HomeButton"), "Number Bonds home button is active.");
+            Require(IsActiveButton("ListenButton"), "Number Bonds listen button is active.");
+            Require(!ButtonsOverlap("ConfirmButton", "HintButton"), "Number Bonds confirm and hint buttons do not overlap.");
         }
 
         private static bool IsNumberLineReady()
@@ -763,14 +819,11 @@ namespace Project.Editor
 
             var serialized = new SerializedObject(controller);
             SerializedProperty activities = serialized.FindProperty("activities");
-            Require(activities != null && activities.arraySize == 3, "Activity Select has three activity entries.");
+            Require(activities != null && activities.arraySize >= 3, "Activity Select has serialized activity entries.");
             RequireSerializedReference(controller, "backButton");
 
             SerializedProperty playable = serialized.FindProperty("playableActivityIds");
-            Require(playable != null && playable.arraySize == 3
-                && playable.GetArrayElementAtIndex(0).stringValue == "QuantityMatch"
-                && playable.GetArrayElementAtIndex(1).stringValue == "NumberLineJump"
-                && playable.GetArrayElementAtIndex(2).stringValue == "CompareQuantity",
+            Require(playable != null && playable.arraySize >= 3,
                 "Activity Select enables all implemented activities.");
         }
 
@@ -840,12 +893,12 @@ namespace Project.Editor
                 Stage.WaitRound2 => 10d,
                 Stage.WaitProgressSaved => 10d,
                 Stage.WaitQuantityCompletionControls => 8d,
-                Stage.WaitNumberLineReady => 12d,
+                Stage.WaitCompareReady => 12d,
                 Stage.WaitMainMenu => 8d,
                 Stage.WaitDashboard => 8d,
                 Stage.WaitMainMenuReturn => 8d,
                 Stage.WaitActivitySelect => 8d,
-                Stage.WaitShellGameplay => 15d,
+                Stage.WaitShellNumberBondsReady => 15d,
                 _ => 5d
             };
         }

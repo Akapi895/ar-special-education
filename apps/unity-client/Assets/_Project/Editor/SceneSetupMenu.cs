@@ -59,12 +59,13 @@ namespace Project.Editor
 
             CreateUIText(canvasObj.transform, "TitleText", "Choose Activity", 38, new Vector2(0f, 240f), new Vector2(700f, 80f));
             GameObject qmButtonObj = CreateUIButton(canvasObj.transform, "QuantityMatchButton", "Quantity Match", new Vector2(0f, 110f));
-            GameObject nljButtonObj = CreateUIButton(canvasObj.transform, "NumberLineJumpButton", "Number Line Jump", new Vector2(0f, 30f));
-            GameObject cqButtonObj = CreateUIButton(canvasObj.transform, "CompareQuantityButton", "Compare Quantity", new Vector2(0f, -50f));
-            GameObject backButtonObj = CreateUIButton(canvasObj.transform, "BackButton", "Back", new Vector2(0f, -170f));
+            GameObject cqButtonObj = CreateUIButton(canvasObj.transform, "CompareQuantityButton", "Compare Quantity", new Vector2(0f, 30f));
+            GameObject nbButtonObj = CreateUIButton(canvasObj.transform, "NumberBondsButton", "Number Bonds", new Vector2(0f, -50f));
+            GameObject nljButtonObj = CreateUIButton(canvasObj.transform, "NumberLineJumpButton", "Number Line Jump", new Vector2(0f, -130f));
+            GameObject backButtonObj = CreateUIButton(canvasObj.transform, "BackButton", "Back", new Vector2(0f, -230f));
 
             var controller = new GameObject("ActivitySelectController").AddComponent<ActivitySelectController>();
-            AssignActivityButtons(controller, qmButtonObj, nljButtonObj, cqButtonObj);
+            AssignActivityButtons(controller, qmButtonObj, cqButtonObj, nbButtonObj, nljButtonObj);
             AssignSerializedObjectReference(controller, "backButton", backButtonObj.GetComponent<Button>());
             AssignPlayableActivities(controller);
 
@@ -169,7 +170,7 @@ namespace Project.Editor
         }
 
         private static void AssignActivityButtons(ActivitySelectController controller, GameObject quantityMatchButtonObj,
-            GameObject numberLineJumpButtonObj, GameObject compareQuantityButtonObj)
+            GameObject compareQuantityButtonObj, GameObject numberBondsButtonObj, GameObject numberLineJumpButtonObj)
         {
             var serializedObject = new SerializedObject(controller);
             SerializedProperty activitiesProperty = serializedObject.FindProperty("activities");
@@ -180,13 +181,15 @@ namespace Project.Editor
                 return;
             }
 
-            activitiesProperty.arraySize = 3;
+            activitiesProperty.arraySize = 4;
             SetActivityButton(activitiesProperty.GetArrayElementAtIndex(0),
                 quantityMatchButtonObj.GetComponent<Button>(), "QuantityMatch", "QuantityMatch");
             SetActivityButton(activitiesProperty.GetArrayElementAtIndex(1),
-                numberLineJumpButtonObj.GetComponent<Button>(), "NumberLineJump", "NumberLineJump");
-            SetActivityButton(activitiesProperty.GetArrayElementAtIndex(2),
                 compareQuantityButtonObj.GetComponent<Button>(), "CompareQuantity", "CompareQuantity");
+            SetActivityButton(activitiesProperty.GetArrayElementAtIndex(2),
+                numberBondsButtonObj.GetComponent<Button>(), "NumberBonds", "NumberBonds");
+            SetActivityButton(activitiesProperty.GetArrayElementAtIndex(3),
+                numberLineJumpButtonObj.GetComponent<Button>(), "NumberLineJump", "NumberLineJump");
 
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(controller);
@@ -210,10 +213,11 @@ namespace Project.Editor
                 return;
             }
 
-            playableProperty.arraySize = 3;
+            playableProperty.arraySize = 4;
             playableProperty.GetArrayElementAtIndex(0).stringValue = "QuantityMatch";
-            playableProperty.GetArrayElementAtIndex(1).stringValue = "NumberLineJump";
-            playableProperty.GetArrayElementAtIndex(2).stringValue = "CompareQuantity";
+            playableProperty.GetArrayElementAtIndex(1).stringValue = "CompareQuantity";
+            playableProperty.GetArrayElementAtIndex(2).stringValue = "NumberBonds";
+            playableProperty.GetArrayElementAtIndex(3).stringValue = "NumberLineJump";
             serializedObject.ApplyModifiedProperties();
             EditorUtility.SetDirty(controller);
         }

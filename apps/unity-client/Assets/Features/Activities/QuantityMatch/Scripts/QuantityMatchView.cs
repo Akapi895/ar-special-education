@@ -2,20 +2,20 @@ using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
 using Core.UI.Components;
+using Core.UI.Layout;
 using Core.UI.Localization;
-using Features.Activities.QuantityMatch;
 using Project.App;
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityInputSystem = UnityEngine.InputSystem;
+#endif
+
 namespace Features.Activities.QuantityMatch
 {
-    /// <summary>
-    /// MonoBehaviour implementation of Quantity Match view.
-    /// Handles UI display and user input for the Quantity Match activity.
-    /// </summary>
     public class QuantityMatchView : MonoBehaviour, IQuantityMatchView
     {
         [Header("UI References")]
@@ -53,9 +53,9 @@ namespace Features.Activities.QuantityMatch
         private Button progressButton;
 
         [SerializeField]
-        private Core.UI.Components.UIFeedbackOverlay feedbackOverlay;
+        private UIFeedbackOverlay feedbackOverlay;
 
-        [Header("Number Input UI")]
+        [Header("Number Input Mode")]
         [SerializeField]
         private GameObject numberInputPanel;
 
@@ -86,7 +86,7 @@ namespace Features.Activities.QuantityMatch
 
         [Header("Group Selection UI")]
         [SerializeField]
-        private GameObject[] groupSelectionButtons;  // Optional: buttons for each group
+        private GameObject[] groupSelectionButtons;
 
         // Events from IActivityView
         public event Action OnHintRequested;
@@ -118,13 +118,11 @@ namespace Features.Activities.QuantityMatch
         private bool numberInputButtonsRegistered;
         private bool numberInputControlsInteractable;
         private Button lastAnswerButton;
+        private Text devKeyboardHintText;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
         private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(108f, 70f);
         private static readonly Vector2 RuntimeNumberInputPanelSize = new Vector2(900f, 330f);
-        private static readonly Vector2 RuntimeTopNavButtonSize = new Vector2(146f, 64f);
-        private static readonly Vector2 RuntimeHomeButtonTopRight = new Vector2(-24f, -24f);
-        private static readonly Vector2 RuntimeListenButtonTopRight = new Vector2(-188f, -24f);
         private const float RuntimeButtonGap = 28f;
         private const float RuntimeDigitButtonGap = 12f;
         private const float RuntimeActionButtonBottomY = 112f;
@@ -142,6 +140,7 @@ namespace Features.Activities.QuantityMatch
         private const string NumberInputSubmitLabel = "Tr\u1ea3 l\u1eddi";
         private const string RuntimeHomeButtonLabel = "Trang ch\u1ee7";
         private const int RuntimeTopNavButtonFontSize = 20;
+        private const string DEV_KEYBOARD_HINT = "Nhấn phím số để nhập nhanh";
 
         public bool HasUiReferences => targetNumberText != null;
 
@@ -207,6 +206,52 @@ namespace Features.Activities.QuantityMatch
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
+        private void ShowDevKeyboardHint()
+        {
+            if (devKeyboardHintText == null && runtimeUiRoot != null)
+            {
+                Transform existing = runtimeUiRoot.Find("DevKeyboardHint");
+                if (existing != null)
+                {
+                    devKeyboardHintText = existing.GetComponent<Text>();
+                }
+                else
+                {
+                    var go = new GameObject("DevKeyboardHint", typeof(RectTransform), typeof(Text));
+                    go.transform.SetParent(runtimeUiRoot);
+                    devKeyboardHintText = go.GetComponent<Text>();
+                    devKeyboardHintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                    devKeyboardHintText.fontSize = 16;
+                    devKeyboardHintText.color = new Color(0.2f, 0.8f, 0.2f, 1f);
+                    devKeyboardHintText.alignment = TextAnchor.LowerRight;
+                    devKeyboardHintText.raycastTarget = false;
+                    devKeyboardHintText.resizeTextForBestFit = true;
+                    devKeyboardHintText.resizeTextMinSize = 12;
+                    devKeyboardHintText.resizeTextMaxSize = 18;
+                    var rect = go.GetComponent<RectTransform>();
+                    rect.anchorMin = new Vector2(0f, 0f);
+                    rect.anchorMax = new Vector2(1f, 0f);
+                    rect.pivot = new Vector2(0.5f, 0f);
+                    rect.sizeDelta = new Vector2(-40f, 30f);
+                    rect.anchoredPosition = new Vector2(0f, 10f);
+                }
+            }
+
+            if (devKeyboardHintText != null)
+            {
+                devKeyboardHintText.text = DEV_KEYBOARD_HINT;
+                devKeyboardHintText.gameObject.SetActive(true);
+            }
+        }
+
+        private void HideDevKeyboardHint()
+        {
+            if (devKeyboardHintText != null)
+            {
+                devKeyboardHintText.gameObject.SetActive(false);
+            }
+        }
+
         /// <summary>
         /// Builds minimal UI at runtime when prefabs are not assigned.
         /// </summary>
@@ -235,12 +280,12 @@ namespace Features.Activities.QuantityMatch
             hintText = CreatePanelText(hintPanel.transform, "HintText", "", 22);
             hintPanel.SetActive(false);
 
-            // Large center bottom Hint button (140x140px, gold, icon bulb)
-            hintButton = CreateSizedBottomButton(panel, "HintButton", "💡", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(140f, 140f), () => OnHintRequested?.Invoke(), 72);
-            
-            // Small top-right Cancel button (100x100px, soft-red, icon cross) - enlarged for kids
-            cancelButton = CreateSizedTopRightButton(panel, "CancelButton", RuntimeHomeButtonLabel, RuntimeHomeButtonTopRight, RuntimeTopNavButtonSize, OnCancelClicked, RuntimeTopNavButtonFontSize);
-            listenButton = CreateSizedTopRightButton(panel, "ListenButton", SimpleLocalization.Get("btn_listen"), RuntimeListenButtonTopRight, RuntimeTopNavButtonSize, OnListenClicked, RuntimeTopNavButtonFontSize);
+            // Hint button at top-left
+            hintButton = UIActivityNavButtons.CreateHintButton(panel, () => OnHintRequested?.Invoke());
+
+            // Navigation buttons using shared utility
+            cancelButton = UIActivityNavButtons.CreateHomeButton(panel, OnCancelClicked);
+            listenButton = UIActivityNavButtons.CreateListenButton(panel, OnListenClicked);
 
             // Centered bottom buttons for transitioning (hidden by default)
             nextRoundButton = CreateSizedBottomButton(panel, "NextButton", "▶ Tiếp tục", new Vector2(0f, RuntimeActionButtonBottomY), new Vector2(240f, 100f), OnNextRoundClicked, 28);
@@ -513,7 +558,7 @@ namespace Features.Activities.QuantityMatch
             SetRuntimeGroupButtonsActive(false);
             SetNumberInputPanelActive(false);
             SetRunningActionButtonsActive(false);
-            
+
             if (feedbackOverlay != null)
             {
                 feedbackOverlay.ShowSuccess("Hoàn thành! Con làm tốt lắm!");
@@ -552,7 +597,7 @@ namespace Features.Activities.QuantityMatch
             SetRuntimeGroupButtonsActive(false);
             SetNumberInputPanelActive(false);
             SetRunningActionButtonsActive(false);
-            
+
             if (feedbackOverlay != null)
             {
                 feedbackOverlay.ShowIncorrect("Cố lên nhé! Thử lại sau nhé!");
@@ -1122,13 +1167,13 @@ namespace Features.Activities.QuantityMatch
 
             if (clearNumberButton != null)
             {
-                clearNumberButton.gameObject.SetActive(false);
+                clearNumberButton.gameObject.SetActive(hasValue);
                 clearNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
 
             if (submitNumberButton != null)
             {
-                submitNumberButton.gameObject.SetActive(false);
+                submitNumberButton.gameObject.SetActive(hasValue);
                 submitNumberButton.interactable = numberInputControlsInteractable && hasValue;
             }
         }
@@ -1608,19 +1653,25 @@ namespace Features.Activities.QuantityMatch
             rect.anchoredPosition = anchoredPosition;
 
             var image = go.GetComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.95f);
-            image.raycastTarget = false;
+            if (image != null)
+            {
+                image.color = new Color(1f, 1f, 1f, 0.95f);
+                image.raycastTarget = false;
+            }
 
             var text = go.GetComponent<Text>();
-            text.text = content;
-            text.fontSize = fontSize;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 20;
-            text.resizeTextMaxSize = fontSize;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = new Color(0.08f, 0.1f, 0.12f, 1f);
-            text.raycastTarget = false;
+            if (text != null)
+            {
+                text.text = content;
+                text.fontSize = fontSize;
+                text.resizeTextForBestFit = true;
+                text.resizeTextMinSize = 20;
+                text.resizeTextMaxSize = fontSize;
+                text.alignment = TextAnchor.MiddleCenter;
+                text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                text.color = new Color(0.08f, 0.1f, 0.12f, 1f);
+                text.raycastTarget = false;
+            }
             return text;
         }
 
@@ -1670,39 +1721,12 @@ namespace Features.Activities.QuantityMatch
 
         private static Text CreateButtonLabel(Transform parent, string label)
         {
-            var go = new GameObject("Label", typeof(RectTransform), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(8f, 4f);
-            rect.offsetMax = new Vector2(-8f, -4f);
-
-            var text = go.GetComponent<Text>();
-            text.text = label;
-            text.fontSize = 24;
-            text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = 16;
-            text.resizeTextMaxSize = 24;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.color = Color.white;
-            text.raycastTarget = false;
-            return text;
+            return UIActivityLayoutHelpers.CreateButtonLabel(parent, label);
         }
 
         private static void SetButtonLabel(Button button, string label)
         {
-            if (button == null)
-            {
-                return;
-            }
-
-            Text text = button.GetComponentInChildren<Text>();
-            if (text != null)
-            {
-                text.text = label;
-            }
+            UIActivityLayoutHelpers.SetButtonLabel(button, label);
         }
 
         private string GetNextButtonLabel(string activityId)
@@ -1717,18 +1741,7 @@ namespace Features.Activities.QuantityMatch
 
         private static void LoadSceneIfAvailable(string sceneName)
         {
-            if (string.IsNullOrEmpty(sceneName))
-            {
-                return;
-            }
-
-            if (!Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                Debug.LogWarning($"[QuantityMatchView] Scene '{sceneName}' is not available in Build Settings.");
-                return;
-            }
-
-            SceneManager.LoadScene(sceneName);
+            UIActivityLayoutHelpers.LoadSceneIfAvailable(sceneName);
         }
 
         private Vector3 originalUiRootPos;
@@ -1773,19 +1786,7 @@ namespace Features.Activities.QuantityMatch
 
         private void NormalizeTopNavigationButtons()
         {
-            ConfigureTopRightNavigationButton(
-                cancelButton,
-                RuntimeHomeButtonLabel,
-                RuntimeHomeButtonTopRight,
-                RuntimeTopNavButtonSize,
-                new Color(0.85f, 0.35f, 0.35f, 0.9f));
-
-            ConfigureTopRightNavigationButton(
-                listenButton,
-                SimpleLocalization.Get("btn_listen"),
-                RuntimeListenButtonTopRight,
-                RuntimeTopNavButtonSize,
-                new Color(0.2f, 0.5f, 0.9f, 0.9f));
+            // Buttons are already configured correctly by UIActivityNavButtons
         }
 
         private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)
@@ -1838,6 +1839,31 @@ namespace Features.Activities.QuantityMatch
             go.GetComponent<Image>().color = name.Contains("Listen")
                 ? new Color(0.2f, 0.5f, 0.9f, 0.9f)
                 : new Color(0.85f, 0.35f, 0.35f, 0.85f);
+
+            var button = go.GetComponent<Button>();
+            if (onClick != null)
+            {
+                button.onClick.AddListener(onClick);
+            }
+
+            Text text = CreateButtonLabel(go.transform, label);
+            text.fontSize = fontSize;
+            text.resizeTextMaxSize = fontSize;
+            UIKidFriendlyStyle.Apply(button, name, label, fontSize);
+            return button;
+        }
+
+        private static Button CreateSizedTopLeftButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, UnityEngine.Events.UnityAction onClick, int fontSize)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = anchoredPosition;
+            go.GetComponent<Image>().color = new Color(0.98f, 0.8f, 0.2f, 1.0f); // Bright yellow
 
             var button = go.GetComponent<Button>();
             if (onClick != null)
