@@ -1,5 +1,6 @@
 using Core.Data.LocalStorage;
 using Features.Activities.CompareQuantity;
+using Features.Activities.NumberBonds;
 using Features.Activities.NumberLineJump;
 using Features.Activities.QuantityMatch;
 using UnityEngine;
@@ -40,6 +41,16 @@ namespace Project.App
 
         [SerializeField]
         private CompareQuantityConfig compareQuantityConfig;
+
+        [Header("Number Bonds")]
+        [SerializeField]
+        private NumberBondsPresenter numberBondsPresenter;
+
+        [SerializeField]
+        private NumberBondsView numberBondsView;
+
+        [SerializeField]
+        private NumberBondsConfig numberBondsConfig;
 
         [Header("Default Activity")]
         [Tooltip("Activity to load if none selected (for testing)")]
@@ -106,6 +117,10 @@ namespace Project.App
 
                 case "CompareQuantity":
                     LoadCompareQuantity();
+                    break;
+
+                case "NumberBonds":
+                    LoadNumberBonds();
                     break;
 
                 default:
@@ -193,6 +208,32 @@ namespace Project.App
             compareQuantityView.Show();
 
             Debug.Log("[ActivityLoader] Compare Quantity loaded.");
+        }
+
+        private void LoadNumberBonds()
+        {
+            if (numberBondsPresenter == null || numberBondsView == null || numberBondsConfig == null)
+            {
+                Debug.LogError("[ActivityLoader] Number Bonds components not assigned.");
+                return;
+            }
+
+            if (arBootstrap.Placement == null || arBootstrap.Interaction == null)
+            {
+                Debug.LogError("[ActivityLoader] AR services not available.");
+                return;
+            }
+
+            numberBondsPresenter.Initialize(
+                numberBondsConfig,
+                numberBondsView,
+                arBootstrap.Placement,
+                arBootstrap.Interaction);
+
+            numberBondsPresenter.StartActivity();
+            numberBondsView.Show();
+
+            Debug.Log("[ActivityLoader] Number Bonds loaded.");
         }
     }
 }

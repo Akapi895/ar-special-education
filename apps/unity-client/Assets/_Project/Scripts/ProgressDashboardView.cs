@@ -48,7 +48,7 @@ namespace Project.App
 
         [Header("Activity IDs")]
         [SerializeField]
-        private string[] activityIds = new string[] { "QuantityMatch", "NumberLineJump", "CompareQuantity" };
+        private string[] activityIds = new string[] { "QuantityMatch", "CompareQuantity", "NumberBonds", "NumberLineJump" };
 
         private LocalProgressStorage progressStorage;
 
@@ -304,6 +304,7 @@ namespace Project.App
                 case "QuantityMatch": return "Ghép số với lượng";
                 case "CompareQuantity": return "So sánh số lượng";
                 case "NumberLineJump": return "Nhảy trên trục số";
+                case "NumberBonds": return "T\u00e1ch-g\u1ed9p s\u1ed1";
                 default: return activityId;
             }
         }
