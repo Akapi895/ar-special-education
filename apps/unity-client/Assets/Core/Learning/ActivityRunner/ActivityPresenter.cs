@@ -29,8 +29,8 @@ namespace Core.Learning.ActivityRunner
         protected int hintsUsedInCurrentRound = 0;
         protected float roundStartTime;
 
-        // Unified hint system - shared across all activities
-        private static HintSystem sharedHintSystem = new HintSystem();
+        // Unified hint system - shared across all activities, managed via HintServiceProxy
+        private static HintSystem sharedHintSystem;
 
         // Events from IActivityRunner
         public event Action<ActivityState> OnStateChanged;
@@ -257,7 +257,7 @@ namespace Core.Learning.ActivityRunner
             }
 
             // Request hint from unified HintSystem
-            ActivityHint hint = sharedHintSystem.RequestHint(
+            ActivityHint hint = GetHintSystem().RequestHint(
                 config.ActivityId,
                 currentRound,
                 hints,
@@ -267,7 +267,7 @@ namespace Core.Learning.ActivityRunner
             if (hint != null)
             {
                 // Update tracking
-                hintsUsedInCurrentRound = sharedHintSystem.GetHintCount(config.ActivityId, currentRound);
+                hintsUsedInCurrentRound = GetHintSystem().GetHintCount(config.ActivityId, currentRound);
                 currentResult.IncrementHintsUsed();
 
                 // Pass to derived class for View handling
@@ -316,6 +316,10 @@ namespace Core.Learning.ActivityRunner
         /// </summary>
         protected HintSystem GetHintSystem()
         {
+            if (sharedHintSystem == null)
+            {
+                sharedHintSystem = Core.Support.HintSystem.HintServiceProxy.Instance;
+            }
             return sharedHintSystem;
         }
 
@@ -325,7 +329,7 @@ namespace Core.Learning.ActivityRunner
         /// </summary>
         protected virtual void ResetHints()
         {
-            sharedHintSystem.ResetActivityHints(config.ActivityId);
+            GetHintSystem().ResetActivityHints(config.ActivityId);
             hintsUsedInCurrentRound = 0;
         }
 

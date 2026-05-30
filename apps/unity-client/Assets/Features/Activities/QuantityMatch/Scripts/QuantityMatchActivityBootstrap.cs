@@ -39,10 +39,6 @@ namespace Features.Activities.QuantityMatch
         public void SetAutoStartWhenReady(bool value)
         {
             autoStartWhenReady = value;
-            if (!value)
-            {
-                CancelInvoke(nameof(TryStartActivity));
-            }
         }
 
         private void Awake()
@@ -72,8 +68,28 @@ namespace Features.Activities.QuantityMatch
         {
             if (autoStartWhenReady && Project.App.GameplayActivityRouter.Instance == null)
             {
-                Invoke(nameof(TryStartActivity), startDelaySeconds);
+                var bootstrap = ARServiceBootstrap.Instance;
+                if (bootstrap != null && bootstrap.Placement != null)
+                {
+                    bootstrap.Placement.OnLearningAreaPlaced += OnPlacementReady;
+                }
+
+                if (bootstrap != null && bootstrap.Placement != null
+                    && bootstrap.Placement.IsPlacementAvailable && bootstrap.Placement.HasLearningArea)
+                {
+                    OnPlacementReady();
+                }
             }
+        }
+
+        private void OnPlacementReady()
+        {
+            var bootstrap = ARServiceBootstrap.Instance;
+            if (bootstrap != null && bootstrap.Placement != null)
+            {
+                bootstrap.Placement.OnLearningAreaPlaced -= OnPlacementReady;
+            }
+            TryStartActivity();
         }
 
         public void TryStartActivity()
@@ -104,7 +120,6 @@ namespace Features.Activities.QuantityMatch
             if (!bootstrap.Placement.IsPlacementAvailable || !bootstrap.Placement.HasLearningArea)
             {
                 Debug.Log("[QuantityMatchActivityBootstrap] Waiting for learning area placement...");
-                Invoke(nameof(TryStartActivity), 0.5f);
                 return;
             }
 

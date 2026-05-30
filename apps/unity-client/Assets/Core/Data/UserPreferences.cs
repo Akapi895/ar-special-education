@@ -11,7 +11,6 @@ namespace Core.Data
         private const string AudioEnabledKey = "UserPrefs.AudioEnabled";
         private const string HighContrastModeKey = "UserPrefs.HighContrastMode";
         private const string SimplifiedModeKey = "UserPrefs.SimplifiedMode";
-        private const string EnforceLessonPrerequisitesKey = "UserPrefs.EnforceLessonPrerequisites";
 
         public static float Volume
         {
@@ -86,28 +85,7 @@ namespace Core.Data
             }
         }
 
-        public static bool EnforceLessonPrerequisites
-        {
-            get => PlayerPrefs.GetInt(
-                EnforceLessonPrerequisitesKey,
-                GetDefaultLessonPrerequisiteLockValue() ? 1 : 0) == 1;
-            set
-            {
-                PlayerPrefs.SetInt(EnforceLessonPrerequisitesKey, value ? 1 : 0);
-                PlayerPrefs.Save();
-            }
-        }
-
-        public static void ResetLessonPrerequisitePreference()
-        {
-            PlayerPrefs.DeleteKey(EnforceLessonPrerequisitesKey);
-            PlayerPrefs.Save();
-        }
-
-        private static bool GetDefaultLessonPrerequisiteLockValue()
-        {
-            return false;
-        }
+        public static bool EnforceLessonPrerequisites => false;
     }
 }
 

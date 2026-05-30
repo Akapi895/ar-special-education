@@ -20,6 +20,11 @@ namespace Core.Learning.ActivityRunner
         event Action OnPlacementPositionLost;
 
         /// <summary>
+        /// Event fired when a learning area has been placed by the user.
+        /// </summary>
+        event Action OnLearningAreaPlaced;
+
+        /// <summary>
         /// Check if a valid placement position is currently available.
         /// </summary>
         bool IsPlacementAvailable { get; }

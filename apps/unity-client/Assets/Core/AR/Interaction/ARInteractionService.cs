@@ -39,6 +39,7 @@ namespace Core.AR.Interaction
         private GameObject selectedObject;
         private GameObject draggingObject;
         private readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
+        private readonly MaterialPropertyBlock cachedHighlightBlock = new MaterialPropertyBlock();
 
         public event Action<GameObject> OnObjectTapped;
         public event Action<GameObject> OnObjectSelected;
@@ -426,18 +427,18 @@ namespace Core.AR.Interaction
                     entry.OriginalPropertyBlocks[renderer] = originalBlock;
                 }
 
-                var highlightBlock = new MaterialPropertyBlock();
-                renderer.GetPropertyBlock(highlightBlock);
+                cachedHighlightBlock.Clear();
+                renderer.GetPropertyBlock(cachedHighlightBlock);
                 if (hasBaseColor)
                 {
-                    highlightBlock.SetColor(BaseColorId, highlightColor);
+                    cachedHighlightBlock.SetColor(BaseColorId, highlightColor);
                 }
                 else
                 {
-                    highlightBlock.SetColor(ColorId, highlightColor);
+                    cachedHighlightBlock.SetColor(ColorId, highlightColor);
                 }
 
-                renderer.SetPropertyBlock(highlightBlock);
+                renderer.SetPropertyBlock(cachedHighlightBlock);
             }
 
             if (!enabled)

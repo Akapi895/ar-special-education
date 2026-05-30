@@ -221,26 +221,7 @@ namespace Project.App
                 return false;
             }
 
-            if (!UserPreferences.EnforceLessonPrerequisites)
-            {
-                return true;
-            }
-
-            string lessonId = ResolveLessonId(activity);
-            return string.IsNullOrEmpty(lessonId) || LessonMapRegistry.IsLessonUnlocked(lessonId, IsLessonMastered);
-        }
-
-        private bool IsLessonMastered(string lessonId)
-        {
-            LessonDefinition lesson = LessonMapRegistry.GetLesson(lessonId);
-            if (lesson == null)
-            {
-                return false;
-            }
-
-            ActivityStatistics stats = ProgressStorageProxy.Instance.GetLessonStatistics(lessonId);
-            return stats.TotalLearningRounds >= lesson.MinimumRoundsForMastery
-                && stats.SuccessRate >= lesson.MinimumAccuracyForMastery;
+            return true;
         }
 
         private static string ResolveLessonId(ActivityButton activity)

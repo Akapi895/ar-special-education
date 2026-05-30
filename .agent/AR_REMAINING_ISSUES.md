@@ -1,51 +1,25 @@
 # AR Remaining Issues & System Status Report
 
-> **Cập nhật**: 30/05/2026 (A2-A4, P0-P2 bugs đã sửa; lesson prerequisites disabled)  
+> **Cập nhật**: 30/05/2026 (A2-A4, P0-P2, dead code x3, arch debt #1-#4, prereqs removed permanently)  
 > **Mục đích**: Consolidate tất cả vấn đề còn tồn tại từ codebase exploration.  
 > **Phạm vi**: 4 activities (QuantityMatch, CompareQuantity, NumberBonds, NumberLineJump) + app shell + AR services.
 
 ---
 
-## 0. Xác Nhận Kiến Trúc Đúng
+## 1. Dead Code & Technical Debt
 
-### ✅ Character KHÔNG phải là con của Main Camera/AR Camera
+### 1.2 Architecture Debt
 
-Đã kiểm tra toàn bộ:
-- **Scene files** (6 scenes): Tất cả camera đều có `m_Children: []` — không có Character nào là con của camera.
-- **Prefab files**: XR Origin (AR Rig) prefab có Main Camera với children rỗng.
-- **Runtime code**: JumpCharacter trong NumberLineJump được parent vào `placementService.LearningAreaContentRoot` (AR anchor area), không phải camera.
-- **Không có** `SetParent` nào trỏ vào `Camera.main.transform` ngoại trừ fallback quad trong `ARSessionService.cs:300`.
-
-**Kết luận**: Không tồn tại cấu trúc sai `Main Camera └── Character`. Nhân vật được đặt đúng trong learning area AR, độc lập với camera.
+| # | Issue | Current | Required | Trạng thái |
+|---|---|---|---|---|
+| 1 | **View files quá lớn** | QuantityMatchView ~1918, NumberLineJumpView ~1139, CompareQuantityView ~977 | Target <500 lines per file | ❌ Chưa làm — cần refactor lớn |
+| 2 | **No unit tests** | Tất cả `Tests/` directories chỉ có `.gitkeep` | Cần test cho Presenter validation, state transitions | ❌ Chưa làm |
 
 ---
 
-## 3. Dead Code & Technical Debt
+## 2. iOS Performance & Build Requirements
 
-### 3.1 Dead Code
-
-| File | Lines | Lý do |
-|---|---|---|
-| `Core/UI/Components/UIHintBubble.cs` | 151 | Không được reference bởi bất kỳ code nào |
-| `Core/UI/Navigation/UIScreenManager.cs` | 96 | Không được reference bởi bất kỳ code nào |
-| `Core/UI/Navigation/UIScreen.cs` | — | Base class, không được dùng |
-
-### 3.2 Architecture Debt
-
-| # | Issue | Current | Required |
-|---|---|---|---|
-| 1 | **Static HintSystem** | `HintSystem` là static class, không cleanup | Chuyển thành service có lifecycle |
-| 2 | **MaterialPropertyBlock không reuse** | Tạo block mới mỗi highlight → GC pressure | Cache instance field |
-| 3 | **Bootstrap polling** | `Invoke("TryStartActivity", 0.5f)` chờ placement | Event-driven: subscribe `OnLearningAreaPlaced` |
-| 4 | **No object pooling** | Instantiate/destroy mỗi round | `SimpleObjectPool` cho production |
-| 5 | **View files quá lớn** | QuantityMatchView ~1918, NumberLineJumpView ~1139, CompareQuantityView ~977 | Target <500 lines per file |
-| 6 | **No unit tests** | Tất cả `Tests/` directories chỉ có `.gitkeep` | Cần test cho Presenter validation, state transitions |
-
----
-
-## 4. iOS Performance & Build Requirements
-
-### 4.1 Performance Checklist
+### 2.1 Performance Checklist
 
 | # | Item | Trạng thái | Ghi chú |
 |---|---|---|---|
@@ -55,7 +29,7 @@
 | 4 | `Application.targetFrameRate = 30` | ❌ Chưa set | Phải set trong BootLoader hoặc LearningSceneServices |
 | 5 | `LateUpdate` cho fallback quad | ⚠️ Tồn tại | `ARSessionService.LateUpdate` thêm frame budget |
 
-### 4.2 Build Settings
+### 2.2 Build Settings
 
 | # | Item | Required Value |
 |---|---|---|
@@ -64,9 +38,9 @@
 | 3 | Managed Stripping Level | Low |
 | 4 | Camera Usage Description | "Ứng dụng cần truy cập camera để hiển thị nội dung thực tế ảo" |
 | 5 | ARKit capability | Enabled (trong Xcode) |
-| 6 | Development Build | ON (cho test) |
+| 6 | Development Build | ON (bắt buộc — đã disable toggle prerequisite lock) |
 
-### 4.3 AR Error Handling
+### 2.3 AR Error Handling
 
 | # | Scenario | Required |
 |---|---|---|
@@ -76,7 +50,7 @@
 
 ---
 
-## 5. Canvas Resolution ✅ ĐÃ ĐỒNG NHẤT
+## 3. Canvas Resolution ✅ ĐÃ ĐỒNG NHẤT
 
 Tất cả activities hiện dùng `1920x1080` (landscape):
 - `QuantityMatchView.cs:1535`: Đã sửa từ `1080x1920` → `1920x1080`.
@@ -84,33 +58,19 @@ Tất cả activities hiện dùng `1920x1080` (landscape):
 
 ---
 
-## 6. UI Consistent Issues
+## 4. UI Consistent Issues
 
-### 6.1 Feedback Colors Không Đồng Nhất
+### 4.1 Feedback Colors Không Đồng Nhất
 
-| Activity | Correct color | Incorrect color |
-|---|---|---|
-| QuantityMatch | Green `Color.green` | Orange `(1.0, 0.5, 0)` |
-| CompareQuantity | Green `Color.green` | Red `Color.red` |
-| NumberBonds | Green | Red |
-| NumberLineJump | Green | Red |
+### 4.2 Feedback Auto-Hide Timing Không Đồng Nhất
 
-### 6.2 Feedback Auto-Hide Timing Không Đồng Nhất
-
-| Activity | Correct auto-hide | Incorrect auto-hide |
-|---|---|---|
-| QuantityMatch | 2s | 1.5s |
-| CompareQuantity | 1.8s (overlay) | 1.2s (overlay) |
-| NumberBonds | None | None |
-| NumberLineJump | None | None |
-
-### 6.3 NumberLineJump — Thiếu Panel Background Tint
+### 4.3 NumberLineJump — Thiếu Panel Background Tint
 
 Không giống CompareQuantity và NumberBonds, NumberLineJump chỉ đổi `feedbackText.color`, không tint panel background.
 
 ---
 
-## 7. Hardcoded Strings (~56+ Strings)
+## 5. Hardcoded Strings (~56+ Strings)
 
 Tất cả các View đều dùng hardcoded tiếng Việt thay vì `SimpleLocalization.Get()`:
 
@@ -124,7 +84,7 @@ Tất cả các View đều dùng hardcoded tiếng Việt thay vì `SimpleLocal
 
 ---
 
-## 8. Priority Action Plan
+## 6. Priority Action Plan
 
 ### Sprint A (Blocker P0/P1) — ✅ Đã hoàn thành
 
@@ -148,7 +108,7 @@ Tất cả các View đều dùng hardcoded tiếng Việt thay vì `SimpleLocal
 [P2] Particle warning (QuantityMatch)       → ✅ Đã thêm procedural confetti fallback
 [P2] SymbolCompare question type           → ✅ Đã thêm QuestionType enum + display
 [P2] Compose/MissingPart behavior          → ✅ Đã thêm FromQuestion cases + ValidateCurrentState
-[P1] UIHintBubble: Tích hợp vào Views      → ❌ Chưa làm
+[P1] UIHintBubble (dead code)               → ✅ Đã xóa (backup in .agent/_deprecated/)
 [P2] Standardize feedback colors           → ❌ Chưa làm
 [P2] Tăng feedback auto-hide timing        → ❌ Chưa làm
 [P2] NumberLineJump: panel background tint → ❌ Chưa làm
@@ -162,10 +122,9 @@ Tất cả các View đều dùng hardcoded tiếng Việt thay vì `SimpleLocal
 [C3] Thêm ✅/❌ icons cạnh text feedback
 [C4] iOS safe area support (Screen.safeArea)
 [C5] Color-blind friendly mode
-[C6] UIHintBubble integration
-[C7] Standardize feedback colors
-[C8] Feedback auto-hide timing
-[C9] NumberLineJump panel background tint
+[C6] Standardize feedback colors
+[C7] Feedback auto-hide timing
+[C8] NumberLineJump panel background tint
 ```
 
 ### Sprint D (iOS Build)
@@ -178,3 +137,23 @@ Tất cả các View đều dùng hardcoded tiếng Việt thay vì `SimpleLocal
 [D5] Build iOS + device test
 [D6] Memory test: 10 rounds liên tiếp
 ```
+
+---
+
+## 7. Files Marked for Cleanup
+
+Các file sau đã được consolidate vào báo cáo này và có thể xóa:
+
+| File | Lý do |
+|---|---|
+| `.agent/UIUX_IMPROVEMENT_PLAN.md` | Nội dung đã được verify và merge vào báo cáo này |
+| `.agent/AR_DEMO_GAP_LOG.md` | Gap log đã được tích hợp vào sections 2-8 |
+
+**Giữ lại**:
+- `.agent/AR_UNITY_ARCHITECTURE_PIPELINE.md` — Tài liệu kiến trúc tham chiếu
+- `.agent/AR_UNITY_IOS_WORKFLOW_RULES.md` — Rules phát triển iOS
+- `.agent/LESSON_01_QUANTITY_RECOGNITION.md` đến `LESSON_04_SEQUENCING.md` — Plan chi tiết từng lesson
+
+---
+
+*Tổng hợp: 30/05/2026 — từ codebase exploration. Sprint A+B fixes applied: IActivityView event, HighlightGroup, ShowMaxJumpsWarning, zone glow animation, feedback confetti/audio.*

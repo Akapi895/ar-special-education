@@ -67,6 +67,7 @@ namespace Core.AR.Placement
 
         public event Action<Vector3> OnPlacementPositionAvailable;
         public event Action OnPlacementPositionLost;
+        public event Action OnLearningAreaPlaced;
 
         public bool IsPlacementAvailable => alwaysAvailable;
         public Vector3 CurrentPlacementPosition => mockPlacementPosition;
@@ -81,6 +82,7 @@ namespace Core.AR.Placement
                 ConfigureEditorSimulationPlacement();
                 EnsureMockLearningArea();
                 OnPlacementPositionAvailable?.Invoke(mockPlacementPosition);
+                OnLearningAreaPlaced?.Invoke();
             }
             else
             {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ARSpecialEducation.Core.AR;
+using Core.Support.Performance;
 using Core.Learning.ActivityRunner;
 using Unity.XR.CoreUtils;
 using UnityEngine;
@@ -61,6 +62,7 @@ namespace Core.AR.Placement
 
         public event Action<Vector3> OnPlacementPositionAvailable;
         public event Action OnPlacementPositionLost;
+        public event Action OnLearningAreaPlaced;
 
         public bool IsPlacementAvailable => placementAvailable;
         public Vector3 CurrentPlacementPosition => currentPlacementPosition;
@@ -126,7 +128,7 @@ namespace Core.AR.Placement
             }
 
             Transform resolvedParent = parent != null ? parent : LearningAreaContentRoot;
-            GameObject instance = Instantiate(prefab, position, rotation, resolvedParent);
+            GameObject instance = ObjectPoolManager.Spawn(prefab, position, rotation, resolvedParent);
             instance.SetActive(true);
             TrackSpawned(instance);
             return instance;
@@ -202,7 +204,7 @@ namespace Core.AR.Placement
                 GameObject obj = spawnedObjects[i];
                 if (obj != null)
                 {
-                    Destroy(obj);
+                    ObjectPoolManager.Release(obj);
                 }
             }
 
@@ -355,6 +357,7 @@ namespace Core.AR.Placement
             }
 
             learningAreaAnchor = anchor;
+            OnLearningAreaPlaced?.Invoke();
             learningAreaAnchor.SetAreaSize(defaultLearningAreaSizeMeters);
             currentPlacementPosition = anchor.Pose.position;
             currentPlacementRotation = anchor.Pose.rotation;
