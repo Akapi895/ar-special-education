@@ -61,6 +61,10 @@ namespace Core.UI.Components
                 confettiParticleSystem.gameObject.SetActive(true);
                 confettiParticleSystem.Play();
             }
+            else
+            {
+                SpawnProceduralConfetti();
+            }
 
             TriggerEntranceAnimation();
             StartAutoHide(autoHideDelay);
@@ -244,6 +248,51 @@ namespace Core.UI.Components
 
             contentPanel.anchoredPosition = originalContentPosition;
             shakeCoroutine = null;
+        }
+
+        private void SpawnProceduralConfetti()
+        {
+            var confettiGo = new GameObject("ProceduralConfetti", typeof(ParticleSystem));
+            confettiGo.transform.SetParent(transform, false);
+            confettiGo.transform.localPosition = Vector3.zero;
+
+            var particles = confettiGo.GetComponent<ParticleSystem>();
+            var main = particles.main;
+            main.playOnAwake = false;
+            main.duration = 0.8f;
+            main.loop = false;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 1.0f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.5f, 1.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.15f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.maxParticles = 40;
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                new Color(1f, 0.9f, 0.2f),
+                new Color(0.2f, 1f, 0.4f));
+            main.gravityModifier = -0.03f;
+
+            var emission = particles.emission;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)30) });
+
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.3f;
+
+            var velocity = particles.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.Local;
+            velocity.y = new ParticleSystem.MinMaxCurve(0.2f, 0.6f);
+
+            var sizeOverLifetime = particles.sizeOverLifetime;
+            sizeOverLifetime.enabled = true;
+            sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 1f, 1f, 0f));
+
+            var renderer = particles.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
+
+            particles.Play();
+            Destroy(confettiGo, 3f);
         }
 
         private void StopAllActiveCoroutines()

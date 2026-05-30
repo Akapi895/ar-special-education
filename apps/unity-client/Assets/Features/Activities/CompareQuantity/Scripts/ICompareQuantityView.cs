@@ -22,7 +22,8 @@ namespace Features.Activities.CompareQuantity
         /// <param name="leftCount">Number of objects in left group.</param>
         /// <param name="rightCount">Number of objects in right group.</param>
         /// <param name="isEquality">Whether this is an equality question.</param>
-        void ShowQuestion(int leftCount, int rightCount, bool isEquality);
+        /// <param name="questionType">How the question is displayed.</param>
+        void ShowQuestion(int leftCount, int rightCount, bool isEquality, CompareQuantityQuestionType questionType = CompareQuantityQuestionType.Standard);
 
         /// <summary>
         /// Show correct feedback with custom message.
@@ -45,9 +46,9 @@ namespace Features.Activities.CompareQuantity
         void ShowActivityFailed(string message, ActivityResult result);
 
         /// <summary>
-        /// Update the answer button labels.
+        /// Refresh the answer button visuals (>, <, = symbols).
         /// </summary>
-        void UpdateButtonLabels(string moreLabel, string fewerLabel, string equalLabel);
+        void RefreshAnswerButtonVisuals(string moreLabel, string fewerLabel, string equalLabel);
 
         /// <summary>
         /// Highlight a group (left or right).

@@ -106,11 +106,7 @@ namespace Core.Data
 
         private static bool GetDefaultLessonPrerequisiteLockValue()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             return false;
-#else
-            return true;
-#endif
         }
     }
 }

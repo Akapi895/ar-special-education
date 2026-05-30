@@ -61,6 +61,31 @@ namespace Features.Activities.NumberBonds
                     state.ConfigureTargetSplit(question);
                     break;
 
+                case NumberBondMode.Compose:
+                    state.PartACount = Mathf.Max(0, question.KnownPartA >= 0 ? question.KnownPartA : question.WholeTarget / 2);
+                    state.PartBCount = Mathf.Max(0, question.KnownPartB >= 0 ? question.KnownPartB : question.WholeTarget - state.PartACount);
+                    state.WholeCount = 0;
+                    break;
+
+                case NumberBondMode.MissingPart:
+                    if (question.KnownPartA >= 0)
+                    {
+                        state.PartACount = question.KnownPartA;
+                        state.PartALocked = true;
+                        state.WholeCount = Mathf.Max(0, question.WholeTarget - question.KnownPartA);
+                    }
+                    else if (question.KnownPartB >= 0)
+                    {
+                        state.PartBCount = question.KnownPartB;
+                        state.PartBLocked = true;
+                        state.WholeCount = Mathf.Max(0, question.WholeTarget - question.KnownPartB);
+                    }
+                    else
+                    {
+                        state.WholeCount = question.WholeTarget;
+                    }
+                    break;
+
                 default:
                     state.WholeCount = question.WholeTarget;
                     break;
@@ -82,6 +107,57 @@ namespace Features.Activities.NumberBonds
             PartBCount = Mathf.Max(0, question.KnownPartB);
             PartBLocked = true;
             WholeCount = Mathf.Max(0, question.WholeTarget - PartBCount);
+        }
+
+        /// <summary>
+        /// Validate the current state against the question.
+        /// </summary>
+        public NumberBondValidationResult ValidateCurrentState(NumberBondsQuestion question)
+        {
+            if (question == null)
+                return NumberBondValidationResult.TechnicalIssue;
+
+            switch (question.Mode)
+            {
+                case NumberBondMode.FreeSplit:
+                    if (WholeCount > 0)
+                        return NumberBondValidationResult.NotAllObjectsMoved;
+                    if (PartACount + PartBCount != question.WholeTarget)
+                        return NumberBondValidationResult.WrongTotal;
+                    return NumberBondValidationResult.Correct;
+
+                case NumberBondMode.TargetSplit:
+                    if (WholeCount > 0)
+                        return NumberBondValidationResult.NotAllObjectsMoved;
+                    if (PartALocked && PartACount != question.KnownPartA)
+                        return NumberBondValidationResult.LockedZoneModified;
+                    if (PartBLocked && PartBCount != question.KnownPartB)
+                        return NumberBondValidationResult.LockedZoneModified;
+                    if (PartACount + PartBCount != question.WholeTarget)
+                        return NumberBondValidationResult.WrongPartCount;
+                    return NumberBondValidationResult.Correct;
+
+                case NumberBondMode.Compose:
+                    if (PartACount > 0 || PartBCount > 0)
+                        return NumberBondValidationResult.NotAllObjectsMoved;
+                    if (WholeCount != question.WholeTarget)
+                        return NumberBondValidationResult.WrongTotal;
+                    return NumberBondValidationResult.Correct;
+
+                case NumberBondMode.MissingPart:
+                    if (WholeCount > 0)
+                        return NumberBondValidationResult.NotAllObjectsMoved;
+                    if (PartALocked && PartACount != question.KnownPartA)
+                        return NumberBondValidationResult.LockedZoneModified;
+                    if (PartBLocked && PartBCount != question.KnownPartB)
+                        return NumberBondValidationResult.LockedZoneModified;
+                    if (PartACount + PartBCount != question.WholeTarget)
+                        return NumberBondValidationResult.WrongPartCount;
+                    return NumberBondValidationResult.Correct;
+
+                default:
+                    return NumberBondValidationResult.TechnicalIssue;
+            }
         }
 
         private void SetCount(BondZone zone, int value)

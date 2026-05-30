@@ -43,6 +43,12 @@ namespace Features.Activities.CompareQuantity
         public string ObjectPrefabName;
 
         /// <summary>
+        /// Type of question display.
+        /// </summary>
+        [Tooltip("How the question is presented to the child")]
+        public CompareQuantityQuestionType QuestionType = CompareQuantityQuestionType.Standard;
+
+        /// <summary>
         /// Validate the question data.
         /// </summary>
         public bool IsValid()
@@ -121,5 +127,22 @@ namespace Features.Activities.CompareQuantity
         /// Both groups have equal objects.
         /// </summary>
         Equal
+    }
+
+    /// <summary>
+    /// How the comparison question is presented.
+    /// </summary>
+    [Serializable]
+    public enum CompareQuantityQuestionType
+    {
+        /// <summary>
+        /// Standard: "Nhóm nào nhiều hơn?", "Nhóm nào ít hơn?", "Bằng nhau?"
+        /// </summary>
+        Standard,
+
+        /// <summary>
+        /// Symbol: "3 ? 5" — show the actual count comparison with a question mark operator
+        /// </summary>
+        SymbolCompare
     }
 }

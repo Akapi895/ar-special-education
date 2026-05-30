@@ -74,11 +74,7 @@ namespace Features.Activities.QuantityMatch
         [SerializeField]
         private Button submitNumberButton;
 
-        [SerializeField]
-        private Button decrementNumberButton;
-
-        [SerializeField]
-        private Button incrementNumberButton;
+        
 
         [Header("Navigation")]
         [SerializeField]
@@ -986,20 +982,6 @@ namespace Features.Activities.QuantityMatch
                 registeredAny = true;
             }
 
-            if (decrementNumberButton != null)
-            {
-                decrementNumberButton.onClick.RemoveAllListeners();
-                decrementNumberButton.onClick.AddListener(() => AdjustNumberInput(-1));
-                registeredAny = true;
-            }
-
-            if (incrementNumberButton != null)
-            {
-                incrementNumberButton.onClick.RemoveAllListeners();
-                incrementNumberButton.onClick.AddListener(() => AdjustNumberInput(1));
-                registeredAny = true;
-            }
-
             numberInputButtonsRegistered = registeredAny;
         }
 
@@ -1042,24 +1024,6 @@ namespace Features.Activities.QuantityMatch
             currentNumberInput = Mathf.Clamp(answer, NumberChoiceMin, NumberChoiceMax).ToString();
             UpdateNumberInputText();
             SubmitNumberInput();
-        }
-
-        private void AdjustNumberInput(int delta)
-        {
-            if (!currentUsesNumberInputMode || delta == 0)
-            {
-                return;
-            }
-
-            int value = 0;
-            if (!string.IsNullOrEmpty(currentNumberInput))
-            {
-                int.TryParse(currentNumberInput, out value);
-            }
-
-            value = Mathf.Clamp(value + delta, NumberChoiceMin, NumberChoiceMax);
-            currentNumberInput = value.ToString();
-            UpdateNumberInputText();
         }
 
         private void ResetNumberInput()
@@ -1142,20 +1106,6 @@ namespace Features.Activities.QuantityMatch
                         }
                     }
                 }
-            }
-
-            if (decrementNumberButton != null)
-            {
-                decrementNumberButton.gameObject.SetActive(false);
-                decrementNumberButton.enabled = true;
-                decrementNumberButton.interactable = interactable;
-            }
-
-            if (incrementNumberButton != null)
-            {
-                incrementNumberButton.gameObject.SetActive(false);
-                incrementNumberButton.enabled = true;
-                incrementNumberButton.interactable = interactable;
             }
 
             UpdateNumberInputActionButtonStates();
@@ -1319,10 +1269,7 @@ namespace Features.Activities.QuantityMatch
             numberInputText = EnsureNumberInputDisplay(panel, numberInputText, "AnswerText", NumberInputEmptyValue, 52, new Vector2(0f, 66f), new Vector2(210f, 70f));
             numberInputText.gameObject.SetActive(false);
 
-            decrementNumberButton = EnsureNumberInputButton(panel, decrementNumberButton, "DecreaseNumberButton", "-", new Vector2(-180f, 66f), new Vector2(82f, 70f), 40, new Color(0.2f, 0.5f, 0.9f, 1f), Color.white);
-            incrementNumberButton = EnsureNumberInputButton(panel, incrementNumberButton, "IncreaseNumberButton", "+", new Vector2(180f, 66f), new Vector2(82f, 70f), 40, new Color(0.2f, 0.5f, 0.9f, 1f), Color.white);
-            decrementNumberButton.gameObject.SetActive(false);
-            incrementNumberButton.gameObject.SetActive(false);
+            
 
             if (digitButtons == null || digitButtons.Length != 10)
             {
@@ -1532,7 +1479,7 @@ namespace Features.Activities.QuantityMatch
 
             var scaler = canvasGo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1080f, 1920f);
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
 

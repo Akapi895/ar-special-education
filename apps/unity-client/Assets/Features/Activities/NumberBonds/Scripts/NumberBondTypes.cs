@@ -24,6 +24,7 @@ namespace Features.Activities.NumberBonds
         Correct,
         NotAllObjectsMoved,
         WrongPartCount,
+        WrongTotal,
         LockedZoneModified,
         InvalidMove,
         TechnicalIssue

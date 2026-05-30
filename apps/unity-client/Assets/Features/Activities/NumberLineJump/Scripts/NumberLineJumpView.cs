@@ -493,11 +493,30 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void ShowMaxJumpsWarning(int remainingJumps)
         {
-            // Show as a temporary notification
-            Debug.Log($"[NumberLineJumpView] Max jumps warning: {remainingJumps} remaining");
+            if (feedbackPanel != null && feedbackText != null)
+            {
+                string message = remainingJumps <= 1
+                    ? "Còn 1 bước cuối!"
+                    : $"Còn {remainingJumps} bước";
+                feedbackText.text = message;
+                feedbackText.color = Color.white;
+                var image = feedbackPanel.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = new Color(0.9f, 0.6f, 0.1f, 0.85f);
+                }
+                feedbackPanel.SetActive(true);
+                CancelInvoke(nameof(HideFeedbackPanel));
+                Invoke(nameof(HideFeedbackPanel), 2f);
+            }
+        }
 
-            // Could display as a toast or warning panel
-            // For now, log it
+        private void HideFeedbackPanel()
+        {
+            if (feedbackPanel != null)
+            {
+                feedbackPanel.SetActive(false);
+            }
         }
 
         /// <summary>

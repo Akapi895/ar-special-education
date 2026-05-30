@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace Features.Activities.NumberBonds
@@ -86,6 +87,49 @@ namespace Features.Activities.NumberBonds
         public void SetValidationState(NumberBondValidationResult result)
         {
             SetColor(result == NumberBondValidationResult.Correct ? CorrectColor : IncorrectColor);
+            StopAllCoroutines();
+            StartCoroutine(PulseCoroutine(result == NumberBondValidationResult.Correct));
+        }
+
+        private IEnumerator PulseCoroutine(bool isCorrect)
+        {
+            Color targetColor = isCorrect ? CorrectColor : IncorrectColor;
+            Color originalColor = GetZoneColor(Zone);
+            float duration = 0.5f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float t = elapsed / duration;
+                float pulse = Mathf.PingPong(t * 2f, 1f);
+                Color c = Color.Lerp(originalColor, targetColor, pulse);
+                if (isCorrect)
+                {
+                    c.a = Mathf.Lerp(0.72f, 0.9f, pulse);
+                }
+                SetColor(c);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            SetColor(targetColor);
+
+            // Second pulse if correct
+            if (isCorrect)
+            {
+                yield return new WaitForSeconds(0.3f);
+                elapsed = 0f;
+                while (elapsed < duration * 0.6f)
+                {
+                    float t = elapsed / (duration * 0.6f);
+                    float pulse = Mathf.Sin(t * Mathf.PI);
+                    Color c = Color.Lerp(targetColor, Color.white * 1.2f, pulse * 0.3f);
+                    SetColor(c);
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+                SetColor(targetColor);
+            }
         }
 
         private void CreateHitbox(float hitRadius)

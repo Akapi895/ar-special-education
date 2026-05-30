@@ -54,7 +54,7 @@ namespace Features.Activities.CompareQuantity
 
             // Initialize view
             view?.Initialize(this);
-            view?.UpdateButtonLabels(config.MoreButtonLabel, config.FewerButtonLabel, config.EqualButtonLabel);
+            view?.RefreshAnswerButtonVisuals(config.MoreButtonLabel, config.FewerButtonLabel, config.EqualButtonLabel);
 
             // Subscribe to view events
             if (view != null)
@@ -92,7 +92,7 @@ namespace Features.Activities.CompareQuantity
             SpawnGroups();
 
             // Update view with question data
-            view?.ShowQuestion(currentQuestion.LeftGroupCount, currentQuestion.RightGroupCount, isEquality);
+            view?.ShowQuestion(currentQuestion.LeftGroupCount, currentQuestion.RightGroupCount, isEquality, currentQuestion.QuestionType);
             view?.UpdateProgress(roundNumber, compareConfig.NumberOfRounds);
         }
 

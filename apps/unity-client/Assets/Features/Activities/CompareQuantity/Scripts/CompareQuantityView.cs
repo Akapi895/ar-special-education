@@ -1,6 +1,7 @@
 using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
+using Core.Support.FeedbackSystem;
 using Core.UI.Components;
 using Core.UI.Layout;
 using Core.UI.Localization;
@@ -88,10 +89,12 @@ namespace Features.Activities.CompareQuantity
         // Events specific to ICompareQuantityView
         public event Action<ComparisonAnswer> OnAnswerSelected;
 
+        private Action<ActivityAnswer> onAnswerSelectedInterface;
+
         event Action<ActivityAnswer> IActivityView.OnAnswerSelected
         {
-            add { }
-            remove { }
+            add => onAnswerSelectedInterface += value;
+            remove => onAnswerSelectedInterface -= value;
         }
 
         // Presenter reference
@@ -264,13 +267,20 @@ namespace Features.Activities.CompareQuantity
         /// <summary>
         /// Show the question with group counts.
         /// </summary>
-        public void ShowQuestion(int leftCount, int rightCount, bool isEquality)
+        public void ShowQuestion(int leftCount, int rightCount, bool isEquality, CompareQuantityQuestionType questionType = CompareQuantityQuestionType.Standard)
         {
             activityFinished = false;
 
             if (questionText != null)
             {
-                questionText.text = RuntimeCompareQuestion;
+                if (questionType == CompareQuantityQuestionType.SymbolCompare)
+                {
+                    questionText.text = $"{leftCount} ? {rightCount}";
+                }
+                else
+                {
+                    questionText.text = RuntimeCompareQuestion;
+                }
             }
 
             // Note: We don't show the actual counts to the child - they need to count!
@@ -317,10 +327,7 @@ namespace Features.Activities.CompareQuantity
             currentSelectedAnswer = null;
         }
 
-        /// <summary>
-        /// Update the answer button labels from config.
-        /// </summary>
-        public void UpdateButtonLabels(string moreLabel, string fewerLabel, string equalLabel)
+        public void RefreshAnswerButtonVisuals(string moreLabel, string fewerLabel, string equalLabel)
         {
             ApplyComparisonAnswerButtonVisuals();
         }
@@ -357,6 +364,10 @@ namespace Features.Activities.CompareQuantity
             {
                 ShowFeedback(message, Color.green);
             }
+
+            FeedbackServiceProxy.Instance?.ShowCorrect(message);
+            SimpleAudioManager.EnsureExists().PlaySound("correct");
+
             DisableInput();
             SetAnswerButtonsActive(false);
             SetRunningActionButtonsActive(false);
@@ -390,7 +401,10 @@ namespace Features.Activities.CompareQuantity
             {
                 ShowFeedback(message, Color.red);
             }
-            EnableAnswerButtons(true);  // Allow retry
+
+            SimpleAudioManager.EnsureExists().PlaySound("incorrect");
+
+            EnableAnswerButtons(true);
             UIKidFriendlyStyle.PlayFeedback(GetSelectedComparisonButton(), false);
         }
 
@@ -498,8 +512,29 @@ namespace Features.Activities.CompareQuantity
         /// </summary>
         public void HighlightGroup(string groupSide, bool highlight)
         {
-            // Group highlight is applied by the AR interaction service when objects are registered.
-            Debug.Log($"[CompareQuantityView] Highlight {groupSide} group: {highlight}");
+            Text target = groupSide == "left" ? leftGroupCountText : rightGroupCountText;
+            if (target != null)
+            {
+                target.color = highlight
+                    ? new Color(1f, 0.9f, 0.2f, 1f)
+                    : Color.white;
+                if (highlight)
+                {
+                    var rect = target.GetComponent<RectTransform>();
+                    if (rect != null)
+                    {
+                        rect.localScale = Vector3.one * 1.15f;
+                    }
+                }
+                else
+                {
+                    var rect = target.GetComponent<RectTransform>();
+                    if (rect != null)
+                    {
+                        rect.localScale = Vector3.one;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -590,6 +625,7 @@ namespace Features.Activities.CompareQuantity
             currentSelectedAnswer = answer;
             ApplyComparisonAnswerButtonVisuals();
             OnAnswerSelected?.Invoke(answer);
+            onAnswerSelectedInterface?.Invoke(new ActivityAnswer { AnswerData = (int)answer });
         }
 
         /// <summary>
@@ -697,24 +733,6 @@ namespace Features.Activities.CompareQuantity
             }
 
             return $"{subject} {label}";
-        }
-
-        private static string NormalizeComparisonButtonLabel(string configuredLabel, string vietnameseFallback)
-        {
-            if (string.IsNullOrWhiteSpace(configuredLabel))
-            {
-                return vietnameseFallback;
-            }
-
-            string normalized = configuredLabel.Trim().ToLowerInvariant();
-            return normalized switch
-            {
-                "more" => vietnameseFallback,
-                "fewer" => vietnameseFallback,
-                "less" => vietnameseFallback,
-                "equal" => vietnameseFallback,
-                _ => configuredLabel
-            };
         }
 
         private void ApplyComparisonAnswerButtonVisuals()
