@@ -110,7 +110,6 @@ namespace Features.Activities.NumberBonds
                 obj.name = objectId;
                 obj.transform.position = position;
                 ActivityPrefabSetup.Instance?.PrepareLearningObject(obj);
-                FitObjectHeight(obj, config.ObjectHeightMeters);
 
                 NumberBondObjectView objectView = obj.GetComponent<NumberBondObjectView>();
                 if (objectView == null)

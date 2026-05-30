@@ -504,7 +504,7 @@ namespace Core.UI.Components
         {
             return purpose switch
             {
-                KidButtonPurpose.Primary => "★ ▶",
+                KidButtonPurpose.Primary => "▶",
                 KidButtonPurpose.Confirm => "✓",
                 KidButtonPurpose.Hint => "💡",
                 KidButtonPurpose.Home => "⌂",
@@ -517,7 +517,7 @@ namespace Core.UI.Components
 
         private static string StripKnownPrefix(string label)
         {
-            string[] icons = { "★ ▶", "▶", "★", "✓", "💡", "⌂", "↻", "▥", "🔊" };
+            string[] icons = { "▶", "✓", "💡", "⌂", "↻", "▥", "🔊" };
             for (int i = 0; i < icons.Length; i++)
             {
                 string icon = icons[i];

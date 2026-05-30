@@ -1,8 +1,10 @@
+using ARSpecialEducation.Core.AR;
 using Core.AR.ARSession;
 using Core.AR.Interaction;
 using Core.AR.Placement;
 using Core.Learning.ActivityRunner;
 using UnityEngine;
+using Unity.XR.CoreUtils;
 
 namespace Core.AR
 {
@@ -130,6 +132,22 @@ namespace Core.AR
         {
             Session?.Initialize();
             Placement?.Initialize();
+
+            ARPlaneDetectionController planeController = FindAnyObjectByType<ARPlaneDetectionController>();
+            if (planeController == null)
+            {
+                XROrigin arOrigin = FindAnyObjectByType<XROrigin>();
+                if (arOrigin != null)
+                {
+                    planeController = arOrigin.gameObject.AddComponent<ARPlaneDetectionController>();
+                }
+            }
+
+            if (planeController != null)
+            {
+                planeController.SetDetectionEnabled(true);
+            }
+
             Interaction?.Initialize();
 
             Debug.Log($"[ARServiceBootstrap] Ready. Placement={(Placement != null ? Placement.GetType().Name : "null")}");

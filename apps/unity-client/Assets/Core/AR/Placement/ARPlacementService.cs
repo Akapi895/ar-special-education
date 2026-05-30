@@ -34,9 +34,11 @@ namespace Core.AR.Placement
         [SerializeField]
         private TrackableType placementTrackableTypes = TrackableType.PlaneWithinPolygon;
 
+#if UNITY_IOS
         [Header("iOS Scale Fix")]
         [SerializeField]
         private float iosScaleAdjustment = 0.6f;
+#endif
 
         [SerializeField]
         private float minimumPlaneArea = 0.15f;
@@ -136,10 +138,10 @@ namespace Core.AR.Placement
             instance.SetActive(true);
 
             // Apply iOS scale adjustment (set in Inspector)
+#if UNITY_IOS
             if (Mathf.Abs(iosScaleAdjustment - 1f) > 0.01f)
-            {
                 instance.transform.localScale *= iosScaleAdjustment;
-            }
+#endif
 
             TrackSpawned(instance);
             return instance;
@@ -315,17 +317,11 @@ namespace Core.AR.Placement
             if (planeManager == null)
             {
                 planeManager = FindAnyObjectByType<ARPlaneManager>();
-                if (planeManager == null)
-                {
-                    planeManager = xrOrigin != null
-                        ? xrOrigin.GetComponent<ARPlaneManager>()
-                        : null;
+            }
 
-                    if (planeManager == null && xrOrigin != null)
-                    {
-                        planeManager = xrOrigin.gameObject.AddComponent<ARPlaneManager>();
-                    }
-                }
+            if (planeManager == null && xrOrigin != null)
+            {
+                planeManager = xrOrigin.gameObject.AddComponent<ARPlaneManager>();
             }
 
             if (planeManager != null)
@@ -394,7 +390,7 @@ namespace Core.AR.Placement
             if (learningAreaAnchor == null)
             {
                 GameObject anchorObject = new GameObject("LearningAreaAnchor");
-                anchorObject.transform.SetParent(transform, true);
+                anchorObject.transform.SetParent(null);
                 learningAreaAnchor = anchorObject.AddComponent<LearningAreaAnchor>();
             }
 

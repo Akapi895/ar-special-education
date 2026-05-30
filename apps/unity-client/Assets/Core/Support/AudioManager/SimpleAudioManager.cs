@@ -48,6 +48,9 @@ namespace Core.Support.AudioManager
                 DontDestroyOnLoad(gameObject);
                 EnsureAudioSources();
 
+                ConfigureAudioSource(sfxSource);
+                ConfigureAudioSource(bgmSource);
+
                 float savedVolume = PlayerPrefs.GetFloat(VolumeKey, PlayerPrefs.GetFloat(LegacyVolumeKey, 1f));
                 SetVolume(savedVolume);
                 SetAudioEnabled(PlayerPrefs.GetInt(AudioEnabledKey, 1) == 1);
@@ -158,13 +161,23 @@ namespace Core.Support.AudioManager
             if (sfxSource == null)
             {
                 sfxSource = gameObject.AddComponent<AudioSource>();
+                sfxSource.playOnAwake = false;
+                ConfigureAudioSource(sfxSource);
             }
 
             if (bgmSource == null)
             {
                 bgmSource = gameObject.AddComponent<AudioSource>();
+                bgmSource.playOnAwake = false;
                 bgmSource.loop = true;
+                ConfigureAudioSource(bgmSource);
             }
+        }
+
+        private static void ConfigureAudioSource(AudioSource source)
+        {
+            if (source == null) return;
+            source.spatialBlend = 0f; // Force 2D sound
         }
 
         private AudioClip GetTemporaryFallbackClip(string soundName)
