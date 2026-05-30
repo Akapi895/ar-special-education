@@ -116,8 +116,8 @@ namespace Features.Activities.QuantityMatch
         private Button lastAnswerButton;
         private Text devKeyboardHintText;
 
-        private static readonly Vector2 RuntimeButtonSize = new Vector2(170f, 58f);
-        private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(108f, 70f);
+private static readonly Vector2 RuntimeButtonSize = new Vector2(224f, 84f);
+private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
         private static readonly Vector2 RuntimeNumberInputPanelSize = new Vector2(900f, 330f);
         private const float RuntimeButtonGap = 28f;
         private const float RuntimeDigitButtonGap = 12f;
@@ -216,7 +216,7 @@ namespace Features.Activities.QuantityMatch
                     var go = new GameObject("DevKeyboardHint", typeof(RectTransform), typeof(Text));
                     go.transform.SetParent(runtimeUiRoot);
                     devKeyboardHintText = go.GetComponent<Text>();
-                    devKeyboardHintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                    devKeyboardHintText.font = UIKidFriendlyStyle.GetSharedFont();
                     devKeyboardHintText.fontSize = 16;
                     devKeyboardHintText.color = new Color(0.2f, 0.8f, 0.2f, 1f);
                     devKeyboardHintText.alignment = TextAnchor.LowerRight;
@@ -1329,7 +1329,7 @@ namespace Features.Activities.QuantityMatch
             text.resizeTextMinSize = 18;
             text.resizeTextMaxSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = color;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -1371,7 +1371,7 @@ namespace Features.Activities.QuantityMatch
             text.resizeTextMinSize = 30;
             text.resizeTextMaxSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = new Color(0.05f, 0.08f, 0.12f, 1f);
             text.raycastTarget = false;
             return text;
@@ -1434,7 +1434,7 @@ namespace Features.Activities.QuantityMatch
             labelText.resizeTextMaxSize = fontSize;
             labelText.color = textColor;
             labelText.alignment = TextAnchor.MiddleCenter;
-            labelText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            labelText.font = UIKidFriendlyStyle.GetSharedFont();
             labelText.raycastTarget = false;
             UIKidFriendlyStyle.Apply(button, name, label, fontSize, name.Contains("Digit"));
             return button;
@@ -1524,7 +1524,7 @@ namespace Features.Activities.QuantityMatch
             text.text = content;
             text.fontSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = Color.white;
             text.raycastTarget = false;
             text.resizeTextForBestFit = true;
@@ -1581,7 +1581,7 @@ namespace Features.Activities.QuantityMatch
             text.resizeTextMinSize = 16;
             text.resizeTextMaxSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = Color.white;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -1615,7 +1615,7 @@ namespace Features.Activities.QuantityMatch
                 text.resizeTextMinSize = 20;
                 text.resizeTextMaxSize = fontSize;
                 text.alignment = TextAnchor.MiddleCenter;
-                text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                text.font = UIKidFriendlyStyle.GetSharedFont();
                 text.color = new Color(0.08f, 0.1f, 0.12f, 1f);
                 text.raycastTarget = false;
             }

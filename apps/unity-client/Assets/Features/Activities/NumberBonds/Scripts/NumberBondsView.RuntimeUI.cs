@@ -94,7 +94,7 @@ namespace Features.Activities.NumberBonds
             text.resizeTextMinSize = Mathf.Max(14, fontSize - 14);
             text.resizeTextMaxSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = Color.white;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
