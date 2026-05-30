@@ -93,6 +93,37 @@ namespace Core.UI.Components
             return button;
         }
 
+        public static void ApplyStandardHomeButton(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            RectTransform rect = button.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(1f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(1f, 1f);
+                rect.sizeDelta = ButtonSize;
+                rect.anchoredPosition = HomeButtonTopRight;
+            }
+
+            string label = SimpleLocalization.Get("btn_home");
+            Text text = button.GetComponentInChildren<Text>(true);
+            if (text != null)
+            {
+                text.text = label;
+                text.fontSize = FontSize;
+                text.resizeTextMinSize = FontSize - 6;
+                text.resizeTextMaxSize = FontSize;
+                text.alignment = TextAnchor.MiddleCenter;
+            }
+
+            UIKidFriendlyStyle.Apply(button, "HomeButton", label, FontSize);
+        }
+
         private static void CreateButtonLabel(Transform parent, string label)
         {
             CreateButtonLabel(parent, label, FontSize);

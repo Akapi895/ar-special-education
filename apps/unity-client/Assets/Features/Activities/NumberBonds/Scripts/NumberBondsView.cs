@@ -75,6 +75,7 @@ namespace Features.Activities.NumberBonds
             SetButtonActive(nextRoundButton, false);
             SetButtonActive(progressButton, false);
             UIKidFriendlyStyle.ApplyToTree(transform);
+            UIActivityNavButtons.ApplyStandardHomeButton(cancelButton);
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
@@ -274,6 +275,7 @@ namespace Features.Activities.NumberBonds
 
             SetButtonActive(nextRoundButton, ActivityFlowNavigator.TryGetNextActivityId("NumberBonds", out _));
             SetButtonActive(progressButton, true);
+            CenterNextButtonIfSolo();
         }
 
         public void ShowActivityFailed(string message, ActivityResult result)
@@ -292,6 +294,7 @@ namespace Features.Activities.NumberBonds
             }
             SetButtonActive(nextRoundButton, ActivityFlowNavigator.TryGetNextActivityId("NumberBonds", out _));
             SetButtonActive(progressButton, true);
+            CenterNextButtonIfSolo();
         }
 
         public void ClearSpawnedObjects()
@@ -362,6 +365,7 @@ namespace Features.Activities.NumberBonds
             SetButtonLabel(nextRoundButton, label);
             SetButtonActive(nextRoundButton, true);
             UIKidFriendlyStyle.PlayFeedback(nextRoundButton, true);
+            CenterNextButtonIfSolo();
         }
 
         private void OnNextRoundClicked()
@@ -408,6 +412,38 @@ namespace Features.Activities.NumberBonds
             SetButtonActive(hintButton, active);
             SetButtonActive(listenButton, active);
             SetButtonActive(cancelButton, true);
+        }
+
+        private void CenterNextButtonIfSolo()
+        {
+            if (nextRoundButton == null)
+            {
+                return;
+            }
+
+            bool showProgress = progressButton != null && progressButton.gameObject.activeSelf;
+            float actionButtonOffset = (RuntimeButtonSize.x + ButtonGap) * 0.5f;
+
+            RectTransform nextRect = nextRoundButton.GetComponent<RectTransform>();
+            if (nextRect != null)
+            {
+                nextRect.anchorMin = new Vector2(0.5f, 0f);
+                nextRect.anchorMax = new Vector2(0.5f, 0f);
+                nextRect.pivot = new Vector2(0.5f, 0.5f);
+                nextRect.anchoredPosition = new Vector2(showProgress ? -actionButtonOffset : 0f, nextRect.anchoredPosition.y);
+            }
+
+            if (showProgress && progressButton != null)
+            {
+                RectTransform progressRect = progressButton.GetComponent<RectTransform>();
+                if (progressRect != null)
+                {
+                    progressRect.anchorMin = new Vector2(0.5f, 0f);
+                    progressRect.anchorMax = new Vector2(0.5f, 0f);
+                    progressRect.pivot = new Vector2(0.5f, 0.5f);
+                    progressRect.anchoredPosition = new Vector2(actionButtonOffset, progressRect.anchoredPosition.y);
+                }
+            }
         }
 
         private void WireButtonListeners()

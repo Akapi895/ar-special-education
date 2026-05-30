@@ -890,7 +890,7 @@ namespace Features.Activities.CompareQuantity
 
         private void NormalizeTopNavigationButtons()
         {
-            // Buttons are already configured correctly by UIActivityNavButtons
+            UIActivityNavButtons.ApplyStandardHomeButton(cancelButton);
         }
 
         private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, KidButtonPurpose purpose)

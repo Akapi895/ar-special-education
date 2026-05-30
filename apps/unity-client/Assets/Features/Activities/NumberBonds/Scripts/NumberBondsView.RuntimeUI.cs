@@ -40,6 +40,7 @@ namespace Features.Activities.NumberBonds
             SetButtonActive(nextRoundButton, false);
             SetButtonActive(progressButton, false);
             WireButtonListeners();
+            UIActivityNavButtons.ApplyStandardHomeButton(cancelButton);
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
 
