@@ -39,7 +39,7 @@ namespace Core.AR.Interaction
         private GameObject selectedObject;
         private GameObject draggingObject;
         private readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
-        private readonly MaterialPropertyBlock cachedHighlightBlock = new MaterialPropertyBlock();
+        private MaterialPropertyBlock cachedHighlightBlock;
 
         public event Action<GameObject> OnObjectTapped;
         public event Action<GameObject> OnObjectSelected;
@@ -53,6 +53,8 @@ namespace Core.AR.Interaction
             {
                 interactionCamera = Camera.main;
             }
+
+            cachedHighlightBlock = new MaterialPropertyBlock();
         }
 
         private void OnEnable()
