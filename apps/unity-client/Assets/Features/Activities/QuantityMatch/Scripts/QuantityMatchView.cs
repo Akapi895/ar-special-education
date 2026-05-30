@@ -270,7 +270,7 @@ namespace Features.Activities.QuantityMatch
 
             CreateTopHeaderPanel(panel, "QuestionHeaderPanel", 24f, new Vector2(700f, 88f));
             targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("quantity_choose_group", "?"), 34, 30f, new Vector2(660f, 78f));
-            progressText = CreateTopLeftText(panel, "Progress", "", 24, new Vector2(40f, -40f), new Vector2(300f, 60f));
+            progressText = CreateTopLeftText(panel, "Progress", "", 24, new Vector2(240f, -40f), new Vector2(300f, 60f));
 
             feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0, RuntimeFeedbackPanelBottomY), true);
             feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 26);
@@ -1786,7 +1786,7 @@ namespace Features.Activities.QuantityMatch
 
         private void NormalizeTopNavigationButtons()
         {
-            // Buttons are already configured correctly by UIActivityNavButtons
+            UIActivityNavButtons.ApplyStandardHomeButton(cancelButton);
         }
 
         private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, Color color)

@@ -82,17 +82,34 @@ namespace Core.UI.Components
             string content = string.IsNullOrWhiteSpace(label) ? text.text : label;
             text.text = DecorateLabel(purpose, content);
             text.font = GetChildFont();
-            text.fontSize = fontSize;
+            int effectiveFontSize = purpose == KidButtonPurpose.Home
+                ? Mathf.Max(16, fontSize - 2)
+                : fontSize;
+            text.fontSize = effectiveFontSize;
             text.resizeTextForBestFit = true;
-            text.resizeTextMinSize = Mathf.Max(16, fontSize - 14);
-            text.resizeTextMaxSize = fontSize;
+            text.resizeTextMinSize = purpose == KidButtonPurpose.Home
+                ? Mathf.Max(12, effectiveFontSize - 8)
+                : Mathf.Max(16, effectiveFontSize - 14);
+            text.resizeTextMaxSize = effectiveFontSize;
             text.fontStyle = FontStyle.Bold;
             text.alignment = TextAnchor.MiddleCenter;
             text.color = GetTextColor(purpose);
             text.raycastTarget = false;
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.horizontalOverflow = purpose == KidButtonPurpose.Home
+                ? HorizontalWrapMode.Overflow
+                : HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
             text.transform.SetAsLastSibling();
+
+            if (purpose == KidButtonPurpose.Home)
+            {
+                RectTransform labelRect = text.rectTransform;
+                if (labelRect != null)
+                {
+                    labelRect.offsetMin = new Vector2(6f, labelRect.offsetMin.y);
+                    labelRect.offsetMax = new Vector2(-6f, labelRect.offsetMax.y);
+                }
+            }
         }
 
         public static void SetButtonTextColor(Button button, Color color)

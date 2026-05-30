@@ -422,6 +422,7 @@ namespace Features.Activities.NumberLineJump
                 SetButtonLabel(nextRoundButton, nextLabel);
                 UIKidFriendlyStyle.Apply(nextRoundButton, KidButtonPurpose.Primary, nextLabel, 28);
                 nextRoundButton.gameObject.SetActive(true);
+                CenterNextButtonIfSolo();
                 UIKidFriendlyStyle.PlayFeedback(nextRoundButton, true);
             }
         }
@@ -576,6 +577,8 @@ namespace Features.Activities.NumberLineJump
             {
                 progressButton.gameObject.SetActive(true);
             }
+
+            CenterNextButtonIfSolo();
         }
 
         /// <summary>
@@ -613,6 +616,8 @@ namespace Features.Activities.NumberLineJump
             {
                 progressButton.gameObject.SetActive(true);
             }
+
+            CenterNextButtonIfSolo();
         }
 
         /// <summary>
@@ -862,6 +867,38 @@ namespace Features.Activities.NumberLineJump
             if (progressButton != null) progressButton.gameObject.SetActive(active);
         }
 
+        private void CenterNextButtonIfSolo()
+        {
+            if (nextRoundButton == null)
+            {
+                return;
+            }
+
+            bool showProgress = progressButton != null && progressButton.gameObject.activeSelf;
+            float actionButtonOffset = (RuntimeButtonSize.x + RuntimeButtonGap) * 0.5f;
+
+            RectTransform nextRect = nextRoundButton.GetComponent<RectTransform>();
+            if (nextRect != null)
+            {
+                nextRect.anchorMin = new Vector2(0.5f, 0f);
+                nextRect.anchorMax = new Vector2(0.5f, 0f);
+                nextRect.pivot = new Vector2(0.5f, 0.5f);
+                nextRect.anchoredPosition = new Vector2(showProgress ? -actionButtonOffset : 0f, nextRect.anchoredPosition.y);
+            }
+
+            if (showProgress && progressButton != null)
+            {
+                RectTransform progressRect = progressButton.GetComponent<RectTransform>();
+                if (progressRect != null)
+                {
+                    progressRect.anchorMin = new Vector2(0.5f, 0f);
+                    progressRect.anchorMax = new Vector2(0.5f, 0f);
+                    progressRect.pivot = new Vector2(0.5f, 0.5f);
+                    progressRect.anchoredPosition = new Vector2(actionButtonOffset, progressRect.anchoredPosition.y);
+                }
+            }
+        }
+
         private void LayoutEdgeJumpButtons()
         {
             LayoutEdgeJumpButton(leftJumpButton, true);
@@ -958,7 +995,7 @@ namespace Features.Activities.NumberLineJump
 
         private void NormalizeTopNavigationButtons()
         {
-            // Buttons are already configured correctly by UIActivityNavButtons
+            UIActivityNavButtons.ApplyStandardHomeButton(cancelButton);
         }
 
         private static void ConfigureTopRightNavigationButton(Button button, string label, Vector2 anchoredPosition, Vector2 size, KidButtonPurpose purpose)
@@ -1075,31 +1112,27 @@ namespace Features.Activities.NumberLineJump
                 return;
             }
 
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.resizeTextForBestFit = false;
             text.fontSize = 92;
             text.resizeTextMinSize = 58;
             text.resizeTextMaxSize = 92;
             text.fontStyle = FontStyle.Bold;
             text.color = new Color(0.12f, 0.08f, 0.04f, 1f);
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
 
             Outline outline = text.GetComponent<Outline>();
-            if (outline == null)
+            if (outline != null)
             {
-                outline = text.gameObject.AddComponent<Outline>();
+                outline.enabled = false;
             }
-
-            outline.effectColor = new Color(1f, 1f, 1f, 0.85f);
-            outline.effectDistance = new Vector2(3f, -3f);
-            outline.useGraphicAlpha = true;
 
             Shadow shadow = text.GetComponent<Shadow>();
-            if (shadow == null)
+            if (shadow != null)
             {
-                shadow = text.gameObject.AddComponent<Shadow>();
+                shadow.enabled = false;
             }
-
-            shadow.effectColor = new Color(0.2f, 0.14f, 0.05f, 0.28f);
-            shadow.effectDistance = new Vector2(0f, -5f);
-            shadow.useGraphicAlpha = true;
         }
 
     }
