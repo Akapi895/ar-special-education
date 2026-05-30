@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   entries:
   - key: app_title
-    value: Học Toán Vui
+    value: HỌC TOÁN VUI
   - key: btn_start
     value: Bắt đầu học
   - key: btn_progress

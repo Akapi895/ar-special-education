@@ -50,7 +50,7 @@ namespace Features.Activities.NumberBonds
         private const float RuntimeActionButtonBottomY = 52f;
         private const float RuntimeConfirmBottomY = 132f;
         private const float RuntimeHintPanelBottomY = 214f;
-        private const float RuntimeFeedbackPanelBottomY = 292f;
+        private const float RuntimeFeedbackPanelBottomY = 314f;
         private const float ButtonGap = 28f;
 
         public bool HasUiReferences => progressText != null;

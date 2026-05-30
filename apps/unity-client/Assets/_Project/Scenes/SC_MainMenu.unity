@@ -833,7 +833,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Học Toán Vui
+  m_Text: HỌC TOÁN VUI
 --- !u!222 &938260646
 CanvasRenderer:
   m_ObjectHideFlags: 0

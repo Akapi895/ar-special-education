@@ -1531,7 +1531,7 @@ namespace Features.Activities.QuantityMatch
             text.resizeTextMinSize = 18;
             text.resizeTextMaxSize = fontSize;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
             return text;
         }
 

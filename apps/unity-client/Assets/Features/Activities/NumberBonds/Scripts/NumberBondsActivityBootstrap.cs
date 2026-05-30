@@ -17,9 +17,6 @@ namespace Features.Activities.NumberBonds
         [SerializeField]
         private bool autoStartWhenReady = true;
 
-        [SerializeField]
-        private float startDelaySeconds = 1f;
-
         private bool started;
 
         public void Configure(NumberBondsPresenter presenter, NumberBondsView view, NumberBondsConfig config,

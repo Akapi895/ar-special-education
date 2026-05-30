@@ -22,9 +22,6 @@ namespace Features.Activities.QuantityMatch
         [SerializeField]
         private bool autoStartWhenReady = true;
 
-        [SerializeField]
-        private float startDelaySeconds = 1f;
-
         private bool started;
 
         public void Configure(QuantityMatchPresenter presenter, QuantityMatchView view, QuantityMatchConfig config,

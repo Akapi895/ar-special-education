@@ -23,6 +23,15 @@ namespace Features.Activities.NumberBonds
 
         private const float TapThresholdPixels = 16f;
 
+        private Camera GetInteractionCamera()
+        {
+            if (interactionCamera != null)
+                return interactionCamera;
+
+            interactionCamera = Camera.main;
+            return interactionCamera;
+        }
+
         public event Action<NumberBondObjectView, NumberBondZoneView> OnObjectDropped;
         public event Action<NumberBondZoneView> OnZoneTapped;
 
@@ -101,13 +110,14 @@ namespace Features.Activities.NumberBonds
 
         private void BeginPointer(Vector2 screenPosition)
         {
-            if (IsPointerOverUi(screenPosition) || interactionCamera == null)
+            Camera cam = GetInteractionCamera();
+            if (IsPointerOverUi(screenPosition) || cam == null)
             {
                 return;
             }
 
             pointerDownPosition = screenPosition;
-            Ray ray = interactionCamera.ScreenPointToRay(screenPosition);
+            Ray ray = cam.ScreenPointToRay(screenPosition);
             RaycastHit[] hits = Physics.RaycastAll(ray, 100f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
             if (hits.Length == 0)
             {
@@ -138,12 +148,13 @@ namespace Features.Activities.NumberBonds
 
         private void ContinueDrag(Vector2 screenPosition)
         {
-            if (activeObject == null || interactionCamera == null)
+            Camera cam = GetInteractionCamera();
+            if (activeObject == null || cam == null)
             {
                 return;
             }
 
-            Ray ray = interactionCamera.ScreenPointToRay(screenPosition);
+            Ray ray = cam.ScreenPointToRay(screenPosition);
             Plane plane = new Plane(Vector3.up, new Vector3(0f, dragPlaneY, 0f));
             if (!plane.Raycast(ray, out float distance))
             {
@@ -166,6 +177,7 @@ namespace Features.Activities.NumberBonds
 
         private void EndPointer(Vector2 screenPosition)
         {
+            GetInteractionCamera(); // ensure camera is fresh
             if (activeObject != null)
             {
                 EndDrag();
@@ -203,12 +215,13 @@ namespace Features.Activities.NumberBonds
 
         private NumberBondZoneView FindZoneAtScreenPosition(Vector2 screenPosition)
         {
-            if (interactionCamera == null)
+            Camera cam = GetInteractionCamera();
+            if (cam == null)
             {
                 return null;
             }
 
-            Ray ray = interactionCamera.ScreenPointToRay(screenPosition);
+            Ray ray = cam.ScreenPointToRay(screenPosition);
             RaycastHit[] hits = Physics.RaycastAll(ray, 100f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
             if (hits.Length == 0)
             {

@@ -107,7 +107,7 @@ namespace Features.Activities.CompareQuantity
         private static readonly Vector2 RuntimeButtonSize = new Vector2(190f, 78f);
         private static readonly Vector2 RuntimeComparisonButtonSize = new Vector2(136f, 136f);
         private static readonly Vector2 RuntimeFeedbackPanelSize = new Vector2(790f, 128f);
-        private static readonly Vector2 RuntimeFeedbackPanelCenter = new Vector2(0f, -270f);
+        private static readonly Vector2 RuntimeFeedbackPanelCenter = new Vector2(0f, -150f);
         private const float RuntimeButtonGap = 34f;
         private const float RuntimeActionButtonBottomY = 52f;
         private const float RuntimeAnswerButtonBottomY = 150f;
@@ -795,7 +795,7 @@ namespace Features.Activities.CompareQuantity
             text.alignment = TextAnchor.MiddleCenter;
             text.color = new Color(0.16f, 0.12f, 0.08f, 1f);
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
         private Button GetSelectedComparisonButton()
@@ -885,7 +885,7 @@ namespace Features.Activities.CompareQuantity
             text.color = Color.white;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
             return text;
         }
 

@@ -22,9 +22,6 @@ namespace Features.Activities.CompareQuantity
         [SerializeField]
         private bool autoStartWhenReady = true;
 
-        [SerializeField]
-        private float startDelaySeconds = 1f;
-
         private bool started;
 
         public void Configure(CompareQuantityPresenter presenter, CompareQuantityView view, CompareQuantityConfig config,

@@ -1139,7 +1139,7 @@ namespace Features.Activities.NumberLineJump
             text.fontStyle = FontStyle.Bold;
             text.color = new Color(0.12f, 0.08f, 0.04f, 1f);
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
 
             Outline outline = text.GetComponent<Outline>();
             if (outline != null)

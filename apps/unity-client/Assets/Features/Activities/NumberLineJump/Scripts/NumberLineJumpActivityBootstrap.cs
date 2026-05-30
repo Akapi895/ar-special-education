@@ -22,9 +22,6 @@ namespace Features.Activities.NumberLineJump
         [SerializeField]
         private bool autoStartWhenReady = true;
 
-        [SerializeField]
-        private float startDelaySeconds = 1f;
-
         private bool started;
 
         public void Configure(NumberLineJumpPresenter presenter, NumberLineJumpView view, NumberLineJumpConfig config,
