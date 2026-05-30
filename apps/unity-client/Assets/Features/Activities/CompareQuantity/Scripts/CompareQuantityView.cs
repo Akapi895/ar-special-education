@@ -104,8 +104,8 @@ namespace Features.Activities.CompareQuantity
         private ComparisonAnswer? currentSelectedAnswer;
         private bool activityFinished;
 
-        private static readonly Vector2 RuntimeButtonSize = new Vector2(190f, 78f);
-        private static readonly Vector2 RuntimeComparisonButtonSize = new Vector2(136f, 136f);
+        private static readonly Vector2 RuntimeButtonSize = new Vector2(224f, 84f);
+        private static readonly Vector2 RuntimeComparisonButtonSize = new Vector2(160f, 160f);
         private static readonly Vector2 RuntimeFeedbackPanelSize = new Vector2(790f, 128f);
         private static readonly Vector2 RuntimeFeedbackPanelCenter = new Vector2(0f, -150f);
         private const float RuntimeButtonGap = 34f;
@@ -881,7 +881,7 @@ namespace Features.Activities.CompareQuantity
             text.resizeTextMinSize = 16;
             text.resizeTextMaxSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = Color.white;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;

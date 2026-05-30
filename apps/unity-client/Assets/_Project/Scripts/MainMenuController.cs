@@ -25,34 +25,56 @@ namespace Project.App
         [SerializeField] private CanvasGroup menuCanvasGroup;
         [SerializeField] private RectTransform titleTransform;
 
+        [Header("Mascot (Optional)")]
+        [SerializeField] private MascotDisplay mascotDisplay;
+        [SerializeField] private string mascotGreeting = "Cùng chơi toán nào!";
+
         private void Start()
         {
             LocalizeAndStyleMenuText();
+            ApplyMenuWideCardBackground();
+
+            // Show mascot greeting (auto-created if not assigned in scene)
+            EnsureMascot();
+            if (mascotDisplay != null)
+            {
+                mascotDisplay.SetMascot("\U0001F430");
+                mascotDisplay.PlayEntrance();
+                mascotDisplay.SetSpeech(mascotGreeting, 5f);
+            }
 
             // Setup button listeners
             if (startLearningButton != null)
             {
                 string startLabel = "Bắt đầu học";
+                var rect = startLearningButton.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.sizeDelta = new Vector2(440f, 110f);
+                rect.anchoredPosition = new Vector2(0f, -40f);
                 UIKidFriendlyStyle.Apply(
                     startLearningButton,
                     KidButtonPurpose.Primary,
                     startLabel,
-                    34);
-                UIKidFriendlyStyle.HideButtonBackground(startLearningButton);
-                UIKidFriendlyStyle.SetButtonTextColorWithOutline(startLearningButton, new Color(1f, 0.94f, 0.48f, 1f));
+                    38);
                 startLearningButton.onClick.AddListener(OnStartLearning);
             }
 
             if (viewProgressButton != null)
             {
                 string progressLabel = "Xem tiến độ";
+                var rect = viewProgressButton.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(1f, 1f);
+                rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(1f, 1f);
+                rect.sizeDelta = new Vector2(200f, 60f);
+                rect.anchoredPosition = new Vector2(-24f, -24f);
                 UIKidFriendlyStyle.Apply(
                     viewProgressButton,
                     KidButtonPurpose.Progress,
                     progressLabel,
-                    32);
-                UIKidFriendlyStyle.HideButtonBackground(viewProgressButton);
-                UIKidFriendlyStyle.SetButtonTextColorWithOutline(viewProgressButton, new Color(0.55f, 0.9f, 1f, 1f));
+                    24);
                 viewProgressButton.onClick.AddListener(OnViewProgress);
             }
 
@@ -65,6 +87,34 @@ namespace Project.App
             Debug.Log("[MainMenuController] Main menu loaded.");
         }
 
+        private void ApplyMenuWideCardBackground()
+        {
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null) return;
+
+            var bgGo = new GameObject("MenuBackgroundCard", typeof(RectTransform), typeof(Core.UI.Components.RoundedRectGraphic));
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            bgRect.SetParent(canvas.transform, false);
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.offsetMin = new Vector2(20f, 20f);
+            bgRect.offsetMax = new Vector2(-20f, -20f);
+
+            var bgGraphic = bgGo.GetComponent<Core.UI.Components.RoundedRectGraphic>();
+            bgGraphic.CornerRadius = 32f;
+            bgGraphic.color = new Color(0.12f, 0.12f, 0.14f, 0.82f);
+            bgGraphic.raycastTarget = false;
+
+            bgGo.transform.SetAsFirstSibling();
+        }
+
+        private void EnsureMascot()
+        {
+            if (mascotDisplay != null) return;
+            mascotDisplay = gameObject.AddComponent<MascotDisplay>();
+            mascotDisplay.SetMascot("\U0001F430");
+        }
+
         private void LocalizeAndStyleMenuText()
         {
             Text titleText = titleTransform != null
@@ -73,7 +123,7 @@ namespace Project.App
 
             if (titleText != null)
             {
-                titleText.text = SimpleLocalization.Get("app_title");
+                titleText.text = "\U0001F430 " + SimpleLocalization.Get("app_title");
                 titleText.fontSize = 50;
                 titleText.resizeTextForBestFit = true;
                 titleText.resizeTextMinSize = 34;

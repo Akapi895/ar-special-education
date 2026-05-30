@@ -1,3 +1,4 @@
+using Core.UI.Components;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -36,7 +37,7 @@ namespace Core.UI.Layout
             text.resizeTextMinSize = 14;
             text.resizeTextMaxSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = Color.white;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -82,7 +83,7 @@ namespace Core.UI.Layout
             text.resizeTextMinSize = 14;
             text.resizeTextMaxSize = fontSize;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = Color.white;
             text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -126,7 +127,7 @@ namespace Core.UI.Layout
             text.resizeTextMinSize = 14;
             text.resizeTextMaxSize = 22;
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.color = Color.white;
             text.raycastTarget = false;
             return text;
@@ -160,6 +161,30 @@ namespace Core.UI.Layout
             {
                 panel.SetActive(active);
             }
+        }
+
+        public static GameObject CreateCardBackground(Transform parent, string name, Vector2 size, Vector2 anchoredPosition, float cornerRadius = 24f)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(RoundedRectGraphic));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = size + new Vector2(18f, 12f);
+            rect.anchoredPosition = anchoredPosition;
+
+            var graphic = go.GetComponent<RoundedRectGraphic>();
+            graphic.CornerRadius = cornerRadius;
+            graphic.color = new Color(1f, 1f, 1f, 0.76f);
+            graphic.raycastTarget = false;
+
+            var shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.12f);
+            shadow.effectDistance = new Vector2(0f, -4f);
+            shadow.useGraphicAlpha = true;
+
+            go.transform.SetAsFirstSibling();
+            return go;
         }
 
         public static void LoadSceneIfAvailable(string sceneName)

@@ -331,9 +331,17 @@ namespace Project.App
             labelRect.offsetMin = Vector2.zero;
             labelRect.offsetMax = Vector2.zero;
             Text text = labelObj.GetComponent<Text>();
-            text.text = GetActivityDisplayName(activityId);
+            string mascot = activityId switch
+            {
+                "QuantityMatch" => "\U0001F431",   // Cat 🐱
+                "CompareQuantity" => "\U0001F43B",  // Bear 🐻
+                "NumberBonds" => "\U0001F43C",      // Panda 🐼
+                "NumberLineJump" => "\U0001F438",   // Frog 🐸
+                _ => "\U0001F430"                    // Bunny 🐰
+            };
+            text.text = mascot + " " + GetActivityDisplayName(activityId);
             text.alignment = TextAnchor.MiddleCenter;
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.fontSize = 24;
             text.color = Color.white;
             text.raycastTarget = false;
@@ -348,6 +356,15 @@ namespace Project.App
 
         private void ArrangeActivityButtons(List<ActivityButton> allActivities)
         {
+            // 2x2 grid layout with larger cards
+            Vector2[] gridPositions = new Vector2[]
+            {
+                new Vector2(-230f, 80f),   // Button 0: top-left
+                new Vector2(230f, 80f),    // Button 1: top-right
+                new Vector2(-230f, -70f),  // Button 2: bottom-left
+                new Vector2(230f, -70f),   // Button 3: bottom-right
+            };
+
             int orderedIndex = 0;
             foreach (string activityId in RequiredPlayableActivityIds)
             {
@@ -355,16 +372,18 @@ namespace Project.App
                 RectTransform rect = activity?.button != null
                     ? activity.button.GetComponent<RectTransform>()
                     : null;
-                if (rect == null)
-                {
-                    continue;
-                }
+                if (rect == null) continue;
 
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.sizeDelta = new Vector2(Mathf.Max(rect.sizeDelta.x, 360f), Mathf.Max(rect.sizeDelta.y, 64f));
-                rect.anchoredPosition = new Vector2(0f, 110f - orderedIndex * 80f);
+                
+                if (orderedIndex < gridPositions.Length)
+                {
+                    rect.sizeDelta = new Vector2(380f, 110f);
+                    rect.anchoredPosition = gridPositions[orderedIndex];
+                }
+                
                 orderedIndex++;
             }
 

@@ -113,7 +113,7 @@ namespace Features.Activities.NumberLineJump
         private Transform runtimeUiRoot;
         private bool activityFinished;
 
-        private static readonly Vector2 RuntimeButtonSize = new Vector2(180f, 72f);
+        private static readonly Vector2 RuntimeButtonSize = new Vector2(224f, 84f);
         private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(142f, 218f);
         private const float RuntimeButtonGap = 16f;
         private const float RuntimeActionButtonBottomY = 52f;
@@ -1131,7 +1131,7 @@ namespace Features.Activities.NumberLineJump
                 return;
             }
 
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            text.font = UIKidFriendlyStyle.GetSharedFont();
             text.resizeTextForBestFit = false;
             text.fontSize = 92;
             text.resizeTextMinSize = 58;

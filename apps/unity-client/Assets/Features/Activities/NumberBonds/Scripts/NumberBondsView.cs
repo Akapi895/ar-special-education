@@ -45,11 +45,11 @@ namespace Features.Activities.NumberBonds
         private bool activityFinished;
         private int objectSequence;
 
-        private static readonly Vector2 RuntimeButtonSize = new Vector2(190f, 72f);
+        private static readonly Vector2 RuntimeButtonSize = new Vector2(224f, 84f);
         private static readonly Vector2 RuntimeFeedbackPanelSize = new Vector2(800f, 104f);
         private const float RuntimeActionButtonBottomY = 52f;
-        private const float RuntimeConfirmBottomY = 132f;
-        private const float RuntimeHintPanelBottomY = 214f;
+        private const float RuntimeConfirmBottomY = 145f;
+        private const float RuntimeHintPanelBottomY = 230f;
         private const float RuntimeFeedbackPanelBottomY = 314f;
         private const float ButtonGap = 28f;
 

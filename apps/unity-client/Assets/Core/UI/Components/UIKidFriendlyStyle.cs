@@ -69,6 +69,7 @@ namespace Core.UI.Components
             shadow.effectDistance = new Vector2(0f, -6f);
             shadow.useGraphicAlpha = true;
 
+            EnsureCardBackground(button.transform, rect);
             button.targetGraphic = background;
             button.transition = Selectable.Transition.ColorTint;
             button.colors = CreateColorBlock(normalColor);
@@ -535,23 +536,51 @@ namespace Core.UI.Components
             return label;
         }
 
+        public static Font GetSharedFont()
+        {
+            return GetChildFont();
+        }
+
         private static Font GetChildFont()
         {
             if (childFont != null)
-            {
                 return childFont;
-            }
 
-            childFont = Font.CreateDynamicFontFromOSFont(
-                new[] { "Comic Sans MS", "Segoe UI Rounded", "Arial Rounded MT Bold", "Segoe UI", "Arial" },
-                32);
+            // Try Quicksand (child-friendly, Vietnamese support, bundled in Resources)
+            childFont = Resources.Load<Font>("Fonts/Quicksand-VariableFont_wght");
+            if (childFont != null)
+                return childFont;
 
-            if (childFont == null)
-            {
-                childFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            }
-
+            // Fallback: LegacyRuntime (guaranteed to exist)
+            childFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             return childFont;
+        }
+
+        private static void EnsureCardBackground(Transform buttonTransform, RectTransform buttonRect)
+        {
+            Transform existing = buttonTransform.parent.Find("CardBackground_" + buttonTransform.name);
+            if (existing != null)
+                return;
+
+            var cardGo = new GameObject("CardBackground_" + buttonTransform.name, typeof(RectTransform), typeof(RoundedRectGraphic));
+            var cardRect = cardGo.GetComponent<RectTransform>();
+            cardRect.SetParent(buttonTransform.parent, false);
+            cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+            cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.sizeDelta = buttonRect.sizeDelta + new Vector2(24f, 16f);
+            cardRect.anchoredPosition = buttonRect.anchoredPosition;
+
+            var graphic = cardGo.GetComponent<RoundedRectGraphic>();
+            graphic.CornerRadius = Mathf.Max(12f, buttonRect.sizeDelta.y * 0.3f);
+            graphic.color = new Color(1f, 1f, 1f, 0.68f);
+            graphic.raycastTarget = false;
+
+            var shadow = cardGo.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.10f);
+            shadow.effectDistance = new Vector2(0f, -3f);
+            shadow.useGraphicAlpha = true;
+
+            cardGo.transform.SetAsFirstSibling();
         }
 
         private static Color Lighten(Color color, float amount)

@@ -4,6 +4,7 @@ using Features.Activities;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Core.UI.Components;
 using UnityEngine.InputSystem;
 
 namespace Features.Activities.QuantityMatch
@@ -707,7 +708,7 @@ namespace Features.Activities.QuantityMatch
             label.fontSize = 80;
             label.characterSize = 0.007f;
             label.color = Color.white;
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = UIKidFriendlyStyle.GetSharedFont();
 
             // Billboard component
             labelGo.AddComponent<BillboardBehavior>();
