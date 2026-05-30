@@ -19,7 +19,7 @@ apps/backend/.mypy_cache/
 apps/backend/dist/
 apps/backend/build/
 
-# Unity
+# Unity - Generated/cache files (should NOT be in Git)
 apps/unity-client/[Ll]ibrary/
 apps/unity-client/[Tt]emp/
 apps/unity-client/[Oo]bj/
@@ -28,6 +28,13 @@ apps/unity-client/[Bb]uilds/
 apps/unity-client/[Ll]ogs/
 apps/unity-client/[Uu]ser[Ss]ettings/
 apps/unity-client/[Mm]emoryCaptures/
+
+# Unity - Auto-generated project files (should NOT be in Git)
+apps/unity-client/*.csproj
+apps/unity-client/*.sln
+apps/unity-client/*.slnx
+apps/unity-client/Packages/packages-lock.json
+apps/unity-client/ProjectSettings/ProjectVersion.txt
 
 # LaTeX build artifacts
 docs/report-latex/build/

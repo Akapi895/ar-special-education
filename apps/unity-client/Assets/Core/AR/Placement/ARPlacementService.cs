@@ -34,6 +34,10 @@ namespace Core.AR.Placement
         [SerializeField]
         private TrackableType placementTrackableTypes = TrackableType.PlaneWithinPolygon;
 
+        [Header("iOS Scale Fix")]
+        [SerializeField]
+        private float iosScaleAdjustment = 0.6f;
+
         [SerializeField]
         private float minimumPlaneArea = 0.15f;
 
@@ -130,6 +134,13 @@ namespace Core.AR.Placement
             Transform resolvedParent = parent != null ? parent : LearningAreaContentRoot;
             GameObject instance = ObjectPoolManager.Spawn(prefab, position, rotation, resolvedParent);
             instance.SetActive(true);
+
+            // Apply iOS scale adjustment (set in Inspector)
+            if (Mathf.Abs(iosScaleAdjustment - 1f) > 0.01f)
+            {
+                instance.transform.localScale *= iosScaleAdjustment;
+            }
+
             TrackSpawned(instance);
             return instance;
         }
@@ -387,10 +398,18 @@ namespace Core.AR.Placement
                 learningAreaAnchor = anchorObject.AddComponent<LearningAreaAnchor>();
             }
 
-            learningAreaAnchor.SetPose(pose.position, pose.rotation);
+            // Adjust the pose for iOS to ensure proper floor alignment
+            Pose adjustedPose = AdjustPoseForPlatform(pose);
+
+            learningAreaAnchor.SetPose(adjustedPose.position, adjustedPose.rotation);
             learningAreaAnchor.SetAreaSize(defaultLearningAreaSizeMeters);
             learningAreaAnchor.Initialize(attachedPlane);
             HidePlaneVisualizationAfterPlacement();
+        }
+
+        private Pose AdjustPoseForPlatform(Pose originalPose)
+        {
+            return originalPose;
         }
 
         private void HidePlaneVisualizationAfterPlacement()

@@ -22,7 +22,10 @@ namespace ARSpecialEducation.Core.AR
         [SerializeField] bool allowRepositionLearningArea;
         [SerializeField] bool parentSpawnedObjectsUnderLearningArea = true;
         [SerializeField] bool spawnDefaultObjectAfterPlacement = true;
-        [SerializeField] Vector3 defaultSpawnLocalOffset = new Vector3(0f, 0.08f, 0f);
+
+        [Header("iOS Scale Fix")]
+        [SerializeField] Vector3 defaultSpawnLocalOffset = new Vector3(0f, 0f, 0f);
+        [SerializeField] float spawnScaleMultiplier = 0.6f;
 
         readonly List<GameObject> spawnedObjects = new List<GameObject>();
 
@@ -155,6 +158,13 @@ namespace ARSpecialEducation.Core.AR
                 : null;
 
             var instance = Instantiate(prefab, position, rotation, parent);
+
+            // Apply scale adjustment for iOS (set in Inspector)
+            if (Mathf.Abs(spawnScaleMultiplier - 1f) > 0.01f)
+            {
+                instance.transform.localScale *= spawnScaleMultiplier;
+            }
+
             spawnedObjects.Add(instance);
             OnObjectSpawned?.Invoke(instance);
             return instance;
