@@ -1653,7 +1653,12 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             {
                 var eventSystem = new GameObject("EventSystem");
                 eventSystem.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSystem.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                bool added = false;
+                try { eventSystem.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>(); added = true; } catch { }
+                if (!added)
+                {
+                    eventSystem.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+                }
             }
 
             return canvas;

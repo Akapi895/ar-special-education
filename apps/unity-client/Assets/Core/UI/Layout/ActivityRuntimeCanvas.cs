@@ -36,8 +36,26 @@ namespace Core.UI.Layout
                 return;
             }
 
-            var eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-            EventSystem.current = eventSystem.GetComponent<EventSystem>();
+            var eventSystemGO = new GameObject("EventSystem");
+            eventSystemGO.AddComponent<EventSystem>();
+
+            bool inputSystemAdded = false;
+            try
+            {
+                eventSystemGO.AddComponent<InputSystemUIInputModule>();
+                inputSystemAdded = true;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[ActivityRuntimeCanvas] InputSystemUIInputModule not available ({ex.Message}). Falling back to StandaloneInputModule.");
+            }
+
+            if (!inputSystemAdded)
+            {
+                eventSystemGO.AddComponent<StandaloneInputModule>();
+            }
+
+            EventSystem.current = eventSystemGO.GetComponent<EventSystem>();
         }
     }
 }

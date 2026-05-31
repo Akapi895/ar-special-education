@@ -25,31 +25,20 @@ namespace Features.Activities.QuantityMatch
             lineRenderer = gameObject.AddComponent<LineRenderer>();
             lineRenderer.useWorldSpace = false;
             lineRenderer.loop = true;
-            lineRenderer.startWidth = 0.08f;
-            lineRenderer.endWidth = 0.08f;
-            
+            lineRenderer.startWidth = 0.12f;
+            lineRenderer.endWidth = 0.02f;
+            lineRenderer.positionCount = segments;
+            lineRenderer.startColor = new Color(color.r, color.g, color.b, 0.85f);
+            lineRenderer.endColor = new Color(color.r, color.g, color.b, 0.0f);
+
             // Set simple default material
             Shader defaultShader = Shader.Find("Sprites/Default");
             if (defaultShader != null)
             {
                 lineRenderer.material = new Material(defaultShader);
             }
-            
-            lineRenderer.positionCount = segments;
-            DrawCircle();
 
-            var glowRenderer = gameObject.AddComponent<LineRenderer>();
-            glowRenderer.useWorldSpace = false;
-            glowRenderer.loop = true;
-            glowRenderer.startWidth = 0.16f;
-            glowRenderer.endWidth = 0.0f;
-            glowRenderer.positionCount = segments;
-            glowRenderer.startColor = new Color(1f, 1f, 1f, 0.15f);
-            glowRenderer.endColor = new Color(1f, 1f, 1f, 0.0f);
-            Shader glowShader = Shader.Find("Sprites/Default");
-            if (glowShader != null)
-                glowRenderer.material = new Material(glowShader);
-            DrawGlowRing(glowRenderer);
+            DrawCircle();
         }
 
         private void Update()
@@ -110,19 +99,6 @@ namespace Features.Activities.QuantityMatch
             }
 
             lastDrawnRadius = radius;
-        }
-
-        private void DrawGlowRing(LineRenderer renderer)
-        {
-            if (renderer == null) return;
-            float radius = this.radius;
-            for (int i = 0; i < segments; i++)
-            {
-                float angle = (float)i / segments * Mathf.PI * 2f;
-                float x = Mathf.Cos(angle) * (radius + 0.06f);
-                float z = Mathf.Sin(angle) * (radius + 0.06f);
-                renderer.SetPosition(i, new Vector3(x, 0.005f, z));
-            }
         }
 
         public void Highlight()

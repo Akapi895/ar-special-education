@@ -80,7 +80,9 @@ namespace Project.Editor
 
         private static void CreateEventSystem()
         {
-            new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            var esGo = new GameObject("EventSystem");
+            esGo.AddComponent<EventSystem>();
+            try { esGo.AddComponent<InputSystemUIInputModule>(); } catch { esGo.AddComponent<StandaloneInputModule>(); }
         }
 
         private static void CreateCanvas(string sceneName)
