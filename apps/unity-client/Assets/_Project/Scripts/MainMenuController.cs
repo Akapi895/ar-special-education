@@ -25,9 +25,7 @@ namespace Project.App
         [SerializeField] private CanvasGroup menuCanvasGroup;
         [SerializeField] private RectTransform titleTransform;
 
-        [Header("Mascot (Optional)")]
         [SerializeField] private MascotDisplay mascotDisplay;
-        [SerializeField] private string mascotGreeting = "Cùng chơi toán nào!";
 
         private void Start()
         {
@@ -36,12 +34,6 @@ namespace Project.App
 
             // Show mascot greeting (auto-created if not assigned in scene)
             EnsureMascot();
-            if (mascotDisplay != null)
-            {
-                mascotDisplay.SetMascot("\U0001F430");
-                mascotDisplay.PlayEntrance();
-                mascotDisplay.SetSpeech(mascotGreeting, 5f);
-            }
 
             // Setup button listeners
             if (startLearningButton != null)
@@ -112,7 +104,6 @@ namespace Project.App
         {
             if (mascotDisplay != null) return;
             mascotDisplay = gameObject.AddComponent<MascotDisplay>();
-            mascotDisplay.SetMascot("\U0001F430");
         }
 
         private void LocalizeAndStyleMenuText()

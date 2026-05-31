@@ -15,6 +15,10 @@ namespace Core.UI.Components
         [SerializeField] private float bounceSpeed = 1.2f;
         [SerializeField] private float entranceDuration = 0.4f;
 
+        [Header("Speech")]
+        [SerializeField] private string mascotGreeting = "Cùng chơi toán nào!";
+        [SerializeField] private float speechDisplayDuration = 5f;
+
         private Text mascotText;
         private GameObject speechPanel;
         private Text speechText;
@@ -26,8 +30,11 @@ namespace Core.UI.Components
 
         private void Start()
         {
+            Debug.Log("[MascotDisplay] Start() called. Initializing UI...");
             EnsureUI();
+            mascotText.text = mascotEmoji;
             PlayEntrance();
+            SetSpeech(mascotGreeting, speechDisplayDuration);
         }
 
         private void OnDisable()
@@ -43,46 +50,65 @@ namespace Core.UI.Components
             Canvas canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null)
             {
-                Debug.LogError("[MascotDisplay] No canvas found in scene.");
+                Debug.LogError("[MascotDisplay] No canvas found in scene. Mascot will not appear.");
                 return;
             }
+            Debug.Log($"[MascotDisplay] Found canvas: {canvas.name}");
 
             Transform root = canvas.transform;
 
+            // Create mascot background (circular pastel colored disc)
+            var mascotBg = new GameObject("MascotBg", typeof(RectTransform), typeof(Core.UI.Components.RoundedRectGraphic));
+            mascotBg.transform.SetParent(root, false);
+            var bgRect = mascotBg.GetComponent<RectTransform>();
+            bgRect.anchorMin = new Vector2(0.5f, 0.5f);
+            bgRect.anchorMax = new Vector2(0.5f, 0.5f);
+            bgRect.pivot = new Vector2(0.5f, 0.5f);
+            bgRect.sizeDelta = new Vector2(110f, 110f);
+            bgRect.anchoredPosition = new Vector2(0f, 120f);
+            var bgGraphic = mascotBg.GetComponent<Core.UI.Components.RoundedRectGraphic>();
+            bgGraphic.CornerRadius = 55f; // makes it a circle
+            bgGraphic.color = new Color(1f, 0.85f, 0.7f, 1f); // warm pastel orange
+            bgGraphic.raycastTarget = false;
+            var bgShadow = mascotBg.AddComponent<Shadow>();
+            bgShadow.effectColor = new Color(0f, 0f, 0f, 0.15f);
+            bgShadow.effectDistance = new Vector2(0f, -5f);
+            bgShadow.useGraphicAlpha = true;
+
+            // Create mascot emoji text (NO custom font — use default for emoji rendering)
             var mascotObj = new GameObject("MascotEmoji", typeof(RectTransform), typeof(Text));
             mascotObj.transform.SetParent(root, false);
             mascotRect = mascotObj.GetComponent<RectTransform>();
             mascotRect.anchorMin = new Vector2(0.5f, 0.5f);
             mascotRect.anchorMax = new Vector2(0.5f, 0.5f);
             mascotRect.pivot = new Vector2(0.5f, 0.5f);
-            mascotRect.sizeDelta = new Vector2(120f, 120f);
+            mascotRect.sizeDelta = new Vector2(100f, 100f);
             mascotRect.anchoredPosition = new Vector2(0f, 120f);
+            Debug.Log($"[MascotDisplay] Mascot position: {mascotRect.anchoredPosition}, size: {mascotRect.sizeDelta}");
 
             mascotText = mascotObj.GetComponent<Text>();
             mascotText.text = mascotEmoji;
-            mascotText.fontSize = 80;
+            mascotText.fontSize = 70;
             mascotText.alignment = TextAnchor.MiddleCenter;
-            mascotText.font = UIKidFriendlyStyle.GetSharedFont();
+            // IMPORTANT: Do NOT assign a custom font — the default Unity font supports emoji on iOS.
+            // Quicksand lacks emoji glyphs and would render emoji as blank boxes.
             mascotText.raycastTarget = false;
             mascotText.color = Color.white;
+            mascotText.supportRichText = false;
 
-            speechPanel = new GameObject("MascotSpeechBubble", typeof(RectTransform), typeof(Image));
+            speechPanel = new GameObject("MascotSpeechBubble", typeof(RectTransform));
+            speechPanel.transform.SetParent(root, false);
             var speechRect = speechPanel.GetComponent<RectTransform>();
-            speechRect.SetParent(root, false);
             speechRect.anchorMin = new Vector2(0.5f, 0.5f);
             speechRect.anchorMax = new Vector2(0.5f, 0.5f);
             speechRect.pivot = new Vector2(0.5f, 1f);
-            speechRect.sizeDelta = new Vector2(340f, 70f);
+            speechRect.sizeDelta = new Vector2(380f, 70f);
             speechRect.anchoredPosition = new Vector2(0f, 210f);
 
-            var speechImage = speechPanel.GetComponent<Image>();
-            speechImage.color = new Color(1f, 1f, 1f, 0.88f);
-            speechImage.raycastTarget = false;
             var rounded = speechPanel.AddComponent<Core.UI.Components.RoundedRectGraphic>();
             rounded.CornerRadius = 20f;
             rounded.color = new Color(1f, 1f, 1f, 0.88f);
             rounded.raycastTarget = false;
-            DestroyImmediate(speechImage);
 
             var shadow = speechPanel.AddComponent<Shadow>();
             shadow.effectColor = new Color(0f, 0f, 0f, 0.12f);
@@ -143,7 +169,7 @@ namespace Core.UI.Components
         private IEnumerator EntranceCoroutine()
         {
             float elapsed = 0f;
-            float targetSize = 80f;
+            float targetSize = 70f;
 
             while (elapsed < entranceDuration)
             {
@@ -188,7 +214,7 @@ namespace Core.UI.Components
                     mascotRect.anchoredPosition = basePosition + new Vector2(0f, bounce);
 
                     float pulse = 1f + Mathf.Sin(Time.unscaledTime * bounceSpeed * 2f * Mathf.PI) * 0.03f;
-                    mascotText.fontSize = Mathf.RoundToInt(80f * pulse);
+                    mascotText.fontSize = Mathf.RoundToInt(70f * pulse);
                 }
                 yield return null;
             }
