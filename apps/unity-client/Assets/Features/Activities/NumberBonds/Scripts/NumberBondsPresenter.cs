@@ -104,6 +104,11 @@ namespace Features.Activities.NumberBonds
             view?.UpdateZoneCounts(roundState);
             view?.UpdateExpression(currentExpression);
             view?.SetConfirmEnabled(CanConfirm());
+
+            if (CanConfirm())
+            {
+                HandleConfirmRequested();
+            }
         }
 
         private NumberBondValidationResult ValidateMove(BondZone from, BondZone to)
@@ -125,6 +130,13 @@ namespace Features.Activities.NumberBonds
         {
             if (currentState != ActivityState.InProgress)
             {
+                return;
+            }
+
+            if (roundState != null && roundState.WholeCount > 0)
+            {
+                string msg = numberBondsConfig.GetFeedback(NumberBondValidationResult.NotAllObjectsMoved, currentExpression);
+                view?.ShowIncorrectFeedback(msg);
                 return;
             }
 
