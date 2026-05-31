@@ -1148,7 +1148,7 @@ namespace Features.Activities.NumberLineJump
             text.resizeTextMinSize = 48;
             text.resizeTextMaxSize = 72;
             text.fontStyle = FontStyle.Bold;
-            text.color = new Color(0.12f, 0.12f, 0.14f, 1f);
+            text.color = new Color(0.039f, 0.455f, 0.020f, 1f);
             text.alignment = TextAnchor.MiddleCenter;
 
             return button;
