@@ -253,30 +253,5 @@ namespace Features.Activities.NumberBonds
 
             return lineMaterial;
         }
-
-        private static void FitObjectHeight(GameObject obj, float targetHeight)
-        {
-            if (obj == null || targetHeight <= 0f)
-            {
-                return;
-            }
-
-            Renderer[] renderers = obj.GetComponentsInChildren<Renderer>(true);
-            if (renderers.Length == 0)
-            {
-                return;
-            }
-
-            Bounds bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-            {
-                bounds.Encapsulate(renderers[i].bounds);
-            }
-
-            if (bounds.size.y > 0.0001f)
-            {
-                obj.transform.localScale *= targetHeight / bounds.size.y;
-            }
-        }
     }
 }

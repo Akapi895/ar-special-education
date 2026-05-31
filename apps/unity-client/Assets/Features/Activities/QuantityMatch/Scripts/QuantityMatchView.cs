@@ -84,6 +84,23 @@ namespace Features.Activities.QuantityMatch
         [SerializeField]
         private GameObject[] groupSelectionButtons;
 
+        // FIX D: Camera proximity guard
+        [Header("Camera Proximity Guard")]
+        [SerializeField]
+        private float tooCloseThreshold = 0.6f;
+
+        [SerializeField]
+        private Camera arCamera;
+
+        [SerializeField]
+        private GameObject proximityWarningPanel;
+
+        [SerializeField]
+        private Text proximityWarningText;
+
+        private bool proximityWarningCreated;
+        private GameObject contentAnchor; // Will reference spawned content for distance check
+
         // Events from IActivityView
         public event Action OnHintRequested;
         public event Action OnCancelRequested;
@@ -201,6 +218,111 @@ namespace Features.Activities.QuantityMatch
             RegisterNumberInputButtons();
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
         }
+
+        // FIX D: Camera proximity guard - checks distance every frame
+        private void Update()
+        {
+            if (arCamera == null || contentAnchor == null || activityFinished)
+            {
+                return;
+            }
+
+            float distance = Vector3.Distance(arCamera.transform.position, contentAnchor.transform.position);
+
+            if (distance < tooCloseThreshold)
+            {
+                // Too close - hide answer buttons and show warning
+                SetRuntimeGroupButtonsActive(false);
+                ShowProximityWarning(true);
+            }
+            else
+            {
+                // Far enough - show answer buttons normally
+                if (currentState == "InProgress")
+                {
+                    SetRuntimeGroupButtonsActive(!currentUsesNumberInputMode);
+                }
+                ShowProximityWarning(false);
+            }
+        }
+
+        // FIX D: Find and cache AR camera reference
+        private void ResolveARCamera()
+        {
+            if (arCamera != null)
+            {
+                return;
+            }
+
+            arCamera = Camera.main;
+            if (arCamera == null)
+            {
+                arCamera = FindAnyObjectByType<Camera>();
+            }
+        }
+
+        // FIX D: Create proximity warning UI
+        private void CreateProximityWarningUI()
+        {
+            if (proximityWarningPanel != null)
+            {
+                return;
+            }
+
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null)
+            {
+                return;
+            }
+
+            var panelGo = new GameObject("ProximityWarningPanel", typeof(RectTransform), typeof(Image));
+            panelGo.transform.SetParent(canvas.transform, false);
+            var panelRect = panelGo.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.sizeDelta = new Vector2(500f, 80f);
+            panelRect.anchoredPosition = new Vector2(0f, 100f);
+
+            var panelImage = panelGo.GetComponent<Image>();
+            panelImage.color = new Color(1f, 0f, 0f, 0.85f); // Red background
+
+            var textGo = new GameObject("WarningText", typeof(RectTransform), typeof(Text));
+            textGo.transform.SetParent(panelRect, false);
+            var textRect = textGo.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(10f, 5f);
+            textRect.offsetMax = new Vector2(-10f, -5f);
+
+            proximityWarningText = textGo.GetComponent<Text>();
+            proximityWarningText.text = "Hãy lùi lại để xem!";
+            proximityWarningText.alignment = TextAnchor.MiddleCenter;
+            proximityWarningText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            proximityWarningText.fontSize = 28;
+            proximityWarningText.color = Color.white;
+
+            proximityWarningPanel = panelGo;
+            proximityWarningPanel.SetActive(false);
+        }
+
+        // FIX D: Show/hide proximity warning
+        private void ShowProximityWarning(bool show)
+        {
+            if (proximityWarningPanel != null && proximityWarningPanel.activeSelf != show)
+            {
+                proximityWarningPanel.SetActive(show);
+            }
+        }
+
+        // FIX D: Set content anchor reference for distance checking
+        public void SetContentAnchor(GameObject anchor)
+        {
+            contentAnchor = anchor;
+        }
+
+        // FIX D: Current activity state for proximity check
+        private string currentState = "Idle";
 
         private void ShowDevKeyboardHint()
         {
@@ -322,14 +444,24 @@ namespace Features.Activities.QuantityMatch
 
         /// <summary>
         /// Show the question with target number and group count.
+        /// FIX B: Ensures question number is displayed correctly even if localization fails.
         /// </summary>
         public void ShowQuestion(int targetNumber, int numberOfGroups, bool useNumberInputMode = false)
         {
+            // FIX B: Assert to catch missing question data early
+            if (targetNumber <= 0)
+            {
+                Debug.LogError($"[QuantityMatchView] FIX B: Invalid targetNumber {targetNumber}. Question data may not have been loaded before scene activation.");
+            }
+
             currentTargetNumber = targetNumber;
             currentNumberOfGroups = numberOfGroups;
             currentUsesNumberInputMode = useNumberInputMode;
             activityFinished = false;
             EnsureRuntimeGroupButtons(numberOfGroups);
+
+            // FIX D: Set activity state for proximity check
+            currentState = "InProgress";
 
             UpdateTargetNumber(targetNumber);
             HideFeedback();
@@ -377,14 +509,31 @@ namespace Features.Activities.QuantityMatch
 
         /// <summary>
         /// Update the displayed target number.
+        /// FIX B: Added fallback to display number directly if localization fails.
         /// </summary>
         public void UpdateTargetNumber(int targetNumber)
         {
             if (targetNumberText != null)
             {
-                targetNumberText.text = currentUsesNumberInputMode
-                    ? NumberQuestionTitle
-                    : SimpleLocalization.Get("quantity_choose_group", targetNumber);
+                if (currentUsesNumberInputMode)
+                {
+                    targetNumberText.text = NumberQuestionTitle;
+                }
+                else
+                {
+                    // FIX B: Try localization first, fallback to formatted number if it fails
+                    string localizedText = SimpleLocalization.Get("quantity_choose_group", targetNumber);
+                    if (string.IsNullOrEmpty(localizedText) || localizedText == "?")
+                    {
+                        // FIX B: Localization failed - display number directly
+                        targetNumberText.text = $"Chọn nhóm có {targetNumber} con";
+                        Debug.LogWarning($"[QuantityMatchView] FIX B: Localization failed for 'quantity_choose_group'. Using fallback format.");
+                    }
+                    else
+                    {
+                        targetNumberText.text = localizedText;
+                    }
+                }
             }
 
             SimpleAudioManager.EnsureExists().PlayInstruction(currentUsesNumberInputMode
@@ -549,6 +698,7 @@ namespace Features.Activities.QuantityMatch
         public void ShowActivityComplete(ActivityResult result)
         {
             activityFinished = true;
+            currentState = "Completed"; // FIX D: Stop proximity check
             DisableInput();
             SetRuntimeGroupButtonsInteractable(false);
             SetRuntimeGroupButtonsActive(false);
@@ -588,6 +738,7 @@ namespace Features.Activities.QuantityMatch
         public void ShowActivityFailed(string message, ActivityResult result)
         {
             activityFinished = true;
+            currentState = "Failed"; // FIX D: Stop proximity check
             DisableInput();
             SetRuntimeGroupButtonsInteractable(false);
             SetRuntimeGroupButtonsActive(false);
@@ -1479,10 +1630,13 @@ namespace Features.Activities.QuantityMatch
 
             var scaler = canvasGo.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            // Use mobile-friendly reference resolution (iPhone landscape aspect ratio)
+            scaler.referenceResolution = new Vector2(1334f, 750f);
+            // Match width for portrait, height for landscape to ensure content fits
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+            scaler.matchWidthOrHeight = Screen.width > Screen.height ? 0f : 1f;
 
+            // Ensure EventSystem exists for mobile touch input
             if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 var eventSystem = new GameObject("EventSystem");
@@ -1591,22 +1745,32 @@ namespace Features.Activities.QuantityMatch
 
         private static Text CreateNumberInputText(Transform parent, string name, string content, int fontSize, Vector2 anchoredPosition, Vector2 size)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Text));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = anchoredPosition;
+            // Create background image GameObject (Graphic component)
+            var bgGo = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            bgRect.SetParent(parent, false);
+            bgRect.anchorMin = new Vector2(0.5f, 0.5f);
+            bgRect.anchorMax = new Vector2(0.5f, 0.5f);
+            bgRect.sizeDelta = size;
+            bgRect.anchoredPosition = anchoredPosition;
 
-            var image = go.GetComponent<Image>();
-            if (image != null)
+            var bgImage = bgGo.GetComponent<Image>();
+            if (bgImage != null)
             {
-                image.color = new Color(1f, 1f, 1f, 0.95f);
-                image.raycastTarget = false;
+                bgImage.color = new Color(1f, 1f, 1f, 0.95f);
+                bgImage.raycastTarget = false;
             }
 
-            var text = go.GetComponent<Text>();
+            // Create Text as a separate child GameObject (only one Graphic per GameObject allowed)
+            var textGo = new GameObject(name + "_Text", typeof(RectTransform), typeof(Text));
+            var textRect = textGo.GetComponent<RectTransform>();
+            textRect.SetParent(bgRect, false);
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+            textRect.anchoredPosition = Vector2.zero;
+
+            var text = textGo.GetComponent<Text>();
             if (text != null)
             {
                 text.text = content;

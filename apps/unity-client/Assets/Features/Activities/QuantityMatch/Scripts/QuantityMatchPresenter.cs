@@ -156,6 +156,13 @@ namespace Features.Activities.QuantityMatch
             }
 
             OnAllGroupsSpawned?.Invoke();
+
+            // FIX D: Set content anchor for camera proximity check
+            if (view is QuantityMatchView quantityMatchView && spawnedGroups != null && spawnedGroups.Length > 0)
+            {
+                // Use the first group as reference for proximity check
+                quantityMatchView.SetContentAnchor(spawnedGroups[0]);
+            }
         }
 
         /// <summary>

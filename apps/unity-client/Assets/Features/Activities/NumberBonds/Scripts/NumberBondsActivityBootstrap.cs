@@ -18,6 +18,7 @@ namespace Features.Activities.NumberBonds
         private bool autoStartWhenReady = true;
 
         private bool started;
+        private bool waitingForPlacement;
 
         public void Configure(NumberBondsPresenter presenter, NumberBondsView view, NumberBondsConfig config,
             bool autoStartWhenReady = false)
@@ -63,7 +64,7 @@ namespace Features.Activities.NumberBonds
                 ARServiceBootstrap bootstrap = ARServiceBootstrap.Instance;
                 if (bootstrap != null && bootstrap.Placement != null)
                 {
-                    bootstrap.Placement.OnLearningAreaPlaced += OnPlacementReady;
+                    WaitForPlacement(bootstrap);
                 }
 
                 if (bootstrap != null && bootstrap.Placement != null
@@ -81,7 +82,28 @@ namespace Features.Activities.NumberBonds
             {
                 bootstrap.Placement.OnLearningAreaPlaced -= OnPlacementReady;
             }
+            waitingForPlacement = false;
             TryStartActivity();
+        }
+
+        private void OnDestroy()
+        {
+            ARServiceBootstrap bootstrap = ARServiceBootstrap.Instance;
+            if (bootstrap != null && bootstrap.Placement != null)
+            {
+                bootstrap.Placement.OnLearningAreaPlaced -= OnPlacementReady;
+            }
+        }
+
+        private void WaitForPlacement(ARServiceBootstrap bootstrap)
+        {
+            if (waitingForPlacement || bootstrap == null || bootstrap.Placement == null)
+            {
+                return;
+            }
+
+            bootstrap.Placement.OnLearningAreaPlaced += OnPlacementReady;
+            waitingForPlacement = true;
         }
 
         public void TryStartActivity()
@@ -111,6 +133,7 @@ namespace Features.Activities.NumberBonds
 
             if (!bootstrap.Placement.IsPlacementAvailable || !bootstrap.Placement.HasLearningArea)
             {
+                WaitForPlacement(bootstrap);
                 Debug.Log("[NumberBondsActivityBootstrap] Waiting for learning area placement...");
                 return;
             }

@@ -23,6 +23,7 @@ namespace Features.Activities.NumberLineJump
         private bool autoStartWhenReady = true;
 
         private bool started;
+        private bool waitingForPlacement;
 
         public void Configure(NumberLineJumpPresenter presenter, NumberLineJumpView view, NumberLineJumpConfig config,
             bool autoStartWhenReady = false)
@@ -68,7 +69,7 @@ namespace Features.Activities.NumberLineJump
                 var bootstrap = ARServiceBootstrap.Instance;
                 if (bootstrap != null && bootstrap.Placement != null)
                 {
-                    bootstrap.Placement.OnLearningAreaPlaced += OnPlacementReady;
+                    WaitForPlacement(bootstrap);
                 }
 
                 if (bootstrap != null && bootstrap.Placement != null
@@ -86,7 +87,28 @@ namespace Features.Activities.NumberLineJump
             {
                 bootstrap.Placement.OnLearningAreaPlaced -= OnPlacementReady;
             }
+            waitingForPlacement = false;
             TryStartActivity();
+        }
+
+        private void OnDestroy()
+        {
+            var bootstrap = ARServiceBootstrap.Instance;
+            if (bootstrap != null && bootstrap.Placement != null)
+            {
+                bootstrap.Placement.OnLearningAreaPlaced -= OnPlacementReady;
+            }
+        }
+
+        private void WaitForPlacement(ARServiceBootstrap bootstrap)
+        {
+            if (waitingForPlacement || bootstrap == null || bootstrap.Placement == null)
+            {
+                return;
+            }
+
+            bootstrap.Placement.OnLearningAreaPlaced += OnPlacementReady;
+            waitingForPlacement = true;
         }
 
         public void TryStartActivity()
@@ -116,6 +138,7 @@ namespace Features.Activities.NumberLineJump
 
             if (!bootstrap.Placement.IsPlacementAvailable || !bootstrap.Placement.HasLearningArea)
             {
+                WaitForPlacement(bootstrap);
                 Debug.Log("[NumberLineJumpActivityBootstrap] Waiting for learning area placement...");
                 return;
             }

@@ -62,11 +62,23 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.ARStarterAssets
         {
             int vertexCount = mesh.vertexCount;
 
+            // Guard against invalid mesh data to prevent crashes
+            if (vertexCount < 2)
+            {
+                return;
+            }
+
             // Reuse the list of UVs
             s_FeatheringUVs.Clear();
             if (s_FeatheringUVs.Capacity < vertexCount) { s_FeatheringUVs.Capacity = vertexCount; }
 
             mesh.GetVertices(s_Vertices);
+
+            // Guard against vertex count mismatch
+            if (s_Vertices.Count < 2)
+            {
+                return;
+            }
 
             Vector3 centerInPlaneSpace = s_Vertices[s_Vertices.Count - 1];
             Vector3 uv = new Vector3(0, 0, 0);

@@ -50,3 +50,5 @@ docs/report-latex/*.run.xml
 docs/report-latex/*.synctex.gz
 docs/report-latex/*.toc
 docs/report-latex/*.pdf
+Build/
+Builds/

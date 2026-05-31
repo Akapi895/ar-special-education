@@ -110,7 +110,8 @@ namespace Core.AR.Placement
                 return null;
             }
 
-            Transform resolvedParent = parent != null ? parent : LearningAreaContentRoot;
+            // Use provided parent, LearningAreaContentRoot (if exists), or null for world space
+            Transform resolvedParent = parent != null ? parent : (HasLearningArea ? LearningAreaContentRoot : null);
             GameObject instance = Instantiate(prefab, position, rotation, resolvedParent);
             instance.SetActive(true);
             TrackSpawned(instance);
@@ -122,7 +123,9 @@ namespace Core.AR.Placement
             Transform root = LearningAreaContentRoot;
             Vector3 worldPosition = root != null ? root.TransformPoint(localPosition) : localPosition;
             Quaternion worldRotation = root != null ? root.rotation * localRotation : localRotation;
-            return SpawnAtPosition(prefab, worldPosition, worldRotation, parent != null ? parent : root);
+            // Only use root as parent if it's a valid LearningAreaAnchor, not ARPlacementServiceMock.transform
+            Transform resolvedParent = parent != null ? parent : (HasLearningArea ? root : null);
+            return SpawnAtPosition(prefab, worldPosition, worldRotation, resolvedParent);
         }
 
         public GameObject[] SpawnGrid(GameObject prefab, Vector3 centerPosition, int count, float spacing)
