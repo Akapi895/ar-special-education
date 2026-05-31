@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Features.Activities.QuantityMatch
 {
@@ -25,8 +25,8 @@ namespace Features.Activities.QuantityMatch
             lineRenderer = gameObject.AddComponent<LineRenderer>();
             lineRenderer.useWorldSpace = false;
             lineRenderer.loop = true;
-            lineRenderer.startWidth = 0.04f;
-            lineRenderer.endWidth = 0.04f;
+            lineRenderer.startWidth = 0.08f;
+            lineRenderer.endWidth = 0.08f;
             
             // Set simple default material
             Shader defaultShader = Shader.Find("Sprites/Default");
@@ -37,6 +37,19 @@ namespace Features.Activities.QuantityMatch
             
             lineRenderer.positionCount = segments;
             DrawCircle();
+
+            var glowRenderer = gameObject.AddComponent<LineRenderer>();
+            glowRenderer.useWorldSpace = false;
+            glowRenderer.loop = true;
+            glowRenderer.startWidth = 0.16f;
+            glowRenderer.endWidth = 0.0f;
+            glowRenderer.positionCount = segments;
+            glowRenderer.startColor = new Color(1f, 1f, 1f, 0.15f);
+            glowRenderer.endColor = new Color(1f, 1f, 1f, 0.0f);
+            Shader glowShader = Shader.Find("Sprites/Default");
+            if (glowShader != null)
+                glowRenderer.material = new Material(glowShader);
+            DrawGlowRing(glowRenderer);
         }
 
         private void Update()
@@ -71,8 +84,8 @@ namespace Features.Activities.QuantityMatch
             c.a = currentAlpha;
             if (lineRenderer != null)
             {
-                lineRenderer.startColor = c;
-                lineRenderer.endColor = c;
+                lineRenderer.startColor = new Color(c.r, c.g, c.b, 0.85f);
+                lineRenderer.endColor = new Color(c.r, c.g, c.b, 0.85f);
             }
 
             // Animate scale (bounce effect when highlighted)
@@ -97,6 +110,19 @@ namespace Features.Activities.QuantityMatch
             }
 
             lastDrawnRadius = radius;
+        }
+
+        private void DrawGlowRing(LineRenderer renderer)
+        {
+            if (renderer == null) return;
+            float radius = this.radius;
+            for (int i = 0; i < segments; i++)
+            {
+                float angle = (float)i / segments * Mathf.PI * 2f;
+                float x = Mathf.Cos(angle) * (radius + 0.06f);
+                float z = Mathf.Sin(angle) * (radius + 0.06f);
+                renderer.SetPosition(i, new Vector3(x, 0.005f, z));
+            }
         }
 
         public void Highlight()
@@ -125,3 +151,4 @@ namespace Features.Activities.QuantityMatch
         }
     }
 }
+
