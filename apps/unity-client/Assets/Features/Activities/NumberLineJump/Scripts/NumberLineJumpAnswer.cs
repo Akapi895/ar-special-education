@@ -167,17 +167,18 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public static string GetCurrentEquation(int startNumber, int currentPosition, int targetNumber)
         {
-            int totalChange = targetNumber - startNumber;
+            // Show dynamic steps: start + stepsTaken = currentPosition
+            int stepsTaken = currentPosition - startNumber;
 
-            if (totalChange == 0)
+            if (stepsTaken == 0)
             {
                 return $"{startNumber} = {currentPosition}";
             }
 
-            string operation = totalChange >= 0 ? "+" : "-";
-            int absChange = Mathf.Abs(totalChange);
+            string operation = stepsTaken >= 0 ? "+" : "-";
+            int absSteps = Mathf.Abs(stepsTaken);
 
-            return $"{startNumber} {operation} {absChange} = {currentPosition}";
+            return $"{startNumber} {operation} {absSteps} = {currentPosition}";
         }
 
         /// <summary>

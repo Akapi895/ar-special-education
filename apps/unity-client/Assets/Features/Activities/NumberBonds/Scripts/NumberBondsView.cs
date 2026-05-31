@@ -115,6 +115,7 @@ namespace Features.Activities.NumberBonds
             UpdateExpression(NumberBondExpressionBinder.Format(question, state));
             ShowQuestionText(question);
             SetConfirmEnabled(false);
+            SetButtonActive(confirmButton, true);
             SetInputEnabled(true);
             SetRunningControlsActive(true);
             SetButtonActive(nextRoundButton, false);
@@ -151,6 +152,8 @@ namespace Features.Activities.NumberBonds
             if (reason == NumberBondValidationResult.LockedZoneModified)
             {
                 ShowFeedback(config != null ? config.GetFeedback(reason, null) : string.Empty, Color.red);
+                CancelInvoke(nameof(HideFeedback));
+                Invoke(nameof(HideFeedback), 2.5f);
             }
         }
 
@@ -171,10 +174,13 @@ namespace Features.Activities.NumberBonds
 
         public void SetConfirmEnabled(bool enabled)
         {
-            if (confirmButton != null)
-            {
-                confirmButton.interactable = enabled;
-            }
+            if (confirmButton == null) return;
+            ColorBlock colors = confirmButton.colors;
+            colors.normalColor = enabled
+                ? new Color(0.2f, 0.7f, 0.35f, 1f)
+                : new Color(0.35f, 0.35f, 0.35f, 0.6f);
+            colors.disabledColor = colors.normalColor;
+            confirmButton.colors = colors;
         }
 
         public void ShowCorrectFeedback()

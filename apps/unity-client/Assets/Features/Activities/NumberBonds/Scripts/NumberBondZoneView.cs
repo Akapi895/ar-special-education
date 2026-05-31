@@ -40,7 +40,7 @@ namespace Features.Activities.NumberBonds
         {
             if (countLabel != null)
             {
-                countLabel.text = count.ToString();
+                countLabel.text = IsLocked ? $"{count} \U0001f512" : count.ToString();
             }
         }
 

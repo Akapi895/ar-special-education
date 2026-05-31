@@ -273,14 +273,8 @@ namespace Features.Activities.CompareQuantity
 
             if (questionText != null)
             {
-                if (questionType == CompareQuantityQuestionType.SymbolCompare)
-                {
-                    questionText.text = $"{leftCount} ? {rightCount}";
-                }
-                else
-                {
-                    questionText.text = RuntimeCompareQuestion;
-                }
+                string displayText = $"{leftCount} ? {rightCount}";
+                questionText.text = displayText;
             }
 
             // Note: We don't show the actual counts to the child - they need to count!
@@ -417,6 +411,7 @@ namespace Features.Activities.CompareQuantity
             {
                 hintText.text = hint.HintText;
                 hintPanel.SetActive(true);
+                hintPanel.transform.SetAsLastSibling();
 
                 // Auto-hide after 6 seconds (slightly longer for comparison)
                 CancelInvoke(nameof(HideHint));
@@ -593,7 +588,7 @@ namespace Features.Activities.CompareQuantity
                     bool positive = color.g >= color.r;
                     image.color = positive
                         ? new Color(0.06f, 0.42f, 0.2f, 0.9f)
-                        : new Color(0.5f, 0.28f, 0.04f, 0.9f);
+                        : new Color(0.85f, 0.55f, 0.35f, 0.88f);
                 }
 
                 feedbackText.text = message;

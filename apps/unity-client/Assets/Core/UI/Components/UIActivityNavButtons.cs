@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using Core.UI.Localization;
 
@@ -21,7 +21,7 @@ namespace Core.UI.Components
         /// </summary>
         public static Button CreateHintButton(Transform parent, UnityEngine.Events.UnityAction onClick)
         {
-            return CreateHintButton(parent, SimpleLocalization.Get("btn_hint"), ButtonSize, FontSize, onClick);
+            return CreateHintButton(parent, "💡 Gợi ý", ButtonSize, FontSize, onClick);
         }
 
         /// <summary>
@@ -65,8 +65,8 @@ namespace Core.UI.Components
             var button = go.GetComponent<Button>();
             button.onClick.AddListener(onClick);
 
-            CreateButtonLabel(go.transform, SimpleLocalization.Get("btn_listen"));
-            UIKidFriendlyStyle.Apply(button, "ListenButton", SimpleLocalization.Get("btn_listen"), FontSize);
+            CreateButtonLabel(go.transform, "🔊 Nghe lại");
+            UIKidFriendlyStyle.Apply(button, "ListenButton", "🔊 Nghe lại", FontSize);
             return button;
         }
 
@@ -88,8 +88,8 @@ namespace Core.UI.Components
             var button = go.GetComponent<Button>();
             button.onClick.AddListener(onClick);
 
-            CreateButtonLabel(go.transform, "Trang chủ");
-            UIKidFriendlyStyle.Apply(button, "HomeButton", "Trang chủ", FontSize);
+            CreateButtonLabel(go.transform, "\U0001f3e0 Trang ch\u1ee7");
+            UIKidFriendlyStyle.Apply(button, "HomeButton", "\U0001f3e0 Trang ch\u1ee7", FontSize);
             return button;
         }
 
@@ -149,3 +149,4 @@ namespace Core.UI.Components
         }
     }
 }
+

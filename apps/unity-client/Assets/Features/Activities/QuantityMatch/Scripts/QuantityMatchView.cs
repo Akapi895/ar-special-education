@@ -1,4 +1,4 @@
-using Core.Learning.ActivityRunner;
+﻿using Core.Learning.ActivityRunner;
 using Core.Learning.Models;
 using Core.Support.AudioManager;
 using Core.UI.Components;
@@ -115,6 +115,8 @@ namespace Features.Activities.QuantityMatch
         private bool numberInputControlsInteractable;
         private Button lastAnswerButton;
         private Text devKeyboardHintText;
+
+        public event Action<int> OnHintVisualFeedbackRequested;
 
 private static readonly Vector2 RuntimeButtonSize = new Vector2(224f, 84f);
 private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
@@ -400,7 +402,7 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
         {
             if (progressText != null)
             {
-                progressText.text = $"Câu {current}/{total}";
+                progressText.text = SimpleLocalization.Get("label_round", current, total);
             }
         }
 
@@ -423,7 +425,7 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             }
             else
             {
-                ShowFeedback(message, Color.green);
+                ShowFeedback(message, new Color(0.2f, 0.6f, 0.3f, 1f));
             }
             DisableInput();
             SetRuntimeGroupButtonsActive(false);
@@ -500,7 +502,7 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             }
             else
             {
-                ShowFeedback(message, new Color(1.0f, 0.5f, 0f)); // orange
+                ShowFeedback(message, new Color(0.85f, 0.5f, 0.25f, 1f)); // soft orange
             }
 
             StartCoroutine(ShakeUiCoroutine());
@@ -521,15 +523,22 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
         /// </summary>
         public void ShowHint(ActivityHint hint)
         {
-            if (hintPanel != null && hintText != null)
-            {
-                hintText.text = hint.HintText;
-                hintPanel.SetActive(true);
+            if (hintPanel == null || hintText == null) return;
 
-                // Auto-hide after 5 seconds
-                CancelInvoke(nameof(HideHint));
-                Invoke(nameof(HideHint), 5f);
-            }
+            hintPanel.SetActive(true);
+            hintText.text = hint.HintText;
+            hintText.fontSize = 28;
+            hintText.color = new Color(0.18f, 0.18f, 0.18f, 1f);
+            hintText.resizeTextForBestFit = true;
+            hintText.resizeTextMinSize = 18;
+            hintText.resizeTextMaxSize = 28;
+
+            // Auto-hide after 6 seconds
+            CancelInvoke(nameof(HideHint));
+            Invoke(nameof(HideHint), 6f);
+
+            // Visual hint: at higher levels, notify presenter to highlight groups
+            OnHintVisualFeedbackRequested?.Invoke(hint.Level);
         }
 
         /// <summary>
@@ -538,9 +547,8 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
         public void HideHint()
         {
             if (hintPanel != null)
-            {
                 hintPanel.SetActive(false);
-            }
+            OnHintVisualFeedbackRequested?.Invoke(0); // 0 = clear highlight
         }
 
         /// <summary>
@@ -696,7 +704,11 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             {
                 feedbackText.text = message;
                 feedbackText.color = color;
-                feedbackPanel.SetActive(true);
+                feedbackText.fontSize = 32;
+            feedbackText.resizeTextForBestFit = true;
+            feedbackText.resizeTextMinSize = 22;
+            feedbackText.resizeTextMaxSize = 32;
+            feedbackPanel.SetActive(true);
             }
         }
 
@@ -1136,7 +1148,7 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             ConfigureFriendlyNumberInputPanel();
 
             numberInputText = CreateNumberInputText(numberInputPanel.transform, "AnswerText", "_", 36, new Vector2(0f, 95f), new Vector2(240f, 60f));
-            clearNumberButton = CreateSizedButton(numberInputPanel.transform, "ClearNumberButton", "⌫", new Vector2(-220f, 95f), new Vector2(100f, 60f), null, 24);
+            clearNumberButton = CreateSizedButton(numberInputPanel.transform, "ClearNumberButton", "âŒ«", new Vector2(-220f, 95f), new Vector2(100f, 60f), null, 24);
             submitNumberButton = CreateSizedButton(numberInputPanel.transform, "SubmitNumberButton", "OK", new Vector2(220f, 95f), new Vector2(100f, 60f), null, 24);
 
             digitButtons = new Button[10];
@@ -1507,7 +1519,7 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             rect.sizeDelta = new Vector2(660, 58);
             rect.anchoredPosition = anchoredPosition;
             var image = go.GetComponent<Image>();
-            image.color = new Color(0.02f, 0.03f, 0.04f, 0.32f);
+            image.color = new Color(1f, 1f, 1f, 0.88f);
             image.raycastTarget = false;
             return go;
         }
@@ -1702,7 +1714,7 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
 
             float duration = 0.4f;
             float elapsed = 0f;
-            float magnitude = 10f; // ±10px
+            float magnitude = 10f; // Â±10px
 
             while (elapsed < duration)
             {
@@ -1837,6 +1849,11 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             rect.anchoredPosition = anchoredPosition;
             go.GetComponent<Image>().color = new Color(0.98f, 0.8f, 0.2f, 1.0f); // Bright yellow
 
+            var shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.18f);
+            shadow.effectDistance = new Vector2(0f, -4f);
+            shadow.useGraphicAlpha = true;
+
             var button = go.GetComponent<Button>();
             if (onClick != null)
             {
@@ -1863,3 +1880,4 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
         }
     }
 }
+
