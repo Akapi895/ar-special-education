@@ -22,13 +22,8 @@ namespace Project.App
             if (Application.isPlaying)
             {
                 EnsureOverlay();
-                GameObject overlayObj = overlayCanvas.gameObject;
-                if (overlayObj != null)
-                {
-                    GameObject runner = new GameObject("SceneTransitionRunner");
-                    var runnerComponent = runner.AddComponent<SceneTransitionRunner>();
-                    runnerComponent.StartCoroutine(FadeAndLoad(sceneName, fadeDuration));
-                }
+                var runner = new GameObject("SceneTransitionRunner").AddComponent<SceneTransitionRunner>();
+                runner.StartCoroutine(FadeAndLoad(sceneName, fadeDuration, runner.gameObject));
             }
             else
             {
@@ -64,7 +59,7 @@ namespace Project.App
             overlayImage.raycastTarget = false;
         }
 
-        private static IEnumerator FadeAndLoad(string sceneName, float duration)
+        private static IEnumerator FadeAndLoad(string sceneName, float duration, GameObject runner)
         {
             Debug.Log($"[SceneTransitionManager] Loading scene '{sceneName}' with {duration}s fade...");
             // Block input during transition
@@ -103,6 +98,7 @@ namespace Project.App
             overlayImage.color = Color.clear;
             // Restore input after transition completes
             overlayImage.raycastTarget = false;
+            Object.Destroy(runner);
         }
 
         // Helper MonoBehaviour to run coroutines in static context
