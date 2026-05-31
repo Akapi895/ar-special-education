@@ -1,4 +1,5 @@
 using Core.UI.Components;
+using Core.UI.Layout;
 using Core.UI.Localization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -29,6 +30,7 @@ namespace Project.App
 
         private void Start()
         {
+            ActivityRuntimeCanvas.EnsureEventSystem();
             LocalizeAndStyleMenuText();
             ApplyMenuWideCardBackground();
 

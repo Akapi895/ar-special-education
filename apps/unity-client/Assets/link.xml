@@ -1,0 +1,15 @@
+<linker>
+  <!-- Preserve Input System types required for UI interaction on iOS IL2CPP -->
+  <assembly fullname="Unity.InputSystem" preserve="all"/>
+  <assembly fullname="Unity.InputSystem.ForUI" preserve="all"/>
+
+  <!-- Preserve UGUI types used in scenes -->
+  <assembly fullname="UnityEngine.UI" preserve="all"/>
+
+  <!-- Preserve XR Interaction Toolkit types -->
+  <assembly fullname="Unity.XR.CoreUtils" preserve="all"/>
+  <assembly fullname="Unity.XR.Interaction.Toolkit" preserve="all"/>
+
+  <!-- Preserve project assemblies -->
+  <assembly fullname="Assembly-CSharp" preserve="all"/>
+</linker>
