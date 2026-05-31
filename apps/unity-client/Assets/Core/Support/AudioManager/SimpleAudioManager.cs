@@ -25,6 +25,7 @@ namespace Core.Support.AudioManager
 
         public static SimpleAudioManager EnsureExists()
         {
+            Debug.Log("[SimpleAudioManager] EnsureExists called.");
             if (Instance != null)
             {
                 return Instance;
@@ -37,6 +38,7 @@ namespace Core.Support.AudioManager
             }
 
             GameObject audioGo = new GameObject("SimpleAudioManager");
+            Debug.Log("[SimpleAudioManager] Creating new SimpleAudioManager instance.");
             return audioGo.AddComponent<SimpleAudioManager>();
         }
 
@@ -63,6 +65,11 @@ namespace Core.Support.AudioManager
 
         public void PlaySound(string soundName)
         {
+            if (string.IsNullOrEmpty(soundName))
+            {
+                Debug.LogWarning("[SimpleAudioManager] PlaySound called with null/empty soundName.");
+                return;
+            }
             if (!IsAudioEnabled())
             {
                 return;
@@ -80,6 +87,15 @@ namespace Core.Support.AudioManager
                 clip = GetTemporaryFallbackClip(soundName);
             }
 
+            if (clip == null)
+            {
+                Debug.LogWarning($"[SimpleAudioManager] Audio clip '{soundName}' not found. Using fallback beep.");
+            }
+            else
+            {
+                Debug.Log($"[SimpleAudioManager] Playing '{soundName}' (clip: {clip.name}, length: {clip.length:F2}s, sources ready: {sfxSource != null})");
+            }
+
             if (clip != null)
             {
                 sfxSource.PlayOneShot(clip);
@@ -94,6 +110,7 @@ namespace Core.Support.AudioManager
 
         public void PlayInstruction(string soundName)
         {
+            Debug.Log($"[SimpleAudioManager] PlayInstruction called: '{soundName}'");
             lastInstructionSoundName = soundName;
             PlaySound(soundName);
         }

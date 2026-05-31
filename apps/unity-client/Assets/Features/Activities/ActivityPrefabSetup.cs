@@ -42,7 +42,7 @@ namespace Features.Activities
         [SerializeField] private float animalFacingYawOffset;
         [SerializeField] private float randomFacingYaw = 12f;
         [SerializeField] private bool repairLearningObjectMaterials = true;
-        [SerializeField] private string learningObjectShaderName = "Universal Render Pipeline/Unlit";
+        [SerializeField] private string learningObjectShaderName = "Universal Render Pipeline/Lit";
         [SerializeField] private bool boostLearningObjectContrast = true;
         [SerializeField] private float minimumLearningObjectBrightness = 0.58f;
         [SerializeField] private float learningObjectColorLift = 0.32f;
@@ -629,6 +629,8 @@ namespace Features.Activities
                 if (changed)
                 {
                     renderer.sharedMaterials = materials;
+                    renderer.receiveShadows = true;
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
                 }
             }
         }

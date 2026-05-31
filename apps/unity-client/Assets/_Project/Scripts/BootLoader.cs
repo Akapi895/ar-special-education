@@ -20,6 +20,7 @@ namespace Project.App
 
         private void Start()
         {
+            Debug.Log($"[BootLoader] App STARTED. Unity {Application.unityVersion}, Platform: {Application.platform}, Target FPS: {Application.targetFrameRate}");
             // Initialize any services here
             InitializeServices();
 
@@ -40,12 +41,15 @@ namespace Project.App
             // Ensure audio preferences and replay support exist before scenes request sounds.
             Core.Support.AudioManager.SimpleAudioManager.EnsureExists();
 
+            Application.targetFrameRate = 30;
+
             Debug.Log("[BootLoader] Services initialized.");
         }
 
         private void LoadMainMenu()
         {
-            SceneManager.LoadScene(mainMenuSceneName);
+            Debug.Log($"[BootLoader] Loading SCENE: {mainMenuSceneName}");
+            SceneTransitionManager.LoadScene(mainMenuSceneName);
         }
     }
 }

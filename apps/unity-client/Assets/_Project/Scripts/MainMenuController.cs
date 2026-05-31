@@ -34,6 +34,7 @@ namespace Project.App
 
             // Show mascot greeting (auto-created if not assigned in scene)
             EnsureMascot();
+            Debug.Log($"[MainMenuController] MainMenu STARTED. Screen: {Screen.width}x{Screen.height}, SafeArea: {Screen.safeArea}");
 
             // Setup button listeners
             if (startLearningButton != null)
@@ -98,6 +99,21 @@ namespace Project.App
             bgGraphic.raycastTarget = false;
 
             bgGo.transform.SetAsFirstSibling();
+
+            // Apply safe area padding for iOS notched devices
+            Rect safeArea = Screen.safeArea;
+            if (safeArea.x != 0f || safeArea.y != 0f ||
+                safeArea.width != Screen.width || safeArea.height != Screen.height)
+            {
+                // Safe area differs from full screen — apply padding to the card
+                float leftPad = safeArea.xMin;
+                float rightPad = Screen.width - safeArea.xMax;
+                float topPad = Screen.height - safeArea.yMax;
+                float bottomPad = safeArea.yMin;
+                bgRect.offsetMin = new Vector2(leftPad + 20f, bottomPad + 20f);
+                bgRect.offsetMax = new Vector2(-(rightPad + 20f), -(topPad + 20f));
+                Debug.Log($"[MainMenuController] Safe area applied: L={leftPad} R={rightPad} T={topPad} B={bottomPad}");
+            }
         }
 
         private void EnsureMascot()

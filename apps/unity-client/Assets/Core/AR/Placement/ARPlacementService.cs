@@ -59,10 +59,10 @@ namespace Core.AR.Placement
         // FIX A: Plane detection gating
         [Header("Plane Detection Gating")]
         [SerializeField]
-        private float planeDetectionTimeout = 15f;
+        private float planeDetectionTimeout = 30f;
 
         [SerializeField]
-        private float forcePlacementDistance = 1.2f;
+        private float forcePlacementDistance = 2.5f;
 
         [SerializeField]
         private Canvas scanningCanvas;
@@ -88,7 +88,7 @@ namespace Core.AR.Placement
         public bool IsPlacementAvailable => placementAvailable;
         public Vector3 CurrentPlacementPosition => currentPlacementPosition;
         public bool HasLearningArea => learningAreaAnchor != null && learningAreaAnchor.IsPlaced;
-        public Transform LearningAreaContentRoot => HasLearningArea ? learningAreaAnchor.ContentRoot : transform;
+        public Transform LearningAreaContentRoot => HasLearningArea ? learningAreaAnchor.ContentRoot : null;
         public Vector2 LearningAreaSizeMeters => HasLearningArea ? learningAreaAnchor.AreaSizeMeters : defaultLearningAreaSizeMeters;
 
         private void Awake()
@@ -181,6 +181,7 @@ namespace Core.AR.Placement
 
             ShowScanningUI(true);
             Debug.Log("[ARPlacementService] FIX A: Started searching for horizontal plane (polling mode). Content spawn is gated.");
+            Debug.Log($"[ARPlacementService] Plane detection search started. Timeout: {planeDetectionTimeout}s, Min area: {minimumPlaneArea}m²");
         }
 
         // FIX A: Check if plane is horizontal and large enough
@@ -203,6 +204,7 @@ namespace Core.AR.Placement
         // FIX A: When a valid horizontal plane is found, raycast to find spawn point
         private void OnHorizontalPlaneFound(ARPlane plane)
         {
+            Debug.Log($"[ARPlacementService] Valid horizontal plane FOUND at {plane.center}. Size: {plane.size.x}x{plane.size.y}m. Alignment: {plane.alignment}");
             horizontalPlaneDetected = true;
             isSearchingForPlane = false;
 
@@ -238,7 +240,6 @@ namespace Core.AR.Placement
             ShowScanningUI(false);
         }
 
-        // FIX A: Force placement after timeout or when no plane is detected
         private void ForcePlacementAtCameraForward()
         {
             if (placementAvailable)
@@ -247,23 +248,27 @@ namespace Core.AR.Placement
             }
 
             isSearchingForPlane = false;
-            Debug.LogWarning("[ARPlacementService] FIX A: Plane detection timeout. Force-placing at camera forward.");
+            Debug.LogWarning($"[ARPlacementService] Plane detection timeout ({planeDetectionTimeout}s). Force-placing at {currentPlacementPosition}. Camera pos: {arCamera?.transform.position}");
 
             if (arCamera != null)
             {
+                // Try to find a surface by raycasting downward from camera position
+                Vector3 cameraPos = arCamera.transform.position;
                 Vector3 forward = arCamera.transform.forward;
                 forward.y = 0f;
-                if (forward.sqrMagnitude < 0.0001f)
-                {
-                    forward = Vector3.forward;
-                }
-                else
+                if (forward.sqrMagnitude > 0.0001f)
                 {
                     forward.Normalize();
                 }
+                else
+                {
+                    forward = Vector3.forward;
+                }
 
-                currentPlacementPosition = arCamera.transform.position + forward * forcePlacementDistance;
-                currentPlacementPosition.y = 0f; // Place on ground
+                // Place further away (2.5m) so objects don't appear stuck to camera
+                currentPlacementPosition = cameraPos + forward * forcePlacementDistance;
+                // Set at camera height or 0, whichever is lower (assumes floor is below camera)
+                currentPlacementPosition.y = Mathf.Min(0f, cameraPos.y - 1.2f);
                 currentPlacementRotation = Quaternion.identity;
             }
             else
@@ -300,11 +305,11 @@ namespace Core.AR.Placement
             var panelRect = panelGo.GetComponent<RectTransform>();
             panelRect.anchorMin = new Vector2(0.5f, 0.5f);
             panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(400f, 80f);
-            panelRect.anchoredPosition = new Vector2(0f, -200f);
+            panelRect.sizeDelta = new Vector2(500f, 100f);
+            panelRect.anchoredPosition = new Vector2(0f, -240f);
 
             var panelImage = panelGo.GetComponent<Image>();
-            panelImage.color = new Color(0.1f, 0.1f, 0.1f, 0.8f);
+            panelImage.color = new Color(0.12f, 0.12f, 0.14f, 0.88f);
 
             // Create text
             var textGo = new GameObject("ScanningText", typeof(RectTransform), typeof(Text));
@@ -316,11 +321,11 @@ namespace Core.AR.Placement
             textRect.offsetMax = new Vector2(-10f, -5f);
 
             scanningText = textGo.GetComponent<Text>();
-            scanningText.text = "Đang tìm mặt phẳng...";
+            scanningText.text = "Hãy quay camera từ từ qua mặt bàn nhé!";
+            scanningText.fontSize = 24;
+            scanningText.color = new Color(1f, 0.86f, 0.36f, 1f);
             scanningText.alignment = TextAnchor.MiddleCenter;
             scanningText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            scanningText.fontSize = 24;
-            scanningText.color = Color.white;
 
             scanningCanvas.gameObject.SetActive(false);
         }
@@ -335,7 +340,7 @@ namespace Core.AR.Placement
 
             if (scanningText != null)
             {
-                scanningText.text = "Đang tìm mặt phẳng...";
+                scanningText.text = "Hãy quay camera từ từ qua mặt bàn nhé!";
             }
         }
 
@@ -358,6 +363,7 @@ namespace Core.AR.Placement
 
         public GameObject SpawnAtPosition(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
         {
+            Debug.Log($"[ARPlacementService] SpawnAtPosition called. Prefab: {prefab?.name}, Position: {position}, Parent: {parent?.name}");
             if (prefab == null)
             {
                 Debug.LogError("[ARPlacementService] Cannot spawn null prefab.");
@@ -443,6 +449,7 @@ namespace Core.AR.Placement
 
         public void ClearSpawnedObjects()
         {
+            Debug.Log($"[ARPlacementService] ClearSpawnedObjects called. Clearing {spawnedObjects.Count} objects via ObjectPoolManager.Release...");
             for (int i = spawnedObjects.Count - 1; i >= 0; i--)
             {
                 GameObject obj = spawnedObjects[i];
@@ -614,6 +621,7 @@ namespace Core.AR.Placement
 
         private void EnsureLearningArea(Pose pose, ARPlane attachedPlane = null)
         {
+            Debug.Log($"[ARPlacementService] EnsureLearningArea called. HasLearningArea: {HasLearningArea}, autoCreate: {autoCreateLearningAreaFromPlacement}");
             if (!autoCreateLearningAreaFromPlacement || HasLearningArea)
             {
                 return;
@@ -632,6 +640,7 @@ namespace Core.AR.Placement
             learningAreaAnchor.SetPose(adjustedPose.position, adjustedPose.rotation);
             learningAreaAnchor.SetAreaSize(defaultLearningAreaSizeMeters);
             learningAreaAnchor.Initialize(attachedPlane);
+            Debug.Log($"[ARPlacementService] LearningAreaAnchor CREATED at {adjustedPose.position}. Plane attached: {attachedPlane != null}");
             HidePlaneVisualizationAfterPlacement();
 
             if (!placementAvailable)
@@ -687,6 +696,12 @@ namespace Core.AR.Placement
                 {
                     lineRenderer.enabled = false;
                 }
+            }
+
+            // Also disable the plane manager to stop CPU usage from plane detection
+            if (planeManager != null)
+            {
+                planeManager.enabled = false;
             }
         }
 

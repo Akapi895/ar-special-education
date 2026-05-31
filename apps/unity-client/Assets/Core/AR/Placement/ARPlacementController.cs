@@ -70,6 +70,7 @@ namespace ARSpecialEducation.Core.AR
 
         public bool TryPlaceLearningAreaFromScreen(Vector2 screenPosition)
         {
+            Debug.Log($"[ARPlacementController] TryPlaceLearningAreaFromScreen at ({screenPosition.x:F0}, {screenPosition.y:F0})");
             ResolveReferences();
 
             if (raycastManager == null)
@@ -80,6 +81,7 @@ namespace ARSpecialEducation.Core.AR
 
             if (!raycastManager.Raycast(screenPosition, RaycastHits, placementTrackableTypes))
             {
+                Debug.LogWarning($"[ARPlacementController] Raycast failed at ({screenPosition.x:F0}, {screenPosition.y:F0}). No valid AR plane hit.");
                 NotifyPlacementFailed("No valid AR plane was hit for learning area placement.");
                 return false;
             }
@@ -117,6 +119,7 @@ namespace ARSpecialEducation.Core.AR
             CurrentLearningArea = anchor;
 
             OnLearningAreaPlaced?.Invoke(anchor);
+            Debug.Log($"[ARPlacementController] LearningArea PLACED. Position: {pose.position}, Marker prefab: {(learningAreaMarkerPrefab != null ? learningAreaMarkerPrefab.name : "procedural")}");
 
             if (spawnDefaultObjectAfterPlacement && defaultSpawnPrefab != null)
             {
@@ -147,6 +150,7 @@ namespace ARSpecialEducation.Core.AR
 
         public GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation)
         {
+            Debug.Log($"[ARPlacementController] SpawnObject: {prefab?.name} at {position}. Parent under learning area: {parentSpawnedObjectsUnderLearningArea}");
             if (prefab == null)
             {
                 NotifyPlacementFailed("Cannot spawn a null AR prefab.");
@@ -158,6 +162,7 @@ namespace ARSpecialEducation.Core.AR
                 : null;
 
             var instance = Instantiate(prefab, position, rotation, parent);
+            Debug.Log($"[ARPlacementController] Object SPAWNED: {instance.name}. LocalScale: {instance.transform.localScale}");
 
             // Apply scale adjustment for iOS (set in Inspector)
             if (Mathf.Abs(spawnScaleMultiplier - 1f) > 0.01f)
@@ -228,7 +233,20 @@ namespace ARSpecialEducation.Core.AR
 
         static bool IsPointerOverUI()
         {
-            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1);
+            if (EventSystem.current == null)
+            {
+                return false;
+            }
+
+            // Try touch input first (iOS/Android)
+            if (UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches.Count > 0)
+            {
+                var touch = UnityEngine.InputSystem.EnhancedTouch.Touch.activeTouches[0];
+                return EventSystem.current.IsPointerOverGameObject(touch.touchId);
+            }
+
+            // Fallback: mouse (Editor/desktop)
+            return EventSystem.current.IsPointerOverGameObject(-1);
         }
 
         static void DestroyGameObject(GameObject target)

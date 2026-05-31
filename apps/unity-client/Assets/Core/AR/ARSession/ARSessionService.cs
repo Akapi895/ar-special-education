@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using Core.Learning.ActivityRunner;
+using Core.UI.Components;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 
 namespace Core.AR.ARSession
@@ -63,6 +65,7 @@ namespace Core.AR.ARSession
         private void OnEnable()
         {
             UnityEngine.XR.ARFoundation.ARSession.stateChanged += OnARSessionStateChanged;
+            Debug.Log("[ARSessionService] ARSession state changed handler subscribed.");
         }
 
         private void OnDisable()
@@ -89,6 +92,10 @@ namespace Core.AR.ARSession
 
             initialized = true;
             UpdateFromSessionState(UnityEngine.XR.ARFoundation.ARSession.state);
+            Debug.Log($"[ARSessionService] Initial ARSession state: {UnityEngine.XR.ARFoundation.ARSession.state}");
+            Debug.Log($"[ARSessionService] Platform: {Application.platform}, Unity: {Application.unityVersion}");
+            Debug.Log($"[ARSessionService] Device: {SystemInfo.deviceModel}, OS: {SystemInfo.operatingSystem}");
+            CheckARSupport();
             StartFallbackEvaluationIfNeeded();
             Debug.Log("[ARSessionService] Initialized.");
         }
@@ -248,14 +255,16 @@ namespace Core.AR.ARSession
 
             if (!Application.HasUserAuthorization(UserAuthorization.WebCam))
             {
+                Debug.Log("[ARSessionService] Requesting webcam permission for AR fallback...");
                 yield return Application.RequestUserAuthorization(UserAuthorization.WebCam);
             }
 
             if (!Application.HasUserAuthorization(UserAuthorization.WebCam))
             {
-                Debug.LogWarning("[ARSessionService] Camera permission denied; continuing without camera fallback.");
+                Debug.LogError("[ARSessionService] Webcam permission DENIED. Fallback camera cannot start.");
                 yield break;
             }
+            Debug.Log("[ARSessionService] Webcam permission GRANTED. Starting fallback camera...");
 
             WebCamDevice? selectedDevice = SelectBackCamera();
             fallbackTexture = selectedDevice.HasValue
@@ -328,6 +337,10 @@ namespace Core.AR.ARSession
         {
             if (fallbackStarted)
             {
+                if (Time.frameCount % 300 == 0)
+                {
+                    Debug.Log($"[ARSessionService] Fallback camera quad active. Position: {fallbackQuad?.transform.position}");
+                }
                 UpdateFallbackQuad();
             }
         }
@@ -392,8 +405,12 @@ namespace Core.AR.ARSession
                 || Application.platform == RuntimePlatform.Android;
         }
 
+        private ARSessionState previousSessionState = ARSessionState.None;
+
         private void OnARSessionStateChanged(ARSessionStateChangedEventArgs args)
         {
+            Debug.Log($"[ARSessionService] ARSession state changed: {previousSessionState} -> {args.state}");
+            previousSessionState = args.state;
             UpdateFromSessionState(args.state);
         }
 
@@ -428,6 +445,76 @@ namespace Core.AR.ARSession
             }
         }
 
+        private void ShowTrackingLostMessage()
+        {
+            Debug.Log("[ARSessionService] Tracking lost or not tracking. Showing recovery message.");
+        }
+
+        private void CheckARSupport()
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            if (UnityEngine.XR.ARFoundation.ARSession.state == ARSessionState.Unsupported)
+            {
+                Debug.LogError("[ARSessionService] ARKit is not supported on this device.");
+                ShowARUnsupportedMessage();
+                return;
+            }
+
+            StartCoroutine(CheckARAvailability());
+#endif
+        }
+
+        private IEnumerator CheckARAvailability()
+        {
+            yield return null;
+
+            if (UnityEngine.XR.ARFoundation.ARSession.state == ARSessionState.Unsupported)
+            {
+                Debug.LogError("[ARSessionService] ARKit is not supported on this device.");
+                ShowARUnsupportedMessage();
+            }
+        }
+
+        private void ShowARUnsupportedMessage()
+        {
+            var canvasGo = new GameObject("ARUnsupportedCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 1000;
+            canvasGo.transform.SetParent(null);
+            DontDestroyOnLoad(canvasGo);
+
+            var scaler = canvasGo.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+            var panelGo = new GameObject("MessagePanel", typeof(RectTransform), typeof(Image));
+            panelGo.transform.SetParent(canvas.transform, false);
+            var panelRect = panelGo.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.sizeDelta = new Vector2(700f, 300f);
+            panelRect.anchoredPosition = Vector2.zero;
+            var panelImage = panelGo.GetComponent<Image>();
+            panelImage.color = new Color(0.12f, 0.12f, 0.14f, 0.95f);
+
+            var textGo = new GameObject("MessageText", typeof(RectTransform), typeof(Text));
+            textGo.transform.SetParent(panelRect, false);
+            var textRect = textGo.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(20f, 20f);
+            textRect.offsetMax = new Vector2(-20f, -20f);
+            var text = textGo.GetComponent<Text>();
+            text.text = "Thiết bị này không hỗ trợ AR.\nVui lòng thử trên thiết bị iOS có ARKit.";
+            text.fontSize = 30;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = new Color(1f, 0.86f, 0.36f, 1f);
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.font = UIKidFriendlyStyle.GetSharedFont();
+        }
+
         private void SetSessionReady(bool ready)
         {
             if (sessionReady == ready)
@@ -440,12 +527,12 @@ namespace Core.AR.ARSession
             if (ready)
             {
                 OnSessionReady?.Invoke();
-                Debug.Log("[ARSessionService] Session ready.");
+                Debug.Log($"[ARSessionService] Session state changed to ready. Ready: {sessionReady}, Tracking: {trackingQuality}");
             }
             else
             {
                 OnSessionLost?.Invoke();
-                Debug.Log("[ARSessionService] Session lost or not tracking.");
+                ShowTrackingLostMessage();
             }
         }
     }

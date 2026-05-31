@@ -17,6 +17,8 @@ namespace Project.Runtime
         {
             RuntimePerformanceSettings.Apply();
 
+            Application.targetFrameRate = 30;
+
             if (FindAnyObjectByType<ProgressStorageProxy>() == null)
             {
                 var progressGo = new GameObject("ProgressStorageProxy");
