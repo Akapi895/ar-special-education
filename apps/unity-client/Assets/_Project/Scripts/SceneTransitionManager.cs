@@ -60,13 +60,15 @@ namespace Project.App
             imageRect.sizeDelta = Vector2.zero;
 
             overlayImage = imageGo.GetComponent<Image>();
-            overlayImage.color = Color.white;
-            overlayImage.raycastTarget = true;
+            overlayImage.color = Color.clear;
+            overlayImage.raycastTarget = false;
         }
 
         private static IEnumerator FadeAndLoad(string sceneName, float duration)
         {
             Debug.Log($"[SceneTransitionManager] Loading scene '{sceneName}' with {duration}s fade...");
+            // Block input during transition
+            overlayImage.raycastTarget = true;
             // Fade to black
             overlayImage.color = Color.clear;
             float elapsed = 0f;
@@ -99,6 +101,8 @@ namespace Project.App
                 yield return null;
             }
             overlayImage.color = Color.clear;
+            // Restore input after transition completes
+            overlayImage.raycastTarget = false;
         }
 
         // Helper MonoBehaviour to run coroutines in static context
