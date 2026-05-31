@@ -33,7 +33,9 @@ namespace Features.Activities
         [Header("Animal Learning Objects")]
         [SerializeField] private GameObject[] animalPrefabs;
         [SerializeField] private bool preferAnimalPrefabs = true;
-        [SerializeField] private float learningObjectTargetHeight = 0.48f;
+        // FIX C: Reduced from 0.48f to 0.18f (18cm) for better AR appearance on mobile
+        // Animals should appear 15-20cm tall on a real floor for proper perspective
+        [SerializeField] private float learningObjectTargetHeight = 0.18f;
         [SerializeField] private string resourcesAnimalFolder = "ARAnimals";
         [SerializeField] private bool preferGroundedLearningAnimals;
         [SerializeField] private bool faceLearningObjectsToCamera = true;
@@ -147,6 +149,26 @@ namespace Features.Activities
             StabilizeSkinnedMeshRendering(obj);
             RepairLearningObjectMaterials(obj);
             FaceLearningObjectTowardCamera(obj.transform);
+
+            // FIX C: Runtime scale check - warn if character is too large
+            Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                Bounds combinedBounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                {
+                    combinedBounds.Encapsulate(renderers[i].bounds);
+                }
+
+                float objectHeight = combinedBounds.size.y;
+                // FIX C: Log warning if object is too large (>40cm)
+                if (objectHeight > 0.4f)
+                {
+                    Debug.LogWarning($"[ActivityPrefabSetup] FIX C: Object '{obj.name}' is too large: {objectHeight:F2}m. Scaling down by 0.5x.");
+                    obj.transform.localScale *= 0.5f;
+                    SnapObjectBottomToGroundPlane(obj);
+                }
+            }
 
             var presentation = obj.GetComponent<ARAnimalPresentation>();
             if (presentation == null)
