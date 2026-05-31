@@ -114,18 +114,18 @@ namespace Features.Activities.NumberLineJump
         private bool activityFinished;
 
         private static readonly Vector2 RuntimeButtonSize = new Vector2(224f, 84f);
-        private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(142f, 218f);
+        private static readonly Vector2 RuntimeEdgeJumpButtonSize = new Vector2(160f, 160f);
         private const float RuntimeButtonGap = 16f;
         private const float RuntimeActionButtonBottomY = 52f;
         private const float RuntimeJumpButtonBottomY = 124f;
-        private const float RuntimeEdgeJumpButtonX = 26f;
+        private const float RuntimeEdgeJumpButtonX = 80f;
         private const float RuntimeEdgeJumpButtonY = -12f;
         private const float RuntimeHintPanelBottomY = 194f;
         private const float RuntimeEquationPanelBottomY = 262f;
         private const float RuntimeFeedbackPanelBottomY = 334f;
         private const string RuntimeHomeButtonLabel = "Trang ch\u1ee7";
-        private const string LeftJumpArrow = "←";
-        private const string RightJumpArrow = "→";
+        private const string LeftJumpArrow = "<";
+        private const string RightJumpArrow = ">";
         private const int RuntimeTopNavButtonFontSize = 20;
 
         public bool HasUiReferences => startNumberText != null;
@@ -248,6 +248,9 @@ namespace Features.Activities.NumberLineJump
             progressButton = CreateButton(panel, "ProgressButton", SimpleLocalization.Get("btn_progress"), new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked);
             nextRoundButton.gameObject.SetActive(false);
             progressButton.gameObject.SetActive(false);
+            AddTextCardBackground(progressText?.transform.parent, "ProgressCard", new Vector2(200f, 52f));
+            AddTextCardBackground(startNumberText?.transform.parent, "StartCard", new Vector2(240f, 52f));
+            AddTextCardBackground(currentPositionText?.transform.parent, "CurrentCard", new Vector2(240f, 52f));
             NormalizeTopNavigationButtons();
             LayoutEdgeJumpButtons();
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);
@@ -686,23 +689,12 @@ namespace Features.Activities.NumberLineJump
         /// </summary>
         public void UpdateJumpButtonsState(JumpDirection allowedDirection, int currentPosition, int minNumber, int maxNumber)
         {
+            // Only check bounds - direction restrictions removed for free exploration
             if (leftJumpButton != null)
-            {
-                bool notAtMin = currentPosition > minNumber;
-                leftJumpButton.interactable = notAtMin;
-            }
+                leftJumpButton.interactable = currentPosition > minNumber;
 
             if (rightJumpButton != null)
-            {
-                bool notAtMax = currentPosition < maxNumber;
-                rightJumpButton.interactable = notAtMax;
-            }
-
-            // Enable confirm if not at start position
-            if (confirmButton != null)
-            {
-                // confirmButton is enabled when player has moved from start
-            }
+                rightJumpButton.interactable = currentPosition < maxNumber;
         }
 
         /// <summary>
@@ -1012,6 +1004,33 @@ namespace Features.Activities.NumberLineJump
             return UIActivityLayoutHelpers.CreateButton(parent, name, label, anchoredPosition, onClick, RuntimeButtonSize);
         }
 
+        private void AddTextCardBackground(Transform parent, string name, Vector2 size)
+        {
+            if (parent == null) return;
+            var existing = parent.Find(name);
+            if (existing != null) return;
+
+            var card = new GameObject(name, typeof(RectTransform), typeof(Core.UI.Components.RoundedRectGraphic));
+            var rect = card.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = size + new Vector2(16f, 8f);
+            rect.anchoredPosition = Vector2.zero;
+
+            var graphic = card.GetComponent<Core.UI.Components.RoundedRectGraphic>();
+            graphic.CornerRadius = 14f;
+            graphic.color = new Color(1f, 1f, 1f, 0.76f);
+            graphic.raycastTarget = false;
+
+            var shadow = card.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.1f);
+            shadow.effectDistance = new Vector2(0f, -3f);
+            shadow.useGraphicAlpha = true;
+
+            card.transform.SetAsFirstSibling();
+        }
+
         private void NormalizeTopNavigationButtons()
         {
             UIActivityNavButtons.ApplyStandardHomeButton(cancelButton);
@@ -1096,7 +1115,8 @@ namespace Features.Activities.NumberLineJump
 
         private static Button CreateEdgeJumpButton(Transform parent, string name, string label, bool isLeft, UnityEngine.Events.UnityAction onClick)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            // Circular button using RoundedRectGraphic (Image-free to avoid dual-Graphic conflict)
+            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Button));
             var rect = go.GetComponent<RectTransform>();
             rect.SetParent(parent, false);
             rect.anchorMin = new Vector2(isLeft ? 0f : 1f, 0.5f);
@@ -1104,54 +1124,40 @@ namespace Features.Activities.NumberLineJump
             rect.pivot = new Vector2(isLeft ? 0f : 1f, 0.5f);
             rect.sizeDelta = RuntimeEdgeJumpButtonSize;
             rect.anchoredPosition = new Vector2(isLeft ? RuntimeEdgeJumpButtonX : -RuntimeEdgeJumpButtonX, RuntimeEdgeJumpButtonY);
-            go.GetComponent<Image>().color = new Color(0.08f, 0.32f, 0.72f, 0.88f);
 
+            // Circular frosted glass background
+            var circle = go.AddComponent<Core.UI.Components.RoundedRectGraphic>();
+            circle.CornerRadius = 80f; // half of 160 = perfect circle
+            circle.color = new Color(1f, 1f, 1f, 0.30f); // frosted glass: white, 30% opacity
+            circle.raycastTarget = true;
+
+            // Subtle shadow for floating glass effect
+            var shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.12f);
+            shadow.effectDistance = new Vector2(0f, -4f);
+            shadow.useGraphicAlpha = true;
+
+            // Button setup
             var button = go.GetComponent<Button>();
             button.onClick.AddListener(onClick);
+            button.targetGraphic = circle;
 
+            // Text label (< or >) — dark for contrast on frosted glass
             Text text = CreateButtonLabel(go.transform, label);
-            text.fontSize = 92;
-            text.resizeTextMinSize = 58;
-            text.resizeTextMaxSize = 92;
+            text.fontSize = 72;
+            text.resizeTextMinSize = 48;
+            text.resizeTextMaxSize = 72;
             text.fontStyle = FontStyle.Bold;
-            UIKidFriendlyStyle.Apply(
-                button,
-                isLeft ? KidButtonPurpose.ComparisonFewer : KidButtonPurpose.ComparisonMore,
-                label,
-                92);
-            EmphasizeEdgeArrow(button);
+            text.color = new Color(0.12f, 0.12f, 0.14f, 1f);
+            text.alignment = TextAnchor.MiddleCenter;
+
             return button;
         }
 
         private static void EmphasizeEdgeArrow(Button button)
         {
-            Text text = button != null ? button.GetComponentInChildren<Text>(true) : null;
-            if (text == null)
-            {
-                return;
-            }
-
-            text.font = UIKidFriendlyStyle.GetSharedFont();
-            text.resizeTextForBestFit = false;
-            text.fontSize = 92;
-            text.resizeTextMinSize = 58;
-            text.resizeTextMaxSize = 92;
-            text.fontStyle = FontStyle.Bold;
-            text.color = new Color(0.12f, 0.08f, 0.04f, 1f);
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Truncate;
-
-            Outline outline = text.GetComponent<Outline>();
-            if (outline != null)
-            {
-                outline.enabled = false;
-            }
-
-            Shadow shadow = text.GetComponent<Shadow>();
-            if (shadow != null)
-            {
-                shadow.enabled = false;
-            }
+            if (button == null) return;
+            // No special emphasis needed - circular buttons are already visually prominent
         }
 
     }

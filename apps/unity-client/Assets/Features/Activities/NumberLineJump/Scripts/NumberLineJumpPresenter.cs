@@ -55,7 +55,7 @@ namespace Features.Activities.NumberLineJump
         private static readonly Color NormalTileColor = new Color(0.44f, 0.52f, 0.62f);
         private static readonly Color AlternateTileColor = new Color(0.52f, 0.59f, 0.68f);
         private static readonly Color StartTileColor = new Color(0.22f, 0.48f, 0.9f);
-        private static readonly Color TargetTileColor = new Color(0.18f, 0.72f, 0.42f);
+        private static readonly Color TargetTileColor = new Color(0.12f, 0.9f, 0.35f);
         private static readonly Color CurrentTileColor = new Color(0.12f, 0.42f, 0.95f);
         private static readonly Color CharacterColor = new Color(0.16f, 0.55f, 1f);
 
@@ -387,13 +387,7 @@ namespace Features.Activities.NumberLineJump
                 return;
             }
 
-            if (!currentQuestion.IsDirectionAllowed(direction))
-            {
-                Debug.Log($"[NumberLineJumpPresenter] Direction {direction} not allowed for this question (config: {currentQuestion.JumpDirection})");
-                PlayBoundaryBump(direction);
-                view?.ShowBoundaryHit(currentPosition);
-                return;
-            }
+            // Direction restriction removed - children can jump freely in both directions
 
             // Calculate new position
             int newPosition = direction == JumpStepDirection.Right
@@ -410,15 +404,7 @@ namespace Features.Activities.NumberLineJump
                 return;
             }
 
-            // Check max jumps
-            if (currentQuestion.MaxJumpsAllowed > 0 && jumpHistory.Count >= currentQuestion.MaxJumpsAllowed)
-            {
-                Debug.Log($"[NumberLineJumpPresenter] Max jumps exceeded");
-                exceededMaxJumps = true;
-                view?.ShowMaxJumpsExceeded();
-                DisableJumpInput();
-                return;
-            }
+            // Max jumps limit removed - children can explore freely
 
             // Perform the jump
             PerformJump(direction, newPosition);
@@ -459,16 +445,7 @@ namespace Features.Activities.NumberLineJump
                 UpdateEquationDisplay();
             }
 
-            // Check for max jumps warning
-            if (currentQuestion.MaxJumpsAllowed > 0)
-            {
-                int remainingJumps = currentQuestion.MaxJumpsAllowed - jumpHistory.Count;
-                if (remainingJumps <= jumpConfig.MaxJumpsWarningThreshold && remainingJumps != jumpsRemainingBeforeWarning)
-                {
-                    jumpsRemainingBeforeWarning = remainingJumps;
-                    view?.ShowMaxJumpsWarning(remainingJumps);
-                }
-            }
+            // Max jumps warning removed - children can explore freely
 
             OnCharacterMoved?.Invoke(currentPosition);
 
