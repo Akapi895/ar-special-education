@@ -69,6 +69,15 @@ namespace Core.UI.Components
             shadow.effectDistance = new Vector2(0f, -6f);
             shadow.useGraphicAlpha = true;
 
+            Outline outline = background.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = background.gameObject.AddComponent<Outline>();
+            }
+            outline.effectColor = new Color(1f, 1f, 1f, 0.20f);
+            outline.effectDistance = new Vector2(2f, -2f);
+            outline.useGraphicAlpha = true;
+
             EnsureCardBackground(button.transform, rect);
             button.targetGraphic = background;
             button.transition = Selectable.Transition.ColorTint;
@@ -120,6 +129,54 @@ namespace Core.UI.Components
             {
                 text.color = color;
             }
+        }
+
+        public static void SetActivityBlockStyle(Button button, Color blockColor)
+        {
+            if (button == null) return;
+
+            Image image = button.GetComponent<Image>();
+            if (image != null)
+            {
+                image.color = blockColor;
+                image.raycastTarget = true;
+            }
+
+            RoundedRectGraphic background = GetButtonBackground(button);
+            if (background != null)
+            {
+                background.color = blockColor;
+                background.raycastTarget = false;
+                Shadow shadow = background.GetComponent<Shadow>();
+                if (shadow == null) shadow = background.gameObject.AddComponent<Shadow>();
+                shadow.effectColor = new Color(0f, 0f, 0f, 0.25f);
+                shadow.effectDistance = new Vector2(0f, -6f);
+                shadow.useGraphicAlpha = true;
+                Outline outline = background.GetComponent<Outline>();
+                if (outline == null) outline = background.gameObject.AddComponent<Outline>();
+                outline.effectColor = new Color(1f, 1f, 1f, 0.18f);
+                outline.effectDistance = new Vector2(2f, -2f);
+                outline.useGraphicAlpha = true;
+            }
+
+            Text text = button.GetComponentInChildren<Text>(true);
+            if (text != null)
+            {
+                text.color = Color.black;
+                text.fontStyle = FontStyle.Bold;
+                text.fontSize = Mathf.Max(text.fontSize, 30);
+                Outline textOutline = text.GetComponent<Outline>();
+                if (textOutline != null) Object.Destroy(textOutline);
+                Shadow textShadow = text.GetComponent<Shadow>();
+                if (textShadow != null) Object.Destroy(textShadow);
+            }
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = blockColor;
+            colors.highlightedColor = new Color(blockColor.r + 0.08f, blockColor.g + 0.08f, blockColor.b + 0.08f, blockColor.a);
+            colors.pressedColor = new Color(blockColor.r - 0.08f, blockColor.g - 0.08f, blockColor.b - 0.08f, blockColor.a);
+            colors.disabledColor = new Color(blockColor.r * 0.5f, blockColor.g * 0.5f, blockColor.b * 0.5f, blockColor.a * 0.5f);
+            button.colors = colors;
         }
 
         public static void SetButtonTextColorWithOutline(Button button, Color color)
@@ -275,7 +332,7 @@ namespace Core.UI.Components
             RoundedDashedBorderGraphic borderGraphic = GetOrAdd<RoundedDashedBorderGraphic>(border.gameObject);
             borderGraphic.color = new Color(1f, 0.62f, 0.12f, active ? 0.95f : 0.55f);
             borderGraphic.CornerRadius = ResolveRadius(rect, false);
-            borderGraphic.BorderThickness = 5f;
+            borderGraphic.BorderThickness = 8f;
             borderGraphic.DashLength = 24f;
             borderGraphic.GapLength = 12f;
             borderGraphic.raycastTarget = false;

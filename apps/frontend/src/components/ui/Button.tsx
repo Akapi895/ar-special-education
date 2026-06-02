@@ -25,15 +25,15 @@ const Button = ({
   ...props
 }: ButtonProps) => {
   const { t } = useTranslation();
-  const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 btn-ripple shadow-soft hover:shadow-medium';
+  const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 btn-ripple shadow-soft hover:shadow-medium';
   
   const variantStyles = {
     primary: 'bg-gradient-primary text-white hover:brightness-105 hover:shadow-glow-accent focus:ring-accent-400 border border-transparent',
-    secondary: 'bg-[var(--app-surface)] text-[var(--app-text)] hover:bg-[var(--app-surface-strong)] focus:ring-gray-300 border border-[var(--app-border)]',
+    secondary: 'bg-white text-primary-600 border border-primary-500 hover:bg-gradient-primary hover:text-white focus:ring-primary-300',
     danger: 'bg-gradient-danger text-white hover:brightness-105 hover:shadow-glow focus:ring-danger-400 border border-transparent',
     success: 'bg-gradient-success text-white hover:brightness-105 hover:shadow-glow-success focus:ring-success-400 border border-transparent',
     warning: 'bg-gradient-warning text-gray-900 hover:brightness-105 hover:shadow-glow focus:ring-warning-400 border border-transparent',
-    outline: 'border-2 border-accent-500 text-accent-600 bg-[var(--app-surface)] hover:bg-accent-500 hover:text-white focus:ring-accent-400',
+    outline: 'border-2 border-primary-500 text-primary-600 bg-[var(--app-surface)] hover:bg-gradient-primary hover:text-white focus:ring-primary-300',
     ghost: 'text-[var(--app-text-muted)] hover:bg-[var(--app-surface)] hover:text-[var(--app-text)] focus:ring-gray-300 border border-transparent',
   };
 

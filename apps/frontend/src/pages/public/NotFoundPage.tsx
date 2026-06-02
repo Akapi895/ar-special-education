@@ -94,25 +94,25 @@ const NotFoundPage = () => {
               <div className="flex flex-wrap justify-center gap-2">
                 <button
                   onClick={() => navigate('/login')}
-                  className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
+                  className="btn-premium-solid-gradient px-4 py-2 rounded-full text-sm font-semibold shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
                 >
                   Đăng nhập
                 </button>
                 <button
                   onClick={() => navigate('/register')}
-                  className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
+                  className="btn-premium-solid-gradient px-4 py-2 rounded-full text-sm font-semibold shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
                 >
                   Đăng ký
                 </button>
                 <button
                   onClick={() => navigate('/#features')}
-                  className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
+                  className="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
                 >
                   Tính năng
                 </button>
                 <button
                   onClick={() => navigate('/#pricing')}
-                  className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
+                  className="px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 shadow-soft hover:shadow-medium active:scale-95 transition-all duration-300"
                 >
                   Bảng giá
                 </button>

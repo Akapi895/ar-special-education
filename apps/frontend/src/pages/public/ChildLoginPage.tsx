@@ -97,8 +97,8 @@ const ChildLoginPage = () => {
             type="submit"
             fullWidth
             size="lg"
-            icon={<ArrowRight className="w-5 h-5" />}
-            className="bg-linear-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl"
+            icon={<ArrowRight className="w-5 h-5 text-white" />}
+            className="btn-premium-solid-gradient shadow-lg hover:shadow-xl"
             disabled={isLoading}
           >
             {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}

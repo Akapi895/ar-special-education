@@ -123,10 +123,10 @@ const AuthPage = () => {
         
         {/* HEADER MOBILE */}
         <div className="md:hidden p-6 pb-0 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#06325a] mb-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-primary mb-2 shadow-md">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-[#06325a]">MathMate Support</h1>
+          <h1 className="text-2xl font-bold text-gradient-primary">MathMate Support</h1>
         </div>
 
         {/* =========================================
@@ -140,7 +140,7 @@ const AuthPage = () => {
             ${mode === 'register' && 'hidden md:flex'} 
         `}>
             <div className="mb-8">
-                <h2 className="text-3xl font-bold text-[#06325a] mb-2">Đăng nhập</h2>
+                <h2 className="text-3xl font-bold text-primary-500 mb-2">Đăng nhập</h2>
                 <p className="text-gray-500">Chào mừng bạn quay lại!</p>
             </div>
 
@@ -181,21 +181,21 @@ const AuthPage = () => {
                 
                 <div className="flex justify-between items-center text-sm">
                     <label className="flex items-center gap-2 text-gray-600 cursor-pointer">
-                        <input type="checkbox" className="rounded border-gray-300 text-[#06325a]" />
+                        <input type="checkbox" className="rounded border-gray-300 text-primary-600" />
                         Ghi nhớ đăng nhập
                     </label>
-                    <Link to="/forgot-password" className="text-[#3498db] font-semibold">
+                    <Link to="/forgot-password" className="text-primary-600 font-semibold">
                         Quên mật khẩu?
                     </Link>
                 </div>
 
                 <Button
-                    type="submit"
-                    fullWidth
-                    size="lg"
-                    disabled={isLoading}
-                    className="bg-[#06325a] hover:bg-[#052848] text-white transition-all rounded-xl py-3 shadow-lg hover:shadow-xl"
-                    icon={<LogIn className="w-5 h-5" />}
+                  type="submit"
+                  fullWidth
+                  size="lg"
+                  disabled={isLoading}
+                  className="btn-premium-solid-gradient transition-all rounded-full py-3 shadow-lg hover:shadow-xl"
+                  icon={<LogIn className="w-5 h-5 text-white" />}
                 >
                     {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                 </Button>
@@ -213,7 +213,7 @@ const AuthPage = () => {
             ${mode === 'login' && 'hidden md:flex'}
         `}>
             <div className="mb-6">
-                <h2 className="text-3xl font-bold text-[#06325a] mb-2">Đăng ký</h2>
+                <h2 className="text-3xl font-bold text-primary-500 mb-2">Đăng ký</h2>
                 <p className="text-gray-500">
                   Tham gia MathMate Support để hỗ trợ con học toán hiệu quả
                 </p>
@@ -287,12 +287,12 @@ const AuthPage = () => {
                 </div>
                 
                 <Button
-                    type="submit"
-                    fullWidth
-                    size="lg"
-                    disabled={isLoading}
-                    className="bg-[#10b981] hover:bg-[#059669] text-white transition-all rounded-xl py-3 shadow-lg hover:shadow-xl"
-                    icon={<UserPlus className="w-5 h-5" />}
+                  type="submit"
+                  fullWidth
+                  size="lg"
+                  disabled={isLoading}
+                  className="btn-premium-solid-gradient transition-all rounded-full py-3 shadow-lg hover:shadow-xl"
+                  icon={<UserPlus className="w-5 h-5 text-white" />}
                 >
                     {isLoading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
                 </Button>
@@ -307,7 +307,7 @@ const AuthPage = () => {
             ${mode === 'login' ? 'left-1/2' : '-left-[5%]'}
             `}
             style={{
-                background: 'linear-gradient(135deg, #06325a 0%, #3498db 100%)',
+                background: 'linear-gradient(135deg, #6c9aee 0%, #5ac1e5 100%)',
                 clipPath: mode === 'login' 
                     ? 'polygon(15% 0, 100% 0, 100% 100%, 0% 100%)'
                     : 'polygon(0 0, 100% 0, 85% 100%, 0% 100%)'
@@ -332,10 +332,10 @@ const AuthPage = () => {
                 </p>
                 
                 <button 
-                    onClick={() => switchMode('register')}
-                    className="relative z-50 bg-white text-[#06325a] hover:bg-blue-50 rounded-full px-10 py-3 font-bold text-lg shadow-lg transform transition hover:scale-105 cursor-pointer"
+                  onClick={() => switchMode('register')}
+                  className="btn-premium-gradient relative z-50 rounded-full px-10 py-3 font-bold text-lg shadow-lg transform transition hover:scale-105 cursor-pointer"
                 >
-                    Đăng ký ngay
+                  Đăng ký ngay
                 </button>
             </div>
 
@@ -354,10 +354,10 @@ const AuthPage = () => {
                 </p>
                 
                 <button 
-                    onClick={() => switchMode('login')}
-                    className="relative z-50 bg-white text-[#06325a] hover:bg-blue-50 rounded-full px-10 py-3 font-bold text-lg shadow-lg transform transition hover:scale-105 cursor-pointer"
+                  onClick={() => switchMode('login')}
+                  className="btn-premium-gradient relative z-50 rounded-full px-10 py-3 font-bold text-lg shadow-lg transform transition hover:scale-105 cursor-pointer"
                 >
-                    Đăng nhập
+                  Đăng nhập
                 </button>
             </div>
         </div>

@@ -26,10 +26,10 @@ const LandingNavbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-md">
               <Calculator className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold bg-gradient-to-r from-[#6c9aee] to-[#5ac1e5] bg-clip-text text-transparent">
               MathMate Support
             </span>
           </div>
@@ -52,10 +52,11 @@ const LandingNavbar = () => {
             <Button 
               variant="outline" 
               onClick={() => navigate('/login')}
+              className="btn-premium-solid-gradient"
             >
               Đăng nhập
             </Button>
-            <Button variant="secondary" onClick={() => navigate('/register')}>
+            <Button variant="secondary" onClick={() => navigate('/register')} className="btn-premium-solid-gradient">
               Bắt đầu miễn phí
             </Button>
           </div>
@@ -84,10 +85,10 @@ const LandingNavbar = () => {
               Tính năng
             </a>
             <div className="pt-4 space-y-3 border-t border-gray-100">
-              <Button variant="outline" fullWidth onClick={() => navigate('/login')}>
+              <Button variant="outline" fullWidth onClick={() => navigate('/login')} className="btn-premium-solid-gradient">
                 Đăng nhập
               </Button>
-              <Button variant="secondary" fullWidth onClick={() => navigate('/register')}>
+              <Button variant="secondary" fullWidth onClick={() => navigate('/register')} className="btn-premium-solid-gradient">
                 Bắt đầu miễn phí
               </Button>
             </div>

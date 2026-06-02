@@ -132,7 +132,7 @@ const ActivityFeed = ({ activities, onViewAll }: ActivityFeedProps) => {
   );
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 h-full">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900">Hoạt động gần đây</h3>
         <button

@@ -87,35 +87,19 @@ namespace Project.App
             Canvas canvas = FindFirstObjectByType<Canvas>();
             if (canvas == null) return;
 
-            var bgGo = new GameObject("MenuBackgroundCard", typeof(RectTransform), typeof(Core.UI.Components.RoundedRectGraphic));
+            var bgGo = new GameObject("MenuBackgroundCard", typeof(RectTransform), typeof(Image));
             var bgRect = bgGo.GetComponent<RectTransform>();
             bgRect.SetParent(canvas.transform, false);
             bgRect.anchorMin = Vector2.zero;
             bgRect.anchorMax = Vector2.one;
-            bgRect.offsetMin = new Vector2(20f, 20f);
-            bgRect.offsetMax = new Vector2(-20f, -20f);
+            bgRect.offsetMin = Vector2.zero;
+            bgRect.offsetMax = Vector2.zero;
 
-            var bgGraphic = bgGo.GetComponent<Core.UI.Components.RoundedRectGraphic>();
-            bgGraphic.CornerRadius = 32f;
-            bgGraphic.color = new Color(0.12f, 0.12f, 0.14f, 0.82f);
-            bgGraphic.raycastTarget = false;
+            var bgImage = bgGo.GetComponent<Image>();
+            bgImage.color = new Color(0.545f, 0.361f, 0.965f, 1f);
+            bgImage.raycastTarget = false;
 
             bgGo.transform.SetAsFirstSibling();
-
-            // Apply safe area padding for iOS notched devices
-            Rect safeArea = Screen.safeArea;
-            if (safeArea.x != 0f || safeArea.y != 0f ||
-                safeArea.width != Screen.width || safeArea.height != Screen.height)
-            {
-                // Safe area differs from full screen — apply padding to the card
-                float leftPad = safeArea.xMin;
-                float rightPad = Screen.width - safeArea.xMax;
-                float topPad = Screen.height - safeArea.yMax;
-                float bottomPad = safeArea.yMin;
-                bgRect.offsetMin = new Vector2(leftPad + 20f, bottomPad + 20f);
-                bgRect.offsetMax = new Vector2(-(rightPad + 20f), -(topPad + 20f));
-                Debug.Log($"[MainMenuController] Safe area applied: L={leftPad} R={rightPad} T={topPad} B={bottomPad}");
-            }
         }
 
         private void EnsureMascot()
@@ -132,21 +116,24 @@ namespace Project.App
 
             if (titleText != null)
             {
-                titleText.text = "\U0001F430 " + SimpleLocalization.Get("app_title");
-                titleText.fontSize = 50;
+                titleText.text = "\U0001F430 " + SimpleLocalization.Get("app_title").ToUpper();
+                titleText.fontSize = 82;
                 titleText.resizeTextForBestFit = true;
-                titleText.resizeTextMinSize = 34;
-                titleText.resizeTextMaxSize = 50;
+                titleText.resizeTextMinSize = 52;
+                titleText.resizeTextMaxSize = 82;
                 titleText.fontStyle = FontStyle.Bold;
+                titleText.alignment = TextAnchor.MiddleCenter;
+                titleText.horizontalOverflow = HorizontalWrapMode.Overflow;
                 titleText.color = new Color(1f, 0.86f, 0.36f, 1f);
-                Shadow shadow = titleText.GetComponent<Shadow>();
-                if (shadow == null)
-                {
-                    shadow = titleText.gameObject.AddComponent<Shadow>();
-                }
 
-                shadow.effectColor = new Color(0f, 0f, 0f, 0.35f);
-                shadow.effectDistance = new Vector2(0f, -4f);
+                RectTransform titleRect = titleText.rectTransform;
+                titleRect.sizeDelta = new Vector2(Mathf.Max(titleRect.sizeDelta.x, 720f), titleRect.sizeDelta.y);
+
+                Outline outline = titleText.GetComponent<Outline>();
+                if (outline == null) outline = titleText.gameObject.AddComponent<Outline>();
+                outline.effectColor = new Color(0.9f, 0.75f, 0.2f, 0.6f);
+                outline.effectDistance = new Vector2(3f, -3f);
+                outline.useGraphicAlpha = true;
             }
         }
 

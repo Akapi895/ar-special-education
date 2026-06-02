@@ -383,6 +383,7 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             CreateTopHeaderPanel(panel, "QuestionHeaderPanel", 24f, new Vector2(700f, 88f));
             targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("quantity_choose_group", "?"), 34, 30f, new Vector2(660f, 78f));
             progressText = CreateTopLeftText(panel, "Progress", "", 24, new Vector2(240f, -40f), new Vector2(300f, 60f));
+            UIActivityLayoutHelpers.CreateCardBackground(panel, "ProgressCard", new Vector2(320f, 72f), new Vector2(240f, -40f), 20f);
 
             feedbackPanel = CreateSubPanel(panel, "FeedbackPanel", new Vector2(0, RuntimeFeedbackPanelBottomY), true);
             feedbackText = CreatePanelText(feedbackPanel.transform, "FeedbackText", "", 26);
@@ -2015,25 +2016,16 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             rect.SetParent(parent, false);
             rect.anchorMin = new Vector2(0.5f, 0f);
             rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
             rect.sizeDelta = size;
             rect.anchoredPosition = anchoredPosition;
-            go.GetComponent<Image>().color = new Color(0.98f, 0.8f, 0.2f, 1.0f); // Bright yellow
-
-            var shadow = go.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.18f);
-            shadow.effectDistance = new Vector2(0f, -4f);
-            shadow.useGraphicAlpha = true;
 
             var button = go.GetComponent<Button>();
-            if (onClick != null)
-            {
-                button.onClick.AddListener(onClick);
-            }
+            if (onClick != null) button.onClick.AddListener(onClick);
 
             Text text = CreateButtonLabel(go.transform, label);
             text.fontSize = fontSize;
             text.resizeTextMaxSize = fontSize;
+
             UIKidFriendlyStyle.Apply(button, name, label, fontSize, size.x <= size.y + 8f);
             return button;
         }

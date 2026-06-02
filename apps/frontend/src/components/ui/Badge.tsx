@@ -27,7 +27,7 @@ const Badge = ({
     warning: 'bg-warning-50 text-warning-800 border-warning-200',
     danger: 'bg-danger-50 text-danger-800 border-danger-200',
     info: 'bg-info-50 text-info-800 border-info-200',
-    primary: 'bg-primary-50 text-primary-800 border-primary-200',
+    primary: 'bg-gradient-primary text-white border-transparent',
   };
 
   const dotColors = {
@@ -36,7 +36,7 @@ const Badge = ({
     warning: 'bg-warning-500',
     danger: 'bg-danger-500',
     info: 'bg-info-500',
-    primary: 'bg-primary-500',
+    primary: 'bg-white',
   };
 
   const sizeStyles = {

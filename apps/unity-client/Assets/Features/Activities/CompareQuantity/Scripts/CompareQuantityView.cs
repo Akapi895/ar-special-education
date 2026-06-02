@@ -206,6 +206,7 @@ namespace Features.Activities.CompareQuantity
 
             progressText = CreateTopText(panel, "Progress", "", 24, 16f, new Vector2(260f, 42f));
             progressText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-500f, -16f);
+            UIActivityLayoutHelpers.CreateCardBackground(panel, "ProgressCard", new Vector2(280f, 56f), new Vector2(-500f, -16f), 20f);
             questionText = CreateTopText(panel, "QuestionText", RuntimeCompareQuestion, 32, 28f, new Vector2(700f, 74f));
 
             leftGroupCountText = CreateTopText(panel, "LeftGroupCount", "B\u00ean tr\u00e1i", 28, 104f, new Vector2(320f, 46f));

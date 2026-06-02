@@ -49,22 +49,8 @@ const HeroSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[calc(100vh-5rem)]">
           {/* Left Content */}
           <div className="flex flex-col justify-center text-center lg:text-left space-y-8 animate-fade-in">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-              MathMate{' '}
-              <span className="relative inline-block">
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Support
-                </span>
-                <svg className="absolute -bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 4 Q50 0, 100 4 T200 4" stroke="url(#gradient2)" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                  <defs>
-                    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#2563eb" />
-                      <stop offset="100%" stopColor="#7c3aed" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-gradient-primary">
+              MathMate Support
             </h1>
             
             <p className="text-lg sm:text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed" style={{ lineHeight: '1.7' }}>
@@ -78,17 +64,17 @@ const HeroSection = () => {
               <Button 
                 size="lg" 
                 onClick={() => navigate('/register')}
-                icon={<Sparkles className="w-5 h-5" />}
-                className="text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group"
+                icon={<Sparkles className="w-5 h-5 text-white" />}
+                className="btn-premium-solid-gradient text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group"
               >
                 Bắt đầu miễn phí
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-5 h-5 ml-2 text-white group-hover:translate-x-1 transition-transform" />
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
                 icon={<BookOpen className="w-5 h-5" />}
-                className="text-lg hover:bg-primary-50 transition-all duration-300"
+                className="btn-premium-gradient text-lg shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Tìm hiểu thêm
               </Button>
@@ -124,14 +110,14 @@ const HeroSection = () => {
                     <div className="text-7xl">🔢</div>
                     <div className="space-y-3">
                       <div className="text-2xl font-bold text-gray-800">Phương pháp CPA</div>
-                      <div className="flex gap-3 justify-center flex-wrap">
-                        <span className="px-4 py-2 bg-blue-500 text-white rounded-full text-sm font-medium shadow-lg">
+                      <div className="flex gap-2 justify-center flex-wrap items-center">
+                        <span className="px-2 py-1 bg-blue-500 text-white rounded-full text-xs font-medium shadow-sm">
                           🧱 Concrete
                         </span>
-                        <span className="px-4 py-2 bg-purple-500 text-white rounded-full text-sm font-medium shadow-lg">
+                        <span className="px-2 py-1 bg-purple-500 text-white rounded-full text-xs font-medium shadow-sm">
                           🎨 Pictorial
                         </span>
-                        <span className="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-medium shadow-lg">
+                        <span className="px-2 py-1 bg-pink-500 text-white rounded-full text-xs font-medium shadow-sm">
                           🔢 Abstract
                         </span>
                       </div>

@@ -1,7 +1,5 @@
 import { lazy } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 import RouteSuspense from '../components/common/RouteSuspense';
 import { ChildProvider } from '../providers/ChildProvider';
@@ -26,7 +24,7 @@ const ParentLayout = () => (
     <div className="flex min-h-screen bg-(--app-bg) transition-colors duration-300">
       <Sidebar />
       <main className="flex-1 min-h-screen overflow-y-auto pt-16 transition-all duration-300 md:ml-20 md:pt-0">
-        <div className="animate-fade-in px-4 py-5 sm:px-6 lg:px-8">
+        <div className="px-4 py-5 sm:px-6 lg:px-8">
           <Breadcrumbs />
           <Outlet />
         </div>
@@ -56,48 +54,36 @@ const ProtectedParentLayout = () => {
 export const AppRouter = () => {
   const { isAuthenticated, user } = useAuth();
   const isParentAuthenticated = isAuthenticated && user?.role === 'parent';
-  const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="min-h-screen"
-      >
-        <Routes location={location}>
-          {/* Public Routes - Wrapped in Suspense */}
-          <Route path="/" element={<RouteSuspense><LandingPage /></RouteSuspense>} />
-          <Route path="/login" element={<RouteSuspense><AuthPage /></RouteSuspense>} />
-          <Route path="/register" element={<RouteSuspense><AuthPage /></RouteSuspense>} />
-          <Route path="/onboarding" element={<RouteSuspense><OnboardingPage /></RouteSuspense>} />
-          <Route path="/child-login" element={<RouteSuspense><ChildLoginPage /></RouteSuspense>} />
+    <Routes>
+      {/* Public Routes - Wrapped in Suspense */}
+      <Route path="/" element={<RouteSuspense><LandingPage /></RouteSuspense>} />
+      <Route path="/login" element={<RouteSuspense><AuthPage /></RouteSuspense>} />
+      <Route path="/register" element={<RouteSuspense><AuthPage /></RouteSuspense>} />
+      <Route path="/onboarding" element={<RouteSuspense><OnboardingPage /></RouteSuspense>} />
+      <Route path="/child-login" element={<RouteSuspense><ChildLoginPage /></RouteSuspense>} />
 
-          {/* Parent Routes - Protected & Lazy Loaded */}
-          <Route path="/parent" element={<ProtectedParentLayout />}>
-            <Route index element={<Navigate to="/parent/dashboard" replace />} />
-            <Route path="dashboard" element={<RouteSuspense><DashboardPage /></RouteSuspense>} />
-            <Route path="exercises" element={<RouteSuspense><ExerciseLibraryPage /></RouteSuspense>} />
-            <Route path="journal" element={<RouteSuspense><JournalPage /></RouteSuspense>} />
-            <Route path="methods" element={<RouteSuspense><MethodsPage /></RouteSuspense>} />
-            <Route path="settings" element={<RouteSuspense><SettingsPage /></RouteSuspense>} />
-          </Route>
+      {/* Parent Routes - Protected & Lazy Loaded */}
+      <Route path="/parent" element={<ProtectedParentLayout />}>
+        <Route index element={<Navigate to="/parent/dashboard" replace />} />
+        <Route path="dashboard" element={<RouteSuspense><DashboardPage /></RouteSuspense>} />
+        <Route path="exercises" element={<RouteSuspense><ExerciseLibraryPage /></RouteSuspense>} />
+        <Route path="journal" element={<RouteSuspense><JournalPage /></RouteSuspense>} />
+        <Route path="methods" element={<RouteSuspense><MethodsPage /></RouteSuspense>} />
+        <Route path="settings" element={<RouteSuspense><SettingsPage /></RouteSuspense>} />
+      </Route>
 
-          {/* Redirect logic - only redirect authenticated users */}
-          <Route
-            path="*"
-            element={
-              isParentAuthenticated
-                ? <Navigate to="/parent/dashboard" replace />
-                : <Navigate to="/login" replace />
-            }
-          />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
+      {/* Redirect logic - only redirect authenticated users */}
+      <Route
+        path="*"
+        element={
+          isParentAuthenticated
+            ? <Navigate to="/parent/dashboard" replace />
+            : <Navigate to="/login" replace />
+        }
+      />
+    </Routes>
   );
 };
 

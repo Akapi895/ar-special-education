@@ -72,14 +72,14 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={inputType}
             className={`
-              rounded-xl border bg-(--app-surface) px-4 py-2.5 text-base
+              rounded-full border bg-(--app-surface) px-5 py-2.5 text-base
               transition-all duration-200
               focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent
               disabled:cursor-not-allowed disabled:bg-(--app-surface) disabled:text-(--app-text-muted)
               placeholder:text-(--app-text-muted)
                 
-              ${hasLeftIcon ? 'pl-10' : ''}
-              ${hasRightAccessory ? 'pr-12' : 'pr-4'} 
+              ${hasLeftIcon ? 'pl-11' : ''}
+              ${hasRightAccessory ? 'pr-12' : 'pr-5'} 
               
               ${widthStyle}
               ${className}

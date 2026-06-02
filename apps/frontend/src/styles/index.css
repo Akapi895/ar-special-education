@@ -2,8 +2,10 @@
 
 /* Define custom colors using CSS variables */
 :root {
-  --primary: #06325a;
-  --accent: #3498db;
+  --primary: #6c9aee;
+  --primary-2: #5ac1e5;
+  --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+  --accent: var(--primary);
   --light-bg: #f1f5f9;
   --app-bg: #f1f5f9;
   --app-surface: rgba(255, 255, 255, 0.92);
@@ -31,12 +33,7 @@ html.dark {
   --toast-border: #1e293b;
 }
 
-@theme {
-  /* Register colors for Tailwind */
-  --color-primary: var(--primary);
-  --color-accent: var(--accent);
-  --color-light-bg: var(--light-bg);
-}
+/* Note: removed invalid @theme rule; colors are exposed via CSS variables above */
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -53,4 +50,70 @@ html {
 body {
   background: var(--app-bg);
   color: var(--app-text);
+}
+
+/* Utility helpers for the navy gradient */
+.bg-gradient-primary {
+  background: var(--gradient-primary) !important;
+}
+.hover\:bg-gradient-primary:hover {
+  background: var(--gradient-primary) !important;
+}
+.text-navy-gradient {
+  background: linear-gradient(90deg, var(--primary), var(--primary-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Subtle gradient background variant for cards */
+.bg-gradient-primary-soft {
+  background: linear-gradient(135deg, rgba(108,154,238,0.06) 0%, rgba(90,193,229,0.06) 100%);
+}
+
+/* Even lighter gradient for large section/card backgrounds */
+.bg-gradient-primary-lighter {
+  background: linear-gradient(135deg, rgba(108,154,238,0.035) 0%, rgba(90,193,229,0.035) 100%);
+}
+
+/* Icon helpers */
+.icon-primary {
+  color: var(--primary) !important;
+}
+.icon-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+/* Premium outline button with white background, navy text, gradient border, and blue hover glow */
+.btn-premium-gradient {
+  background: linear-gradient(#ffffff, #ffffff) padding-box,
+              linear-gradient(135deg, #6c9aee 0%, #5ac1e5 100%) border-box !important;
+  border: 2px solid transparent !important;
+  color: #1e3a8a !important;
+  transition: all 0.3s ease-in-out !important;
+}
+
+.btn-premium-gradient:hover {
+  background: linear-gradient(#ffffff, #ffffff) padding-box,
+              linear-gradient(135deg, #6c9aee 0%, #5ac1e5 100%) border-box !important;
+  color: #1e3a8a !important;
+  box-shadow: 0 0 15px rgba(108, 154, 238, 0.6) !important; /* blue/cyan glow */
+  transform: translateY(-1px);
+}
+
+/* Premium solid button with gradient background, white text, and blue hover glow */
+.btn-premium-solid-gradient {
+  background: linear-gradient(135deg, #6c9aee 0%, #5ac1e5 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid transparent !important;
+  transition: all 0.3s ease-in-out !important;
+}
+
+.btn-premium-solid-gradient:hover {
+  box-shadow: 0 0 15px rgba(108, 154, 238, 0.6) !important; /* blue/cyan glow */
+  filter: brightness(1.05);
+  transform: translateY(-1px);
 }

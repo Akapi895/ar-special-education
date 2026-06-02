@@ -34,7 +34,7 @@ const Card = ({
 
   const variantStyles = {
     default: 'bg-[var(--app-surface)] border border-[var(--app-border)]',
-    gradient: 'bg-gradient-card border border-gray-100',
+    gradient: 'bg-gradient-primary-lighter text-[var(--app-text)] border border-transparent',
     glass: 'glass border-white/30',
     outlined: 'bg-[var(--app-surface)] border-2 border-[var(--app-border)]',
   };

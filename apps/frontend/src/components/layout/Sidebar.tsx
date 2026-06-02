@@ -68,7 +68,7 @@ const Sidebar = () => {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-white/10 bg-slate-900/95 px-4 backdrop-blur md:hidden">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-white/10 bg-gradient-primary px-4 backdrop-blur md:hidden">
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(true)}
@@ -112,9 +112,11 @@ const Sidebar = () => {
         aria-hidden="true"
       />
 
-      <aside className="fixed left-0 top-0 z-50 hidden h-screen w-20 flex-col items-center bg-slate-900 py-6 shadow-lg md:flex">
+      <aside className="fixed left-0 top-0 z-50 hidden h-screen w-20 flex-col items-center bg-gradient-primary py-6 shadow-lg md:flex">
         <div className="mb-8">
-          <Calculator className="w-10 h-10 text-white" strokeWidth={2} />
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-primary shadow-md">
+            <Calculator className="w-6 h-6 text-white" strokeWidth={2} />
+          </div>
         </div>
 
         <nav className="flex-1 flex flex-col gap-3 w-full px-3">
@@ -125,20 +127,26 @@ const Sidebar = () => {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `group relative flex items-center justify-center w-full h-12 rounded-xl transition-all duration-200 ${
-                    isActive ? 'bg-indigo-600' : 'hover:bg-white/10'
+                  `group relative flex items-center justify-center w-full h-12 rounded-xl ${
+                    isActive ? 'bg-[#e3f1ff]' : 'hover:bg-white/10'
                   }`
                 }
               >
-                <Icon
-                  className="w-5 h-5 text-white group-hover:scale-110 transition-transform"
-                  strokeWidth={2}
-                />
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      className={`w-5 h-5 ${
+                        isActive ? 'text-[#1e3a8a]' : 'text-white'
+                      }`}
+                      strokeWidth={2}
+                    />
 
-                <span className="absolute left-full ml-4 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-sm text-white opacity-0 invisible shadow-lg transition-all duration-200 pointer-events-none group-hover:opacity-100 group-hover:visible">
-                  {item.label}
-                  <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-800" />
-                </span>
+                    <span className="absolute left-full ml-4 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-sm text-white opacity-0 invisible shadow-lg pointer-events-none group-hover:opacity-100 group-hover:visible">
+                      {item.label}
+                      <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-800" />
+                    </span>
+                  </>
+                )}
               </NavLink>
             );
           })}
@@ -146,15 +154,15 @@ const Sidebar = () => {
 
         <button
           type="button"
-          className="group relative mt-2 flex h-12 w-full items-center justify-center rounded-xl px-3 transition-all duration-200 hover:bg-white/10"
+          className="group relative mt-2 flex h-12 w-full items-center justify-center rounded-xl px-3 hover:bg-white/10"
           onClick={handleLogout}
         >
           <LogOut
-            className="w-5 h-5 text-white group-hover:scale-110 transition-transform"
+            className="w-5 h-5 text-white"
             strokeWidth={2}
           />
 
-          <span className="absolute left-full ml-4 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-sm text-white opacity-0 invisible shadow-lg transition-all duration-200 pointer-events-none group-hover:opacity-100 group-hover:visible">
+          <span className="absolute left-full ml-4 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-sm text-white opacity-0 invisible shadow-lg pointer-events-none group-hover:opacity-100 group-hover:visible">
             Đăng xuất
             <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-800" />
           </span>
@@ -162,17 +170,17 @@ const Sidebar = () => {
 
         <button
           type="button"
-          className="group relative mt-2 flex h-12 w-full items-center justify-center rounded-xl px-3 transition-all duration-200 hover:bg-white/10"
+          className="group relative mt-2 flex h-12 w-full items-center justify-center rounded-xl px-3 hover:bg-white/10"
           onClick={toggleTheme}
           aria-label={theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
         >
           {theme === 'dark' ? (
-            <SunMedium className="h-5 w-5 text-white group-hover:scale-110 transition-transform" strokeWidth={2} />
+            <SunMedium className="h-5 w-5 text-white" strokeWidth={2} />
           ) : (
-            <MoonStar className="h-5 w-5 text-white group-hover:scale-110 transition-transform" strokeWidth={2} />
+            <MoonStar className="h-5 w-5 text-white" strokeWidth={2} />
           )}
 
-          <span className="absolute left-full ml-4 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-sm text-white opacity-0 invisible shadow-lg transition-all duration-200 pointer-events-none group-hover:opacity-100 group-hover:visible">
+          <span className="absolute left-full ml-4 whitespace-nowrap rounded-lg bg-slate-800 px-3 py-2 text-sm text-white opacity-0 invisible shadow-lg pointer-events-none group-hover:opacity-100 group-hover:visible">
             {theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
             <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-800" />
           </span>
@@ -181,12 +189,12 @@ const Sidebar = () => {
 
       <aside
         id="parent-sidebar-mobile"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-slate-900 px-4 py-5 shadow-2xl transition-transform duration-300 md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-gradient-primary px-4 py-5 shadow-2xl transition-transform duration-300 md:hidden ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-hidden={!isMobileMenuOpen}
       >
-        <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2 text-white">
             <Calculator className="h-8 w-8" strokeWidth={2} />
             <span className="text-lg font-semibold">MathMate Support</span>
@@ -210,13 +218,17 @@ const Sidebar = () => {
                 to={item.to}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white transition-colors ${
-                    isActive ? 'bg-indigo-600' : 'hover:bg-white/10'
+                  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
+                    isActive ? 'bg-[#e3f1ff] text-[#1e3a8a]' : 'text-white hover:bg-white/10'
                   }`
                 }
               >
-                <Icon className="h-5 w-5" strokeWidth={2} />
-                <span>{item.label}</span>
+                {({ isActive }) => (
+                  <>
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-[#1e3a8a]' : 'text-white'}`} strokeWidth={2} />
+                    <span>{item.label}</span>
+                  </>
+                )}
               </NavLink>
             );
           })}

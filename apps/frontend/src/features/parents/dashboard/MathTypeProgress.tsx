@@ -62,7 +62,7 @@ const MathTypeProgress = ({ progress, compact = false }: MathTypeProgressProps) 
               <div className="flex-1">
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-indigo-500 transition-all duration-500 rounded-full"
+                    className="h-full bg-[#64aaeb] transition-all duration-500 rounded-full"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -94,13 +94,13 @@ const MathTypeProgress = ({ progress, compact = false }: MathTypeProgressProps) 
                   <span className="text-sm text-gray-500">
                     {type.progress.current}/{type.progress.target}
                   </span>
-                  <span className="font-bold text-indigo-600">{percentage}%</span>
+                  <span className="font-bold text-[#64aaeb]">{percentage}%</span>
                 </div>
               </div>
               
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-indigo-500 transition-all duration-500 rounded-full"
+                  className="h-full bg-[#64aaeb] transition-all duration-500 rounded-full"
                   style={{ width: `${percentage}%` }}
                 />
               </div>

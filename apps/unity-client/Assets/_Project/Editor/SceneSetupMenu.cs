@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
+using Core.UI.Components;
 using Project.App;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -138,7 +139,7 @@ namespace Project.Editor
 
             Camera camera = cameraGo.GetComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.08f, 0.1f, 0.12f);
+            camera.backgroundColor = new Color(0.545f, 0.361f, 0.965f);
         }
 
         private static void CreateDirectionalLight()
@@ -242,7 +243,7 @@ namespace Project.Editor
 
         private static GameObject CreateUIButton(Transform parent, string name, string label, Vector2 anchoredPosition)
         {
-            GameObject buttonObj = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            GameObject buttonObj = new GameObject(name, typeof(RectTransform), typeof(RoundedRectGraphic), typeof(Button));
             buttonObj.transform.SetParent(parent, false);
 
             RectTransform rect = buttonObj.GetComponent<RectTransform>();
@@ -251,8 +252,13 @@ namespace Project.Editor
             rect.sizeDelta = new Vector2(320f, 58f);
             rect.anchoredPosition = anchoredPosition;
 
-            Image image = buttonObj.GetComponent<Image>();
-            image.color = new Color(0.14f, 0.43f, 0.82f);
+            var graphic = buttonObj.GetComponent<RoundedRectGraphic>();
+            graphic.CornerRadius = 28f;
+            graphic.color = new Color(0.545f, 0.361f, 0.965f);
+
+            var shadow = buttonObj.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.18f);
+            shadow.effectDistance = new Vector2(0f, -4f);
 
             GameObject textObj = CreateUIText(buttonObj.transform, "Text", label, 22, Vector2.zero, rect.sizeDelta);
             textObj.GetComponent<Text>().raycastTarget = false;

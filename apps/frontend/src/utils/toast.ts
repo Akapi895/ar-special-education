@@ -69,23 +69,23 @@ export const toastTheme = {
   toastOptions: {
     ...toastStyles,
     success: {
-      iconTheme: {
-        primary: '#10b981',
-        secondary: '#fff',
-      },
-      style: {
-        ...toastStyles.style,
-        border: '1px solid #10b981',
-      },
+        iconTheme: {
+          primary: '#6c9aee',
+          secondary: '#fff',
+        },
+        style: {
+          ...toastStyles.style,
+          border: '1px solid #6c9aee',
+        },
     },
     error: {
       iconTheme: {
-        primary: '#ef4444',
+        primary: '#6c9aee',
         secondary: '#fff',
       },
       style: {
         ...toastStyles.style,
-        border: '1px solid #ef4444',
+        border: '1px solid #6c9aee',
       },
     },
   },

@@ -189,7 +189,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Bottom Section - Emotion & Activity */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
           <EmotionTracker
             entries={emotionEntries.map(e => ({
               date: e.date,

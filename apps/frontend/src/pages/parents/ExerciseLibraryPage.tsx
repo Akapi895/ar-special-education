@@ -125,76 +125,79 @@ const ExerciseLibraryPage = () => {
 
       {/* Search and Filters */}
       <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-4 mb-6">
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm bài tập..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
+        {/* Search */}
+        <div className="relative w-full">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm bài tập..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
 
-          {/* CPA Stage Filter */}
-          <div className="flex flex-wrap gap-2 lg:justify-end">
+        {/* Filters Row */}
+        <div className="flex flex-wrap items-center gap-y-3 gap-x-4 mt-4 overflow-x-auto pb-1">
+          {/* Math Type Filter */}
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="text-sm text-gray-600 flex items-center gap-1.5 font-medium">
+              <Filter className="w-4 h-4" />
+              Loại toán:
+            </span>
             <button
-              onClick={() => setSelectedStage('all')}
-              className={`px-4 py-2 rounded-lg border transition-colors ${
-                selectedStage === 'all'
-                  ? 'bg-primary-600 text-white border-primary-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+              onClick={() => setSelectedMathType('all')}
+              className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                selectedMathType === 'all'
+                  ? 'bg-[#64aaeb] text-white border-[#64aaeb]'
+                  : 'bg-white text-gray-700 border-[#64aaeb]/50 hover:bg-[#64aaeb]/5 hover:border-[#64aaeb]'
               }`}
             >
               Tất cả
             </button>
-            {(Object.keys(CPA_STAGE_LABELS) as CPAStage[]).map((stage) => (
+            {(Object.keys(MATH_TYPE_LABELS) as MathType[]).map((type) => (
               <button
-                key={stage}
-                onClick={() => setSelectedStage(stage)}
-                className={`px-4 py-2 rounded-lg border transition-colors ${
-                  selectedStage === stage
-                    ? 'bg-primary-600 text-white border-primary-600'
-                    : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                key={type}
+                onClick={() => setSelectedMathType(type)}
+                className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                  selectedMathType === type
+                    ? 'bg-[#64aaeb] text-white border-[#64aaeb]'
+                    : 'bg-white text-gray-700 border-[#64aaeb]/50 hover:bg-[#64aaeb]/5 hover:border-[#64aaeb]'
                 }`}
               >
-                {CPA_STAGE_LABELS[stage].label.split(' ')[0]}
+                {MATH_TYPE_LABELS[type]}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Math Type Filter */}
-        <div className="flex flex-wrap gap-2 mt-4 overflow-x-auto pb-1">
-          <span className="text-sm text-gray-600 flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            Loại toán:
-          </span>
-          <button
-            onClick={() => setSelectedMathType('all')}
-            className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-              selectedMathType === 'all'
-                ? 'bg-primary-100 text-primary-800 border-primary-200'
-                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-            }`}
-          >
-            Tất cả
-          </button>
-          {(Object.keys(MATH_TYPE_LABELS) as MathType[]).map((type) => (
-            <button
-              key={type}
-              onClick={() => setSelectedMathType(type)}
-              className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                selectedMathType === type
-                  ? 'bg-primary-100 text-primary-800 border-primary-200'
-                  : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
-              }`}
-            >
-              {MATH_TYPE_LABELS[type]}
-            </button>
-          ))}
+          {/* Separator */}
+          <span className="text-gray-300 mx-1 hidden sm:inline">|</span>
+
+          {/* CPA Stage Filter */}
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="text-sm text-gray-600 flex items-center gap-1.5 font-medium">
+              <BookOpen className="w-4 h-4" />
+              Phương pháp:
+            </span>
+            {[
+              { id: 'all' as const, label: 'Tất cả' },
+              { id: 'concrete' as const, label: 'Concrete' },
+              { id: 'pictorial' as const, label: 'Pictorial' },
+              { id: 'abstract' as const, label: 'Abstract' }
+            ].map((btn) => (
+              <button
+                key={btn.id}
+                onClick={() => setSelectedStage(btn.id)}
+                className={`px-3 py-1 rounded-full text-sm border font-medium transition-colors ${
+                  selectedStage === btn.id
+                    ? 'bg-[#64aaeb] text-white border-[#64aaeb]'
+                    : 'bg-white text-gray-700 border-[#64aaeb]/50 hover:bg-[#64aaeb]/5 hover:border-[#64aaeb]'
+                }`}
+              >
+                {btn.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

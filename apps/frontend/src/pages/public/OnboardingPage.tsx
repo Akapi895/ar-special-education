@@ -19,8 +19,8 @@ const OnboardingPage = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm mb-6">
-            <Sparkles className="w-5 h-5 text-primary-600" />
-            <span className="text-sm font-medium text-gray-700">MathMate Support</span>
+            <Sparkles className="w-5 h-5 text-primary-500" />
+            <span className="text-sm font-medium text-gradient-primary">MathMate Support</span>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Chào mừng đến với MathMate Support
@@ -114,7 +114,7 @@ const OnboardingPage = () => {
               </p>
 
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <div className="p-4 rounded-xl border border-primary-100 bg-gradient-primary-soft">
                   <h3 className="font-semibold text-gray-900 mb-2">Minh gặp khó khăn với:</h3>
                   <div className="space-y-2">
                     {[
@@ -140,9 +140,9 @@ const OnboardingPage = () => {
                 <Button variant="secondary" onClick={() => setStep(1)}>
                   Quay lại
                 </Button>
-                <Button onClick={handleStart} size="lg">
+                <Button onClick={handleStart} size="lg" className="btn-premium-solid-gradient transition-all rounded-full py-3 shadow-lg hover:shadow-xl">
                   Bắt đầu sử dụng
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-5 h-5 ml-2 text-white" />
                 </Button>
               </div>
             </motion.div>

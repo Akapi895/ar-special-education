@@ -14,6 +14,7 @@ namespace Features.Activities.NumberBonds
             RectTransform panel = CreateUiPanel(canvas.transform, "NumberBondsPanel");
             progressText = CreateTopText(panel, "Progress", "", 24, 18f, new Vector2(360f, 42f));
             progressText.GetComponent<RectTransform>().anchoredPosition = new Vector2(-420f, -18f);
+            UIActivityLayoutHelpers.CreateCardBackground(panel, "ProgressCard", new Vector2(380f, 56f), new Vector2(-420f, -18f), 20f);
             instructionText = CreateTopText(panel, "InstructionText", "", 34, 48f, new Vector2(820f, 64f));
             expressionText = CreateTopText(panel, "ExpressionText", "", 44, 112f, new Vector2(620f, 70f));
 

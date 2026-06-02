@@ -61,25 +61,25 @@ namespace Project.App
 
         private void Start()
         {
+            ApplyBackgroundPanel();
             LocalizeSceneLabels();
             ActivityButton[] availableActivities = EnsureRuntimeActivityButtons();
 
-            // Setup activity button listeners
+            // Setup activity button listeners — now using colored rectangular blocks with black text
             foreach (var activity in availableActivities)
             {
                 if (activity.button != null)
                 {
                     bool isUnlocked = IsActivityUnlocked(activity);
                     string label = GetActivityDisplayName(activity.activityId);
+                    Color activityColor = GetActivityTextColor(activity.activityId);
+
                     UIKidFriendlyStyle.Apply(
                         activity.button,
                         isUnlocked ? KidButtonPurpose.Primary : KidButtonPurpose.Neutral,
                         label,
                         30);
-                    UIKidFriendlyStyle.HideButtonBackground(activity.button);
-                    UIKidFriendlyStyle.SetButtonTextColorWithOutline(
-                        activity.button,
-                        GetActivityTextColor(activity.activityId));
+                    UIKidFriendlyStyle.SetActivityBlockStyle(activity.button, activityColor);
                     activity.button.interactable = isUnlocked;
                     
                     if (activity.lockIcon != null)
@@ -110,6 +110,26 @@ namespace Project.App
             Debug.Log("[ActivitySelectController] Activity select loaded.");
         }
 
+        private void ApplyBackgroundPanel()
+        {
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null) return;
+
+            var bgGo = new GameObject("PageBackground", typeof(RectTransform), typeof(Image));
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            bgRect.SetParent(canvas.transform, false);
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.offsetMin = Vector2.zero;
+            bgRect.offsetMax = Vector2.zero;
+
+            var bgImage = bgGo.GetComponent<Image>();
+            bgImage.color = new Color(0.545f, 0.361f, 0.965f, 1f);
+            bgImage.raycastTarget = false;
+
+            bgGo.transform.SetAsFirstSibling();
+        }
+
         private static void LocalizeSceneLabels()
         {
             Text[] texts = UnityEngine.Object.FindObjectsByType<Text>(
@@ -124,11 +144,22 @@ namespace Project.App
                     continue;
                 }
 
-                string content = text.text.Trim();
-                if (content == "Choose Activity")
+                if (text.gameObject.name == "TitleText")
                 {
-                    text.text = "Chọn bài học";
-                    UIKidFriendlyStyle.ApplyReadableText(text, 6, 34, new Color(1f, 0.86f, 0.36f, 1f));
+                    text.text = "CHỌN BÀI HỌC";
+                    text.fontSize = 68;
+                    text.resizeTextForBestFit = true;
+                    text.resizeTextMinSize = 44;
+                    text.resizeTextMaxSize = 68;
+                    text.fontStyle = FontStyle.Bold;
+                    text.alignment = TextAnchor.MiddleCenter;
+                    text.color = Color.white;
+
+                    Outline outline = text.GetComponent<Outline>();
+                    if (outline != null) Object.Destroy(outline);
+
+                    Shadow shadow = text.GetComponent<Shadow>();
+                    if (shadow != null) Object.Destroy(shadow);
                 }
             }
         }
@@ -321,7 +352,7 @@ namespace Project.App
             rect.anchoredPosition = new Vector2(0f, -130f - missingIndex * 78f);
 
             Image image = go.GetComponent<Image>();
-            image.color = new Color(0.14f, 0.43f, 0.82f, 0.92f);
+            image.color = GetActivityTextColor(activityId);
 
             var labelObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
             labelObj.transform.SetParent(go.transform, false);
@@ -342,8 +373,9 @@ namespace Project.App
             text.text = mascot + " " + GetActivityDisplayName(activityId);
             text.alignment = TextAnchor.MiddleCenter;
             text.font = UIKidFriendlyStyle.GetSharedFont();
-            text.fontSize = 24;
-            text.color = Color.white;
+            text.fontSize = 30;
+            text.fontStyle = FontStyle.Bold;
+            text.color = Color.black;
             text.raycastTarget = false;
 
             return new ActivityButton

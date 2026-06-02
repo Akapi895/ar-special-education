@@ -2,8 +2,9 @@
 
 /* ===== THEME CSS VARIABLES ===== */
 :root {
-  --primary: #06325a;
-  --accent: #3498db;
+  --primary: #6c9aee;
+  --primary-2: #5ac1e5;
+  --accent: var(--primary);
   --light-bg: #f1f5f9;
 }
 
@@ -69,7 +70,7 @@ html {
 }
 
 *:focus-visible {
-  outline: 2px solid #3498db;
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
   border-radius: 0.25rem;
 }
@@ -122,14 +123,14 @@ html {
 
 /* ===== GRADIENT TEXT ===== */
 .text-gradient-primary {
-  background: linear-gradient(135deg, #06325a 0%, #3498db 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-gradient-accent {
-  background: linear-gradient(135deg, #3498db 0%, #60a5fa 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

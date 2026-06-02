@@ -1,4 +1,4 @@
-﻿/**
+/**
  * CPA Progress Gauge Component - Redesigned
  * Clean design with brand colors
  */
@@ -27,9 +27,9 @@ const CPAGauge = ({ concrete, pictorial, abstract, compact = false }: CPAGaugePr
       label: 'Concrete',
       sublabel: 'Cụ thể',
       value: concrete,
-      color: 'bg-blue-600',
-      colorLight: 'bg-blue-50',
-      textColor: 'text-blue-600',
+      color: 'bg-[#64aaeb]',
+      colorLight: 'bg-[#64aaeb]/10',
+      textColor: 'text-[#64aaeb]',
       icon: '🧱',
     },
     {
@@ -37,9 +37,9 @@ const CPAGauge = ({ concrete, pictorial, abstract, compact = false }: CPAGaugePr
       label: 'Pictorial',
       sublabel: 'Hình ảnh',
       value: pictorial,
-      color: 'bg-amber-500',
-      colorLight: 'bg-amber-50',
-      textColor: 'text-amber-600',
+      color: 'bg-[#64aaeb]',
+      colorLight: 'bg-[#64aaeb]/10',
+      textColor: 'text-[#64aaeb]',
       icon: '🎨',
     },
     {
@@ -47,9 +47,9 @@ const CPAGauge = ({ concrete, pictorial, abstract, compact = false }: CPAGaugePr
       label: 'Abstract',
       sublabel: 'Trừu tượng',
       value: abstract,
-      color: 'bg-violet-600',
-      colorLight: 'bg-violet-50',
-      textColor: 'text-violet-600',
+      color: 'bg-[#64aaeb]',
+      colorLight: 'bg-[#64aaeb]/10',
+      textColor: 'text-[#64aaeb]',
       icon: '🔢',
     },
   ];
@@ -109,34 +109,38 @@ const CPAGauge = ({ concrete, pictorial, abstract, compact = false }: CPAGaugePr
       </div>
 
       <div className="mt-6 pt-4 border-t border-gray-100">
-        <div className="flex items-center justify-between">
+        <div className="relative flex justify-between items-start">
+          {/* Connecting Lines */}
+          <div className="absolute top-5 left-[16.6%] right-[16.6%] h-0.5 bg-gray-200 -translate-y-1/2 z-0">
+            <div 
+              className="h-full bg-[#64aaeb] transition-all duration-500"
+              style={{ 
+                width: concrete >= 80 
+                  ? pictorial >= 80 
+                    ? '100%' 
+                    : '50%' 
+                  : '0%' 
+              }}
+            />
+          </div>
+
+          {/* Stepper items */}
           {stages.map((stage, idx) => (
-            <div key={stage.key} className="flex items-center">
+            <div key={stage.key} className="flex flex-col items-center flex-1 z-10">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold transition-all ${
                   stage.value >= 50
-                    ? stage.color
-                    : 'bg-gray-200'
-                } text-white shadow-sm`}
+                    ? 'bg-[#64aaeb] text-white'
+                    : 'bg-gray-200 text-gray-400'
+                } shadow-sm`}
               >
                 {idx + 1}
               </div>
-              {idx < stages.length - 1 && (
-                <div className="w-8 h-0.5 bg-gray-200 mx-1">
-                  <div
-                    className={`h-full ${stage.color} transition-all duration-500`}
-                    style={{ width: stage.value >= 80 ? '100%' : `${Math.min(stage.value, 100)}%` }}
-                  />
-                </div>
-              )}
+              <span className="mt-2 text-xs font-semibold text-gray-700 text-center">
+                {stage.sublabel}
+              </span>
             </div>
           ))}
-        </div>
-        
-        <div className="flex justify-between mt-2 text-xs text-gray-500 font-medium">
-          <span>Cụ thể</span>
-          <span>Hình ảnh</span>
-          <span>Trừu tượng</span>
         </div>
         
         <div className="mt-4 p-3 bg-indigo-50 rounded-xl border border-indigo-100">

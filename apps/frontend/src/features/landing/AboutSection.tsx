@@ -37,8 +37,8 @@ const AboutSection = () => {
                   <span>Hiểu các khái niệm toán học</span>
                 </li>
               </ul>
-              <p className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <strong className="text-blue-700">💡 Điều quan trọng:</strong> Trẻ Dyscalculia không phải "kém thông minh". 
+              <p className="mt-6 p-5 bg-gradient-to-r from-[#6c9aee] to-[#5ac1e5] text-white rounded-xl shadow-md">
+                <strong className="font-bold text-white">💡 Điều quan trọng:</strong> Trẻ Dyscalculia không phải "kém thông minh". 
                 Não bộ của các em xử lý thông tin số khác với người bình thường. 
                 Với phương pháp đúng, trẻ <strong>HOÀN TOÀN có thể học tốt toán!</strong>
               </p>

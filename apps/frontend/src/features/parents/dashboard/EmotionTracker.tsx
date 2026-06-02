@@ -70,7 +70,7 @@ const EmotionTracker = ({ entries, onAddEntry, onViewAll }: EmotionTrackerProps)
   const trend = getOverallTrend();
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900">Nhật ký cảm xúc</h3>
         <button
@@ -82,7 +82,7 @@ const EmotionTracker = ({ entries, onAddEntry, onViewAll }: EmotionTrackerProps)
       </div>
 
       {/* Week Calendar */}
-      <div className="grid grid-cols-7 gap-1.5 mb-4 overflow-x-auto pb-1">
+      <div className="grid grid-cols-7 gap-1.5 mb-4 overflow-x-auto pb-1 min-w-[280px]">
         {last7Days.map((day, idx) => {
           const emotion = day.entry?.emotion;
           const config = emotion ? EMOTION_CONFIG[emotion] : null;
@@ -91,21 +91,24 @@ const EmotionTracker = ({ entries, onAddEntry, onViewAll }: EmotionTrackerProps)
           return (
             <div
               key={day.date}
-              className={`flex flex-col items-center p-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center h-16 rounded-xl transition-all border-2 ${
                 day.isToday
-                  ? 'bg-indigo-50 ring-2 ring-indigo-300'
+                  ? day.entry
+                    ? 'bg-white border-[#64aaeb] shadow-xs font-semibold'
+                    : 'bg-white border-dashed border-[#64aaeb] text-[#64aaeb] font-semibold'
                   : config
-                    ? config.bg
-                    : 'bg-gray-50'
+                    ? `${config.bg} border-transparent`
+                    : 'bg-gray-50 border-transparent'
               } ${idx > todayIndex ? 'opacity-40' : ''}`}
             >
-              <span className="text-xs text-gray-500 mb-1">{day.dayLabel}</span>
-              <span className="text-xl">
+              <span className={`text-[10px] uppercase font-bold mb-0.5 ${
+                day.isToday ? 'text-[#64aaeb]' : 'text-gray-400'
+              }`}>
+                {day.dayLabel}
+              </span>
+              <span className="text-xl leading-none">
                 {config ? config.emoji : idx > todayIndex ? '⏳' : '➕'}
               </span>
-              {day.isToday && (
-                <span className="text-xs text-indigo-600 font-medium mt-1">Hôm nay</span>
-              )}
             </div>
           );
         })}
@@ -141,9 +144,9 @@ const EmotionTracker = ({ entries, onAddEntry, onViewAll }: EmotionTrackerProps)
       {/* Action Button */}
       <button
         onClick={onAddEntry}
-        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-3 rounded-xl transition-colors shadow-sm"
+        className="w-full flex items-center justify-center gap-2 bg-[#64aaeb] hover:bg-[#5299da] text-white font-semibold px-5 py-2.5 rounded-full transition-colors shadow-sm text-sm"
       >
-        <Heart className="w-4 h-4" />
+        <Heart className="w-4.5 h-4.5" />
         Ghi nhận cảm xúc hôm nay
       </button>
     </div>

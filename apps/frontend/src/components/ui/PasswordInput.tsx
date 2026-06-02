@@ -72,7 +72,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              className="transition-colors focus:outline-none"
               aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
             >
               {showPassword ? (

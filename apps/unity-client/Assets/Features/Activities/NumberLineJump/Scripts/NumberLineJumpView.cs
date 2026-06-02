@@ -248,9 +248,9 @@ namespace Features.Activities.NumberLineJump
             progressButton = CreateButton(panel, "ProgressButton", SimpleLocalization.Get("btn_progress"), new Vector2(actionButtonOffset, RuntimeActionButtonBottomY), OnProgressClicked);
             nextRoundButton.gameObject.SetActive(false);
             progressButton.gameObject.SetActive(false);
-            AddTextCardBackground(progressText?.transform.parent, "ProgressCard", new Vector2(200f, 52f));
-            AddTextCardBackground(startNumberText?.transform.parent, "StartCard", new Vector2(240f, 52f));
-            AddTextCardBackground(currentPositionText?.transform.parent, "CurrentCard", new Vector2(240f, 52f));
+            UIActivityLayoutHelpers.CreateCardBackground(panel, "ProgressCard", new Vector2(220f, 56f), new Vector2(0f, -24f), 20f);
+            UIActivityLayoutHelpers.CreateCardBackground(panel, "StartCard", new Vector2(260f, 56f), new Vector2(-205f, -124f), 20f);
+            UIActivityLayoutHelpers.CreateCardBackground(panel, "CurrentCard", new Vector2(260f, 56f), new Vector2(205f, -124f), 20f);
             NormalizeTopNavigationButtons();
             LayoutEdgeJumpButtons();
             UIKidFriendlyStyle.ApplyReadableTextToScene(3, 24);

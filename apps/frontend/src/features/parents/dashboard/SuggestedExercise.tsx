@@ -56,7 +56,7 @@ const SuggestedExerciseCard = ({ exercise, onStart, onViewDetails }: SuggestedEx
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-slate-900 px-5 py-3">
+      <div className="bg-gradient-primary px-5 py-3">
         <div className="flex items-center justify-between">
           <span className="text-white/90 text-sm font-medium">✨ Gợi ý bài tập hôm nay</span>
           <span className="text-white/70 text-xs">{difficultyStars}</span>
@@ -101,13 +101,13 @@ const SuggestedExerciseCard = ({ exercise, onStart, onViewDetails }: SuggestedEx
           <div className="flex lg:flex-col gap-3 lg:min-w-[180px] lg:items-end">
             <button
               onClick={onStart}
-              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-sm"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-[#64aaeb] hover:bg-[#5299da] text-white font-semibold px-6 py-3 rounded-full transition-colors shadow-sm"
             >
               ▶ Bắt đầu bài tập
             </button>
             <button
               onClick={onViewDetails}
-              className="flex items-center justify-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium px-4 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-center gap-1.5 text-gray-600 hover:text-gray-900 font-medium px-4 py-3 rounded-full hover:bg-gray-100 transition-colors"
             >
               Xem chi tiết
               <ArrowRight className="w-4 h-4" />

@@ -336,7 +336,7 @@ namespace Core.AR.Placement
             camera.farClipPlane = Mathf.Max(camera.farClipPlane, 250f);
             camera.fieldOfView = Mathf.Clamp(camera.fieldOfView, 55f, 72f);
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.15f, 0.5f, 0.2f);
+            camera.backgroundColor = new Color(0.545f, 0.361f, 0.965f);
             camera.stereoTargetEye = StereoTargetEyeMask.None;
 
             RenderSettings.ambientMode = AmbientMode.Flat;

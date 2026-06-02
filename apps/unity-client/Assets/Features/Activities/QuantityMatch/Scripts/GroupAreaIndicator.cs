@@ -26,7 +26,7 @@ namespace Features.Activities.QuantityMatch
             lineRenderer.useWorldSpace = false;
             lineRenderer.loop = true;
             lineRenderer.startWidth = 0.12f;
-            lineRenderer.endWidth = 0.02f;
+            lineRenderer.endWidth = 0.12f;
             lineRenderer.positionCount = segments;
             lineRenderer.startColor = new Color(color.r, color.g, color.b, 0.85f);
             lineRenderer.endColor = new Color(color.r, color.g, color.b, 0.0f);
