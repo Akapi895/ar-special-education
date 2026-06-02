@@ -164,7 +164,7 @@ namespace Features.Activities.CompareQuantity
             int largerCount = currentQuestion != null
                 ? Mathf.Max(currentQuestion.LeftGroupCount, currentQuestion.RightGroupCount)
                 : 5;
-            float largerRadius = CalculateCircleRadius(Mathf.Max(1, largerCount));
+                float largerRadius = CalculateCircleRadius(Mathf.Max(1, largerCount)) * 1.35f;
             return Mathf.Max(compareConfig.GroupSpacing, largerRadius * 2f + 2.2f, 3.0f);
         }
 
@@ -176,7 +176,7 @@ namespace Features.Activities.CompareQuantity
             }
 
             float sin = Mathf.Sin(Mathf.PI / objectCount);
-            return sin <= 0.0001f ? 0.68f : 0.68f / (2f * sin);
+            return sin <= 0.0001f ? 0.9f : 0.9f / (2f * sin);
         }
 
         private void CreatePairingVisuals()

@@ -33,8 +33,8 @@ namespace Features.Activities.QuantityMatch
         private int currentRoundNumber;
         private int[] countedTapsByGroup;
 
-        private const float MinimumReadableObjectSpacing = 0.64f;
-        private const float MaximumReadableObjectSpacing = 0.78f;
+        private const float MinimumReadableObjectSpacing = 0.82f;
+        private const float MaximumReadableObjectSpacing = 1.0f;
         private const float MinimumReadableGroupSpacing = 1.45f;
         private const float MaximumReadableGroupSpacing = 1.8f;
         private const float GroupSeparationPadding = 0.35f;

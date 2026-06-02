@@ -11,7 +11,7 @@ namespace Core.Learning.Utils
     /// </summary>
     public static class ARGroupSpawnUtility
     {
-        private const float DefaultObjectSpacing = 0.68f;
+        private const float DefaultObjectSpacing = 0.9f;
 
         /// <summary>
         /// Spawn a single group with the given number of objects.

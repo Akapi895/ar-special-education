@@ -41,26 +41,26 @@ MonoBehaviour:
     customHints: []
     objectPrefabName: 
   maxObjectsPerRound: 8
-  zoneRadiusMeters: 0.52
-  zoneHitRadiusMeters: 0.66
+  zoneRadiusMeters: 0.75
+  zoneHitRadiusMeters: 0.9
   objectHeightMeters: 0.22
-  correctFeedback: Tuyet voi! Con da tach so rat dung.
-  notAllMovedFeedback: Con hay chuyen het con vat xuong hai nhom nhe.
-  wrongPartFeedback: Gan dung roi. Con thu dem lai tung phan nhe.
-  lockedZoneFeedback: Phan nay da cho san roi, minh giu nguyen nhe.
-  failedFeedback: Con da co gang rat tot. Minh thu cau khac nhe.
+  correctFeedback: Tuyệt vời! Con đã tách số rất đúng.
+  notAllMovedFeedback: Con hãy chuyển hết con vật xuống hai nhóm nhé.
+  wrongPartFeedback: Gần đúng rồi. Con thử đếm lại từng phần nhé.
+  lockedZoneFeedback: Phần này đã cho sẵn rồi, mình giữ nguyên nhé.
+  failedFeedback: Con đã cố gắng rất tốt. Mình thử câu khác nhé.
   hintLevel1:
     HintId: nb_hint1
-    HintText: Con hay keo tung con vat tu Tong xuong hai Phan.
+    HintText: Con hãy kéo từng con vật từ Tổng xuống hai Phần.
     Level: 1
     ARHint: 
   hintLevel2:
     HintId: nb_hint2
-    HintText: Bieu thuc dang la X = A + B. Con con C con trong Tong.
+    HintText: Biểu thức đang là X = A + B. Còn C con trong Tổng.
     Level: 2
     ARHint: 
   hintLevel3:
     HintId: nb_hint3
-    HintText: Khi Tong con 0, hai phan cong lai phai bang X.
+    HintText: Khi Tổng còn 0, hai phần cộng lại phải bằng X.
     Level: 3
     ARHint: 

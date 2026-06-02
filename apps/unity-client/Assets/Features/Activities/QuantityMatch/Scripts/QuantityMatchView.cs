@@ -78,7 +78,7 @@ namespace Features.Activities.QuantityMatch
 
         [Header("Navigation")]
         [SerializeField]
-        private string homeSceneName = "SC_MainMenu";
+        private string homeSceneName = "SC_ActivitySelect";
 
         [Header("Group Selection UI")]
         [SerializeField]
@@ -380,14 +380,6 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
             var panel = CreateUiPanel(canvas.transform, "QuantityMatchPanel");
             runtimeUiRoot = panel;
 
-            // Setup Camera background settings for a bright sky-blue feel in editor/standalone
-            Camera mainCam = Camera.main;
-            if (mainCam != null)
-            {
-                mainCam.clearFlags = CameraClearFlags.SolidColor;
-                mainCam.backgroundColor = new Color(0.65f, 0.88f, 0.98f, 1f); // bright sky-blue
-            }
-
             CreateTopHeaderPanel(panel, "QuestionHeaderPanel", 24f, new Vector2(700f, 88f));
             targetNumberText = CreateTopText(panel, "TargetNumber", SimpleLocalization.Get("quantity_choose_group", "?"), 34, 30f, new Vector2(660f, 78f));
             progressText = CreateTopLeftText(panel, "Progress", "", 24, new Vector2(240f, -40f), new Vector2(300f, 60f));
@@ -538,10 +530,20 @@ private static readonly Vector2 RuntimeDigitButtonSize = new Vector2(118f, 98f);
                 }
             }
 
-            SimpleAudioManager.EnsureExists().PlayInstruction(currentUsesNumberInputMode
-                ? "instruction_quantity_count"
-                : "instruction_quantity_match");
-            SimpleAudioManager.Instance.PlayNumber(targetNumber);
+            var audio = SimpleAudioManager.EnsureExists();
+            if (!currentUsesNumberInputMode)
+            {
+                string specificKey = $"qm_instruction_{targetNumber}";
+                if (audio.HasClip(specificKey))
+                    audio.PlayInstruction(specificKey);
+                else
+                    audio.PlayInstruction("instruction_quantity_match");
+            }
+            else
+            {
+                audio.PlayInstruction("instruction_quantity_count");
+            }
+            audio.PlayNumber(targetNumber);
         }
 
         /// <summary>

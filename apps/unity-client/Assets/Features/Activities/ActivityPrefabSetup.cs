@@ -33,19 +33,17 @@ namespace Features.Activities
         [Header("Animal Learning Objects")]
         [SerializeField] private GameObject[] animalPrefabs;
         [SerializeField] private bool preferAnimalPrefabs = true;
-        // FIX C: Reduced from 0.48f to 0.18f (18cm) for better AR appearance on mobile
-        // Animals should appear 15-20cm tall on a real floor for proper perspective
-        [SerializeField] private float learningObjectTargetHeight = 0.18f;
+        [SerializeField] private float learningObjectTargetHeight = 1.35f;
         [SerializeField] private string resourcesAnimalFolder = "ARAnimals";
         [SerializeField] private bool preferGroundedLearningAnimals;
         [SerializeField] private bool faceLearningObjectsToCamera = true;
         [SerializeField] private float animalFacingYawOffset;
         [SerializeField] private float randomFacingYaw = 12f;
         [SerializeField] private bool repairLearningObjectMaterials = true;
-        [SerializeField] private string learningObjectShaderName = "Universal Render Pipeline/Lit";
+        [SerializeField] private string learningObjectShaderName = "Universal Render Pipeline/Unlit";
         [SerializeField] private bool boostLearningObjectContrast = true;
-        [SerializeField] private float minimumLearningObjectBrightness = 0.58f;
-        [SerializeField] private float learningObjectColorLift = 0.32f;
+        [SerializeField] private float minimumLearningObjectBrightness = 0.95f;
+        [SerializeField] private float learningObjectColorLift = 0.75f;
 
         [Header("Auto-Create Placeholders")]
         [SerializeField] private bool autoCreatePlaceholders = true;
@@ -687,7 +685,7 @@ namespace Features.Activities
                 : GetMaterialColor(source);
             SetColorIfPresent(material, "_BaseColor", baseColor);
             SetColorIfPresent(material, "_Color", baseColor);
-            SetEmissionIfPresent(material, baseColor * 0.12f);
+            SetEmissionIfPresent(material, baseColor * 0.04f);
 
             if (source != null)
             {

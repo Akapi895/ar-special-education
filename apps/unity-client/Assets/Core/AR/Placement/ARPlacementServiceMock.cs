@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ARSpecialEducation.Core.AR;
 using Core.Learning.ActivityRunner;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Core.AR.Placement
 {
@@ -209,8 +210,6 @@ namespace Core.AR.Placement
             }
 
             EnsureEditorSimulationRendering(camera);
-            EnsureCleanEditorSimulationSurface();
-            HideDefaultSimulationEnvironmentObjects();
             EnsureStableEditorCameraPose(camera);
 
             if (TryFindSimulationSurface(camera, out Vector3 surfacePosition, out Quaternion surfaceRotation))
@@ -337,7 +336,11 @@ namespace Core.AR.Placement
             camera.farClipPlane = Mathf.Max(camera.farClipPlane, 250f);
             camera.fieldOfView = Mathf.Clamp(camera.fieldOfView, 55f, 72f);
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.62f, 0.78f, 0.92f, 1f);
+            camera.backgroundColor = new Color(0.15f, 0.5f, 0.2f);
+            camera.stereoTargetEye = StereoTargetEyeMask.None;
+
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.85f, 0.85f, 0.85f);
         }
 
         private void EnsureCleanEditorSimulationSurface()

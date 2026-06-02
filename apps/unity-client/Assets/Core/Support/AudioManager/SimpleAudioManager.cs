@@ -63,6 +63,13 @@ namespace Core.Support.AudioManager
             }
         }
 
+        public bool HasClip(string soundName)
+        {
+            if (clipLibrary != null && clipLibrary.GetClip(soundName) != null)
+                return true;
+            return GetTemporaryFallbackClip(soundName) != null;
+        }
+
         public void PlaySound(string soundName)
         {
             if (string.IsNullOrEmpty(soundName))

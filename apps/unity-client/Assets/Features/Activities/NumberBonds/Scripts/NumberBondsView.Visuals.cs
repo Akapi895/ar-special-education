@@ -42,9 +42,9 @@ namespace Features.Activities.NumberBonds
             }
 
             zoneViews.Clear();
-            zoneViews[BondZone.Whole] = CreateZone(BondZone.Whole, "T\u1ed5ng", state.WholeLocked, new Vector3(0f, 0f, 0.48f));
-            zoneViews[BondZone.PartA] = CreateZone(BondZone.PartA, "Ph\u1ea7n A", state.PartALocked, new Vector3(-0.64f, 0f, -0.44f));
-            zoneViews[BondZone.PartB] = CreateZone(BondZone.PartB, "Ph\u1ea7n B", state.PartBLocked, new Vector3(0.64f, 0f, -0.44f));
+            zoneViews[BondZone.Whole] = CreateZone(BondZone.Whole, "T\u1ed5ng", state.WholeLocked, new Vector3(0f, 0f, 0.72f));
+            zoneViews[BondZone.PartA] = CreateZone(BondZone.PartA, "Ph\u1ea7n A", state.PartALocked, new Vector3(-0.96f, 0f, -0.66f));
+            zoneViews[BondZone.PartB] = CreateZone(BondZone.PartB, "Ph\u1ea7n B", state.PartBLocked, new Vector3(0.96f, 0f, -0.66f));
         }
 
         private NumberBondZoneView CreateZone(BondZone zone, string title, bool locked, Vector3 localPosition)

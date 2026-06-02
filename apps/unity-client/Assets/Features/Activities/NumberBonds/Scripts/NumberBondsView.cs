@@ -405,7 +405,7 @@ namespace Features.Activities.NumberBonds
         private void OnCancelClicked()
         {
             OnCancelRequested?.Invoke();
-            LoadSceneIfAvailable("SC_MainMenu");
+            LoadSceneIfAvailable("SC_ActivitySelect");
         }
 
         private void OnListenClicked()

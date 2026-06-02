@@ -4,7 +4,6 @@ using Core.AR.Interaction;
 using Core.AR.Placement;
 using Core.Learning.ActivityRunner;
 using UnityEngine;
-using Unity.XR.CoreUtils;
 
 namespace Core.AR
 {
@@ -89,7 +88,8 @@ namespace Core.AR
                 }
 
                 Placement = placementMock;
-                Session = sessionService != null ? sessionService : CreateFallbackSession();
+                Session = CreateFallbackSession();
+                DisableRealARSession();
             }
             else
             {
@@ -133,21 +133,6 @@ namespace Core.AR
             Session?.Initialize();
             Placement?.Initialize();
 
-            ARPlaneDetectionController planeController = FindAnyObjectByType<ARPlaneDetectionController>();
-            if (planeController == null)
-            {
-                XROrigin arOrigin = FindAnyObjectByType<XROrigin>();
-                if (arOrigin != null)
-                {
-                    planeController = arOrigin.gameObject.AddComponent<ARPlaneDetectionController>();
-                }
-            }
-
-            if (planeController != null)
-            {
-                planeController.SetDetectionEnabled(true);
-            }
-
             Interaction?.Initialize();
 
             Debug.Log($"[ARServiceBootstrap] Ready. Placement={(Placement != null ? Placement.GetType().Name : "null")}");
@@ -162,6 +147,18 @@ namespace Core.AR
             }
 
             return fallback;
+        }
+
+        private static void DisableRealARSession()
+        {
+            var arSession = FindFirstObjectByType<UnityEngine.XR.ARFoundation.ARSession>();
+            if (arSession != null) arSession.enabled = false;
+
+            var arCamBg = FindFirstObjectByType<UnityEngine.XR.ARFoundation.ARCameraBackground>();
+            if (arCamBg != null) arCamBg.enabled = false;
+
+            var arSvc = FindFirstObjectByType<ARSessionService>();
+            if (arSvc != null) arSvc.enabled = false;
         }
     }
 }

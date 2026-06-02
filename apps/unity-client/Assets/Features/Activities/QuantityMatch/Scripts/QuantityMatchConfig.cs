@@ -47,7 +47,7 @@ namespace Features.Activities.QuantityMatch
         [Header("Visual Settings")]
         [Tooltip("Default spacing between objects in a group (meters)")]
         [SerializeField]
-        private float defaultObjectSpacing = 0.68f;
+        private float defaultObjectSpacing = 0.9f;
 
         [Tooltip("Spacing between groups (meters)")]
         [SerializeField]
