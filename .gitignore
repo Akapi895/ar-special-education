@@ -4,6 +4,9 @@
 .idea/
 *.swp
 
+# runtime/build logs
+*.log
+
 # env / secrets
 .env
 .env.*
@@ -30,10 +33,12 @@ apps/unity-client/[Uu]ser[Ss]ettings/
 apps/unity-client/[Mm]emoryCaptures/
 
 # Unity - Auto-generated project files (should NOT be in Git)
+ar-special-education.sln
 apps/unity-client/*.csproj
 apps/unity-client/*.sln
 apps/unity-client/*.slnx
-apps/unity-client/Packages/packages-lock.json
+apps/unity-client/Packages/packages-lock*.json
+apps/unity-client/ProjectSettings/* [0-9].asset
 apps/unity-client/ProjectSettings/ProjectVersion.txt
 
 # LaTeX build artifacts
